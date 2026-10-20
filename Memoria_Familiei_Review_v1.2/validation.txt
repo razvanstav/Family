@@ -1,0 +1,16 @@
+PASS OpenAPI local references resolve
+PASS Operation IDs unique and path parameters exact
+PASS Schema required keys exist and examples satisfy declared shapes
+PASS Nullable patch does not allow null visibility/currency/status
+PASS Representative valid and invalid payloads
+PASS SQL FK tables and columns exist in schema catalog
+PASS Tenant tables enable and force RLS with checks
+PASS Evidence expiry mode guarded at both ends and subjects have deferred guards
+PASS No duplicate table or named index and PostgreSQL identifiers <= 63 bytes
+PASS HTML local artifact links exist
+PASS PHP reference contracts pass php -l
+
+126 API operations; 52 custom tables; 43 tenant RLS tables.
+Scope: static design checks and representative payload checks only. This is not a full OpenAPI standards validator.
+PostgreSQL DDL execution, RLS behavior and deferred constraints: NOT RUN; PostgreSQL server is not installed in this workspace.
+Application E2E and native adapters: NOT RUN; artifacts are a proposed design, not the application.

@@ -1,0 +1,39 @@
+memoria-familiei/
+  backend/                              # Laravel 13, PHP 8.4 pinned in CI
+    app/Platform/
+      Contracts/                        # DTOs, ports; no domain implementations
+      Identity/ Families/ Subjects/ Media/ Eventing/ Audit/ Notifications/ Search/
+    app/Modules/
+      Kitchen/ Pets/ Vehicles/ Memory/ Calendar/ Documents/
+        Contracts/                      # sole public surface
+        Application/                    # commands, queries, typed policies
+        Domain/                         # rules that justify extraction
+        Infrastructure/                 # Eloquent + owned migrations
+        Http/                           # request validation + thin controllers
+        Tests/
+        ModuleServiceProvider.php
+    app/Integrations/                   # orchestrators + event handlers above modules
+    bootstrap/providers.php             # explicit module registration, no plugin loader
+    database/migrations/                # framework + ordered module migrations
+    tests/Architecture/ Security/ EndToEnd/
+  frontend/
+    src/app/                            # router, family context, composition shell
+    src/shared/ui/                      # single design system
+    src/shared/api/generated/           # client generated from OpenAPI
+    src/shared/platform/                # ports + web/native adapters
+    src/modules/{kitchen,pets,vehicles,memory,calendar,documents}/
+    capacitor.config.ts                 # added during mobile phase
+    android/ ios/                       # native projects, same React build input
+  contracts/openapi.v1.json
+  contracts/events/                     # versioned minimal envelopes
+  architecture/adr/                     # decisions listed in the review
+  ops/compose.yaml                     # local PG + storage + email sink + app roles
+  .github/workflows/ci.yml              # or equivalent CI provider
+
+Rules:
+- Contracts may depend on Platform Contracts, never on another module's internals.
+- Modules depend on other modules' Contracts only when declared (Pets/Vehicles -> Documents).
+- Integration handlers depend on Contracts, not persistence models.
+- SQL foreign keys across boundaries protect integrity and do not confer query ownership.
+- No Repository interface per Eloquent model by default; add ports at real replacement boundaries.
+- Shared UI is imported by modules. Modules do not import another module's pages/hooks.

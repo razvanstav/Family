@@ -1,0 +1,23 @@
+flowchart TB
+  HTTP[HTTP Controllers + middleware] --> APP[Application services / workflows]
+  APP --> K[Kitchen Contracts]
+  APP --> P[Pets Contracts]
+  APP --> V[Vehicles Contracts]
+  APP --> D[Documents Contracts]
+  APP --> C[Calendar Contracts]
+  APP --> M[Memory Contracts]
+  P --> D
+  V --> D
+  K --> PLATFORM[Platform Contracts]
+  P --> PLATFORM
+  V --> PLATFORM
+  D --> PLATFORM
+  C --> PLATFORM
+  M --> PLATFORM
+  INTEGRATIONS[Integration handlers / composition root] --> K
+  INTEGRATIONS --> P
+  INTEGRATIONS --> V
+  INTEGRATIONS --> D
+  INTEGRATIONS --> C
+  INTEGRATIONS --> M
+  PLATFORM --> CAP[Auth / Families / Subjects / Media / Events / Audit / Search protocol / Delivery]

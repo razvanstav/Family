@@ -1,0 +1,7 @@
+flowchart LR
+  A[Adulți și membri cu cont] -->|HTTPS| MF[Memoria Familiei SaaS]
+  MF -->|mesaje generice| EMAIL[Furnizor email]
+  MF -->|ulterior| PUSH[APNs / FCM / Web Push]
+  A -->|înregistrări despre| S[Copii fără cont / animale / vehicule]
+  MF --- S
+  SUPPORT[Operator suport cu acces limitat și audit] --> MF

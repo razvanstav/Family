@@ -1,0 +1,12 @@
+flowchart TB
+  U[Browser PWA / Android iOS ulterior] --> EDGE[HTTPS same origin + React static assets]
+  EDGE --> API[Laravel API]
+  API --> PG[(PostgreSQL unic)]
+  API --> S3[(Stocare privată UE)]
+  U -->|PUT temporar semnat| S3
+  SCHED[Scheduler aceeași versiune backend] --> PG
+  WORKER[Worker aceeași versiune backend] --> PG
+  WORKER --> S3
+  WORKER --> EMAIL[Email]
+  API --> OBS[Erori / metrici fără conținut privat]
+  WORKER --> OBS

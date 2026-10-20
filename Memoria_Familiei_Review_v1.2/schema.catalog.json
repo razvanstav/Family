@@ -1,0 +1,3521 @@
+[
+  {
+    "name": "users",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "email",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "password_hash",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "locale",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "timezone",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "email_verified_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "disabled_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": false
+  },
+  {
+    "name": "families",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "timezone",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_by",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "authz_revision",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": false
+  },
+  {
+    "name": "identity_request_keys",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "route_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "request_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "request_hash",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "result_family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": false
+  },
+  {
+    "name": "identity_privacy_requests",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "request_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "family_memberships",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "user_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "role",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "joined_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "family_invitations",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "email",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "token_hash",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "role",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "accepted_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "invited_by_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "family_modules",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "module_id",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "enabled",
+        "type": "boolean",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "subjects",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "family_members",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": true
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "subject_kind",
+        "type": "text",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "display_name",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "birth_date",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "linked_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "documents",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "owner_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "visibility",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "document_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "issued_on",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_on",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expiry_mode",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "media_assets",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "uploader_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "object_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expected_bytes",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "actual_bytes",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "declared_mime",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "detected_mime",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "owner_module",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "owner_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "owner_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "intent_expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "recipes",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "owner_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "visibility",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "recipe_versions",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "recipe_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "version_no",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "ingredients",
+        "type": "jsonb",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "instructions",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "cooking_sessions",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "owner_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "visibility",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "recipe_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "recipe_version_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "dish_title_snapshot",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "cooked_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "cooked_by_member_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "cooking_participants",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "session_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "member_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "meal_ratings",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "session_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "member_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "recorded_by_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "score",
+        "type": "smallint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "pets",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": true
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "owner_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "visibility",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "subject_kind",
+        "type": "text",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "species",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "breed",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "birth_date",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "pet_weight_logs",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "pet_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "measured_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "weight_kg",
+        "type": "numeric",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "note",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "pet_records",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "pet_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "category",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "record_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "occurred_on",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "next_due_on",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "evidence_document_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "cost_minor",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "currency",
+        "type": "char",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "evidence_mode",
+        "type": "text",
+        "fk": true
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "vehicles",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": true
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "owner_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "visibility",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "subject_kind",
+        "type": "text",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "label",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "make",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "model",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "year",
+        "type": "smallint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "fuel_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "vehicle_identifiers",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "vehicle_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "ciphertext",
+        "type": "bytea",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "key_version",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "display_mask",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "vehicle_odometer",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "vehicle_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "reading_km",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "recorded_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "note",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "vehicle_service_logs",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "vehicle_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "serviced_on",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "service_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "odometer_km",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "provider",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "cost_minor",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "currency",
+        "type": "char",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "evidence_document_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "evidence_mode",
+        "type": "text",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "vehicle_fuel_logs",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "vehicle_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "fueled_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "liters",
+        "type": "numeric",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "total_minor",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "currency",
+        "type": "char",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "odometer_km",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "vehicle_obligations",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "vehicle_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "obligation_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "due_on",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "evidence_document_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "evidence_mode",
+        "type": "text",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "closed_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "moments",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "owner_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "visibility",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "kind",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "body",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "occurred_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "calendar_items",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "owner_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "visibility",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "archived_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "origin",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "item_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "starts_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "ends_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "due_on",
+        "type": "date",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "timezone",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "assignee_member_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "source_module",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "source_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "source_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "source_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "document_subjects",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "document_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "subject_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "moment_subjects",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "moment_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "subject_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "calendar_subjects",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "calendar_item_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "subject_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "document_media",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "document_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "media_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "moment_media",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "moment_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "media_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "cooking_session_media",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "session_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "media_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "sort_order",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "calendar_attendees",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "calendar_item_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "member_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "recipes_grants",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "recipe_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "permission",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "cooking_sessions_grants",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "session_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "permission",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "pets_grants",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "pet_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "permission",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "vehicles_grants",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "vehicle_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "permission",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "documents_grants",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "document_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "permission",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "moments_grants",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "moment_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "permission",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "calendar_items_grants",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "calendar_item_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "permission",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "reminder_rules",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "calendar_item_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "recipient_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "offset_days",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "local_time",
+        "type": "time",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "channel",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "enabled",
+        "type": "boolean",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "notification_deliveries",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "rule_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "recipient_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "occurrence_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "scheduled_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "source_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "rule_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "channel",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lease_until",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "attempts",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "provider_id",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "timeline_items",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "source_module",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "source_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "source_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "source_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "occurred_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "outbox_messages",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "event_name",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "event_version",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "aggregate_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "aggregate_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "aggregate_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "payload",
+        "type": "jsonb",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "occurred_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "correlation_id",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "fanout_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "outbox_deliveries",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "event_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "handler_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "available_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lease_until",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "attempts",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "last_error_code",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": false
+  },
+  {
+    "name": "request_idempotency",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "request_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "method",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "route_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "request_hash",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_module",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "response_status",
+        "type": "integer",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "activity_audit",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "actor_user_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "action",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_module",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "metadata_redacted",
+        "type": "jsonb",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "occurred_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "export_requests",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "requested_by_membership_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "guard_authz_revision",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "output_storage_key",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "erasure_requests",
+    "tenant": true,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "requested_by_user_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": true
+      },
+      {
+        "name": "scope",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "target_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "completed_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "erasure_tombstones",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "pk": true,
+        "fk": false
+      },
+      {
+        "name": "family_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_module",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_type",
+        "type": "text",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "resource_id",
+        "type": "uuid",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "erased_at",
+        "type": "timestamptz",
+        "pk": false,
+        "fk": false
+      },
+      {
+        "name": "lock_version",
+        "type": "bigint",
+        "pk": false,
+        "fk": false
+      }
+    ],
+    "identity": true
+  },
+  {
+    "name": "subject_kinds",
+    "tenant": false,
+    "columns": [
+      {
+        "name": "kind",
+        "type": "text",
+        "pk": true,
+        "fk": false
+      }
+    ],
+    "identity": false
+  }
+]

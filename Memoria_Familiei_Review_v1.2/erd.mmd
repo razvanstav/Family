@@ -1,0 +1,751 @@
+erDiagram
+  users {
+    uuid id PK
+    text email
+    text password_hash
+    text locale
+    text timezone
+    timestamptz email_verified_at
+    timestamptz disabled_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  families {
+    uuid id PK
+    text name
+    text timezone
+    uuid created_by FK
+    bigint authz_revision
+    timestamptz archived_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  identity_request_keys {
+    uuid user_id FK
+    text route_key
+    text request_key
+    text request_hash
+    uuid result_family_id FK
+    timestamptz expires_at
+  }
+  identity_privacy_requests {
+    uuid id PK
+    uuid user_id FK
+    uuid family_id FK
+    text request_type
+    text status
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  family_memberships {
+    uuid id PK
+    uuid family_id FK
+    uuid user_id FK
+    text role
+    text status
+    timestamptz joined_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  family_invitations {
+    uuid id PK
+    uuid family_id FK
+    text email
+    text token_hash
+    text role
+    timestamptz expires_at
+    timestamptz accepted_at
+    uuid invited_by_membership_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  family_modules {
+    uuid id PK
+    uuid family_id FK
+    text module_id
+    boolean enabled
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  subjects {
+    uuid id PK
+    uuid family_id FK
+    text kind FK
+    timestamptz archived_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  family_members {
+    uuid id PK
+    uuid family_id FK
+    text subject_kind FK
+    text display_name
+    date birth_date
+    uuid linked_membership_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  documents {
+    uuid id PK
+    uuid family_id FK
+    uuid owner_membership_id FK
+    text visibility
+    bigint lock_version
+    timestamptz archived_at
+    text title
+    text document_type
+    date issued_on
+    date expires_on
+    text expiry_mode
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  media_assets {
+    uuid id PK
+    uuid family_id FK
+    uuid uploader_membership_id FK
+    text object_key
+    bigint expected_bytes
+    bigint actual_bytes
+    text declared_mime
+    text detected_mime
+    text status
+    text owner_module
+    text owner_type
+    uuid owner_id
+    timestamptz intent_expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  recipes {
+    uuid id PK
+    uuid family_id FK
+    uuid owner_membership_id FK
+    text visibility
+    bigint lock_version
+    timestamptz archived_at
+    text title
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  recipe_versions {
+    uuid id PK
+    uuid family_id FK
+    uuid recipe_id FK
+    integer version_no
+    text title
+    jsonb ingredients
+    text instructions
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  cooking_sessions {
+    uuid id PK
+    uuid family_id FK
+    uuid owner_membership_id FK
+    text visibility
+    bigint lock_version
+    timestamptz archived_at
+    uuid recipe_id FK
+    uuid recipe_version_id FK
+    text dish_title_snapshot
+    timestamptz cooked_at
+    uuid cooked_by_member_id FK
+    text notes
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  cooking_participants {
+    uuid id PK
+    uuid family_id FK
+    uuid session_id FK
+    uuid member_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  meal_ratings {
+    uuid id PK
+    uuid family_id FK
+    uuid session_id FK
+    uuid member_id FK
+    uuid recorded_by_membership_id FK
+    smallint score
+    text notes
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  pets {
+    uuid id PK
+    uuid family_id FK
+    uuid owner_membership_id FK
+    text visibility
+    bigint lock_version
+    timestamptz archived_at
+    text subject_kind FK
+    text name
+    text species
+    text breed
+    date birth_date
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  pet_weight_logs {
+    uuid id PK
+    uuid family_id FK
+    uuid pet_id FK
+    timestamptz measured_at
+    numeric weight_kg
+    text note
+    bigint lock_version
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  pet_records {
+    uuid id PK
+    uuid family_id FK
+    uuid pet_id FK
+    text category
+    text record_type
+    date occurred_on
+    date next_due_on
+    text provider
+    text notes
+    uuid evidence_document_id FK
+    bigint cost_minor
+    char currency
+    bigint lock_version
+    timestamptz archived_at
+    timestamptz created_at
+    timestamptz updated_at
+    text evidence_mode FK
+  }
+  vehicles {
+    uuid id PK
+    uuid family_id FK
+    uuid owner_membership_id FK
+    text visibility
+    bigint lock_version
+    timestamptz archived_at
+    text subject_kind FK
+    text label
+    text make
+    text model
+    smallint year
+    text fuel_type
+    text status
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  vehicle_identifiers {
+    uuid id PK
+    uuid family_id FK
+    uuid vehicle_id FK
+    text kind
+    bytea ciphertext
+    integer key_version
+    text display_mask
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  vehicle_odometer {
+    uuid id PK
+    uuid family_id FK
+    uuid vehicle_id FK
+    integer reading_km
+    timestamptz recorded_at
+    text note
+    bigint lock_version
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  vehicle_service_logs {
+    uuid id PK
+    uuid family_id FK
+    uuid vehicle_id FK
+    date serviced_on
+    text service_type
+    integer odometer_km
+    text provider
+    bigint cost_minor
+    char currency
+    text notes
+    uuid evidence_document_id FK
+    text evidence_mode FK
+    bigint lock_version
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  vehicle_fuel_logs {
+    uuid id PK
+    uuid family_id FK
+    uuid vehicle_id FK
+    timestamptz fueled_at
+    numeric liters
+    bigint total_minor
+    char currency
+    integer odometer_km
+    bigint lock_version
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  vehicle_obligations {
+    uuid id PK
+    uuid family_id FK
+    uuid vehicle_id FK
+    text obligation_key
+    text kind
+    date due_on
+    uuid evidence_document_id FK
+    text evidence_mode FK
+    text notes
+    bigint lock_version
+    timestamptz closed_at
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  moments {
+    uuid id PK
+    uuid family_id FK
+    uuid owner_membership_id FK
+    text visibility
+    bigint lock_version
+    timestamptz archived_at
+    text kind
+    text title
+    text body
+    timestamptz occurred_at
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  calendar_items {
+    uuid id PK
+    uuid family_id FK
+    uuid owner_membership_id FK
+    text visibility
+    bigint lock_version
+    timestamptz archived_at
+    text origin
+    text item_type
+    text title
+    timestamptz starts_at
+    timestamptz ends_at
+    date due_on
+    text timezone
+    uuid assignee_member_id FK
+    text status
+    text source_module
+    text source_type
+    uuid source_id
+    bigint source_version
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  document_subjects {
+    uuid id PK
+    uuid family_id FK
+    uuid document_id FK
+    uuid subject_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  moment_subjects {
+    uuid id PK
+    uuid family_id FK
+    uuid moment_id FK
+    uuid subject_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  calendar_subjects {
+    uuid id PK
+    uuid family_id FK
+    uuid calendar_item_id FK
+    uuid subject_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  document_media {
+    uuid id PK
+    uuid family_id FK
+    uuid document_id FK
+    uuid media_id FK
+    integer sort_order
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  moment_media {
+    uuid id PK
+    uuid family_id FK
+    uuid moment_id FK
+    uuid media_id FK
+    integer sort_order
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  cooking_session_media {
+    uuid id PK
+    uuid family_id FK
+    uuid session_id FK
+    uuid media_id FK
+    integer sort_order
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  calendar_attendees {
+    uuid id PK
+    uuid family_id FK
+    uuid calendar_item_id FK
+    uuid member_id FK
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  recipes_grants {
+    uuid id PK
+    uuid family_id FK
+    uuid recipe_id FK
+    uuid membership_id FK
+    text permission
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  cooking_sessions_grants {
+    uuid id PK
+    uuid family_id FK
+    uuid session_id FK
+    uuid membership_id FK
+    text permission
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  pets_grants {
+    uuid id PK
+    uuid family_id FK
+    uuid pet_id FK
+    uuid membership_id FK
+    text permission
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  vehicles_grants {
+    uuid id PK
+    uuid family_id FK
+    uuid vehicle_id FK
+    uuid membership_id FK
+    text permission
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  documents_grants {
+    uuid id PK
+    uuid family_id FK
+    uuid document_id FK
+    uuid membership_id FK
+    text permission
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  moments_grants {
+    uuid id PK
+    uuid family_id FK
+    uuid moment_id FK
+    uuid membership_id FK
+    text permission
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  calendar_items_grants {
+    uuid id PK
+    uuid family_id FK
+    uuid calendar_item_id FK
+    uuid membership_id FK
+    text permission
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  reminder_rules {
+    uuid id PK
+    uuid family_id FK
+    uuid calendar_item_id FK
+    uuid recipient_membership_id FK
+    integer offset_days
+    time local_time
+    text channel
+    boolean enabled
+    bigint lock_version
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  notification_deliveries {
+    uuid id PK
+    uuid family_id FK
+    uuid rule_id FK
+    uuid recipient_membership_id FK
+    text occurrence_key
+    timestamptz scheduled_at
+    bigint source_version
+    bigint rule_version
+    text channel
+    text status
+    timestamptz lease_until
+    integer attempts
+    text provider_id
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  timeline_items {
+    uuid id PK
+    uuid family_id FK
+    text source_module
+    text source_type
+    uuid source_id
+    bigint source_version
+    timestamptz occurred_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  outbox_messages {
+    uuid id PK
+    uuid family_id FK
+    text event_name
+    integer event_version
+    text aggregate_type
+    uuid aggregate_id
+    bigint aggregate_version
+    jsonb payload
+    timestamptz occurred_at
+    text correlation_id
+    timestamptz fanout_at
+    bigint lock_version
+  }
+  outbox_deliveries {
+    uuid event_id FK
+    text handler_key
+    text status
+    timestamptz available_at
+    timestamptz lease_until
+    integer attempts
+    text last_error_code
+  }
+  request_idempotency {
+    uuid id PK
+    uuid family_id FK
+    uuid membership_id FK
+    text request_key
+    text method
+    text route_key
+    text request_hash
+    text resource_module
+    text resource_type
+    uuid resource_id
+    integer response_status
+    timestamptz expires_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  activity_audit {
+    uuid id PK
+    uuid family_id FK
+    uuid actor_user_id FK
+    text action
+    text resource_module
+    text resource_type
+    uuid resource_id
+    jsonb metadata_redacted
+    timestamptz occurred_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  export_requests {
+    uuid id PK
+    uuid family_id FK
+    uuid requested_by_membership_id FK
+    text status
+    bigint guard_authz_revision
+    timestamptz expires_at
+    text output_storage_key
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  erasure_requests {
+    uuid id PK
+    uuid family_id FK
+    uuid requested_by_user_id FK
+    text scope
+    uuid target_id
+    text status
+    timestamptz completed_at
+    timestamptz created_at
+    timestamptz updated_at
+    bigint lock_version
+  }
+  erasure_tombstones {
+    uuid id PK
+    uuid family_id
+    text resource_module
+    text resource_type
+    uuid resource_id
+    timestamptz erased_at
+    bigint lock_version
+  }
+  subject_kinds {
+    text kind PK
+  }
+  users ||--o{ families : references
+  users ||--o{ identity_request_keys : references
+  families ||--o{ identity_request_keys : references
+  users ||--o{ identity_privacy_requests : references
+  families ||--o{ identity_privacy_requests : references
+  families ||--o{ family_memberships : references
+  users ||--o{ family_memberships : references
+  families ||--o{ family_invitations : references
+  family_memberships ||--o{ family_invitations : references
+  families ||--o{ family_modules : references
+  families ||--o{ subjects : references
+  families ||--o{ family_members : references
+  family_memberships ||--o{ family_members : references
+  families ||--o{ documents : references
+  family_memberships ||--o{ documents : references
+  families ||--o{ media_assets : references
+  family_memberships ||--o{ media_assets : references
+  families ||--o{ recipes : references
+  family_memberships ||--o{ recipes : references
+  families ||--o{ recipe_versions : references
+  recipes ||--o{ recipe_versions : references
+  families ||--o{ cooking_sessions : references
+  family_memberships ||--o{ cooking_sessions : references
+  recipe_versions ||--o{ cooking_sessions : references
+  family_members ||--o{ cooking_sessions : references
+  families ||--o{ cooking_participants : references
+  cooking_sessions ||--o{ cooking_participants : references
+  family_members ||--o{ cooking_participants : references
+  families ||--o{ meal_ratings : references
+  cooking_participants ||--o{ meal_ratings : references
+  family_memberships ||--o{ meal_ratings : references
+  families ||--o{ pets : references
+  family_memberships ||--o{ pets : references
+  families ||--o{ pet_weight_logs : references
+  pets ||--o{ pet_weight_logs : references
+  families ||--o{ pet_records : references
+  pets ||--o{ pet_records : references
+  documents ||--o{ pet_records : references
+  families ||--o{ vehicles : references
+  family_memberships ||--o{ vehicles : references
+  families ||--o{ vehicle_identifiers : references
+  vehicles ||--o{ vehicle_identifiers : references
+  families ||--o{ vehicle_odometer : references
+  vehicles ||--o{ vehicle_odometer : references
+  families ||--o{ vehicle_service_logs : references
+  vehicles ||--o{ vehicle_service_logs : references
+  documents ||--o{ vehicle_service_logs : references
+  families ||--o{ vehicle_fuel_logs : references
+  vehicles ||--o{ vehicle_fuel_logs : references
+  families ||--o{ vehicle_obligations : references
+  vehicles ||--o{ vehicle_obligations : references
+  documents ||--o{ vehicle_obligations : references
+  families ||--o{ moments : references
+  family_memberships ||--o{ moments : references
+  families ||--o{ calendar_items : references
+  family_memberships ||--o{ calendar_items : references
+  family_members ||--o{ calendar_items : references
+  families ||--o{ document_subjects : references
+  documents ||--o{ document_subjects : references
+  subjects ||--o{ document_subjects : references
+  families ||--o{ moment_subjects : references
+  moments ||--o{ moment_subjects : references
+  subjects ||--o{ moment_subjects : references
+  families ||--o{ calendar_subjects : references
+  calendar_items ||--o{ calendar_subjects : references
+  subjects ||--o{ calendar_subjects : references
+  families ||--o{ document_media : references
+  documents ||--o{ document_media : references
+  media_assets ||--o{ document_media : references
+  families ||--o{ moment_media : references
+  moments ||--o{ moment_media : references
+  media_assets ||--o{ moment_media : references
+  families ||--o{ cooking_session_media : references
+  cooking_sessions ||--o{ cooking_session_media : references
+  media_assets ||--o{ cooking_session_media : references
+  families ||--o{ calendar_attendees : references
+  calendar_items ||--o{ calendar_attendees : references
+  family_members ||--o{ calendar_attendees : references
+  families ||--o{ recipes_grants : references
+  recipes ||--o{ recipes_grants : references
+  family_memberships ||--o{ recipes_grants : references
+  families ||--o{ cooking_sessions_grants : references
+  cooking_sessions ||--o{ cooking_sessions_grants : references
+  family_memberships ||--o{ cooking_sessions_grants : references
+  families ||--o{ pets_grants : references
+  pets ||--o{ pets_grants : references
+  family_memberships ||--o{ pets_grants : references
+  families ||--o{ vehicles_grants : references
+  vehicles ||--o{ vehicles_grants : references
+  family_memberships ||--o{ vehicles_grants : references
+  families ||--o{ documents_grants : references
+  documents ||--o{ documents_grants : references
+  family_memberships ||--o{ documents_grants : references
+  families ||--o{ moments_grants : references
+  moments ||--o{ moments_grants : references
+  family_memberships ||--o{ moments_grants : references
+  families ||--o{ calendar_items_grants : references
+  calendar_items ||--o{ calendar_items_grants : references
+  family_memberships ||--o{ calendar_items_grants : references
+  families ||--o{ reminder_rules : references
+  calendar_items ||--o{ reminder_rules : references
+  family_memberships ||--o{ reminder_rules : references
+  families ||--o{ notification_deliveries : references
+  reminder_rules ||--o{ notification_deliveries : references
+  family_memberships ||--o{ notification_deliveries : references
+  families ||--o{ timeline_items : references
+  families ||--o{ outbox_messages : references
+  outbox_messages ||--o{ outbox_deliveries : references
+  families ||--o{ request_idempotency : references
+  family_memberships ||--o{ request_idempotency : references
+  families ||--o{ activity_audit : references
+  users ||--o{ activity_audit : references
+  families ||--o{ export_requests : references
+  family_memberships ||--o{ export_requests : references
+  families ||--o{ erasure_requests : references
+  users ||--o{ erasure_requests : references
+  subjects ||--o{ family_members : references
+  subjects ||--o{ pets : references
+  subjects ||--o{ vehicles : references
+  subject_kinds ||--o{ subjects : references

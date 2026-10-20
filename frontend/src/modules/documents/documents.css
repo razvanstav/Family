@@ -1,0 +1,560 @@
+/* Documents: the reference's white canvas, pastel cards and black controls. */
+:root {
+  --ink: #151515;
+  --muted: #686868;
+  --green: #c5e3a7;
+  --blue: #aed2e7;
+  --yellow: #f3e7a2;
+  color: var(--ink);
+  background: #fff;
+}
+.primary {
+  background: #111;
+}
+.primary:hover:not(:disabled) {
+  background: #333;
+}
+.sidebar {
+  background: #fafaf7;
+}
+.topbar {
+  border-color: #f0f0eb;
+}
+.family-selector {
+  color: #222;
+}
+.family-selector select {
+  min-height: 44px;
+}
+.documents-page .page-heading {
+  margin-bottom: 24px;
+}
+.documents-page .page-heading h1 {
+  font-weight: 700;
+  letter-spacing: -1.4px;
+}
+.documents-page .eyebrow {
+  color: #646464;
+  font-size: 10px;
+  letter-spacing: 1.2px;
+}
+.documents-page .library-tools {
+  padding: 4px;
+  border: 1px solid #e8e8e8;
+  border-radius: 36px;
+  gap: 8px;
+  margin-bottom: 24px;
+  background: #fff;
+}
+.documents-page .search {
+  background: #f3f3f3;
+  border: 0;
+  border-radius: 30px;
+  min-height: 46px;
+  color: #333;
+}
+.documents-page .search input {
+  font-size: 14px;
+  color: #222;
+}
+.documents-page .search input::placeholder {
+  color: #707070;
+}
+.documents-page .search input::-webkit-search-cancel-button {
+  display: none;
+}
+.documents-page .search button {
+  min-width: 36px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+.documents-page .filter-button {
+  border-radius: 28px;
+  border-color: #eee;
+  min-height: 46px;
+  color: #222;
+}
+.documents-page .filter-button.active {
+  background: #d1e8b6;
+  border-color: #91b16f;
+}
+.documents-page .filter-panel {
+  background: #f6f6f3;
+  margin: -12px 0 24px;
+}
+.documents-page .intro-row {
+  margin-bottom: 24px;
+}
+.documents-page .hero-card {
+  background: linear-gradient(110deg, #c6e4ad 15%, #e3e5a0 70%, #f5df92);
+  border-radius: 30px;
+  min-height: 224px;
+}
+.documents-page .hero-copy {
+  padding: 24px 28px;
+}
+.documents-page .hero-copy h2 {
+  font-size: 29px;
+  font-weight: 500;
+  line-height: 1.15;
+  margin: 12px 0 8px;
+  letter-spacing: -0.8px;
+}
+.documents-page .hero-copy p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #3e4a32;
+}
+.documents-page .hero-copy .button {
+  min-height: 44px;
+  margin-top: 16px;
+  font-size: 12px;
+  padding: 11px 17px;
+}
+.documents-page .small-label {
+  font-size: 9px;
+  letter-spacing: 0.8px;
+}
+.documents-page .secure-float {
+  font-size: 10px;
+}
+.documents-page .privacy-card {
+  background: #f6f7f0;
+  border: 0;
+  border-radius: 30px;
+}
+.documents-page .privacy-card p {
+  font-size: 13px;
+  color: #63695c;
+  line-height: 1.6;
+}
+.documents-page .privacy-footer {
+  font-size: 11px;
+  color: #58614c;
+}
+.documents-page .category-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.documents-page .category-heading h2 {
+  font-size: 18px;
+  letter-spacing: -0.35px;
+}
+.documents-page .category-heading .text-button {
+  color: #626262;
+  min-height: 44px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.documents-page .categories {
+  padding: 8px 0 22px;
+  gap: 10px;
+}
+.documents-page .category {
+  min-height: 50px;
+  background: #f2f2f2;
+  font-size: 13px;
+  padding: 3px 17px 3px 3px;
+  border-radius: 22px;
+  gap: 10px;
+}
+.documents-page .category > span {
+  width: 44px;
+  height: 44px;
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 19px;
+  color: #454545;
+}
+.documents-page .category > span svg {
+  width: 21px;
+  height: 21px;
+}
+.documents-page .category.selected {
+  background: #d2e6a7;
+}
+.documents-page .category.selected > span {
+  color: #354e27;
+  border-color: #e0e6d4;
+}
+.documents-page .section-header {
+  margin-bottom: 15px;
+}
+.documents-page .section-header h2 {
+  font-size: 21px;
+  font-weight: 700;
+}
+.documents-page .section-header p {
+  font-size: 12px;
+  color: #686868;
+}
+.documents-page .section-header .text-button {
+  min-height: 44px;
+  color: #555;
+}
+.documents-page .count {
+  background: #f0f0ed;
+  color: #505050;
+  font-size: 12px;
+}
+.documents-page .document-grid {
+  gap: 18px;
+}
+.documents-page .document-card {
+  border-radius: 30px;
+  padding: 17px;
+}
+.documents-page .green {
+  background: var(--green);
+}
+.documents-page .blue {
+  background: var(--blue);
+}
+.documents-page .peach {
+  background: #f1cdb9;
+}
+.documents-page .yellow {
+  background: var(--yellow);
+}
+.documents-page .card-top .category-label {
+  color: #353b30;
+  font-size: 11px;
+  background: #ffffff3d;
+  border-color: #ffffff80;
+}
+.documents-page .mini-lock {
+  width: 30px;
+  height: 30px;
+  color: #384032;
+}
+.documents-page .document-card .paper-scene {
+  height: 154px;
+}
+.documents-page .document-card .paper {
+  width: 86px;
+  height: 112px;
+}
+.documents-page .paper-front {
+  background: #fff;
+  box-shadow: 4px 10px 15px #3d493125;
+}
+.documents-page .paper-back {
+  background: #ffffff9c;
+}
+.documents-page .paper-stamp {
+  color: #668641;
+}
+.documents-page .blue .paper-stamp {
+  color: #4984a8;
+}
+.documents-page .peach .paper-stamp {
+  color: #ba7455;
+}
+.documents-page .yellow .paper-stamp {
+  color: #a88d31;
+}
+.documents-page .file-pill {
+  font-size: 10px;
+  background: #ffffffed;
+  padding: 5px 9px;
+  color: #333;
+}
+.documents-page .card-bottom h3 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  min-height: 42px;
+  letter-spacing: -0.25px;
+}
+.documents-page .card-bottom > p {
+  color: #4b5547;
+  font-size: 11px;
+  margin-top: 6px;
+}
+.documents-page .card-access {
+  margin-top: 10px;
+  min-height: 44px;
+}
+.documents-page .card-access > span:first-child {
+  font-size: 11px;
+  color: #354330;
+  gap: 5px;
+}
+.documents-page .card-arrow {
+  width: 44px;
+  height: 44px;
+  border-radius: 18px;
+  background: #242424;
+  color: #fff;
+  border: 2px solid #fff;
+  flex-shrink: 0;
+}
+.documents-page .card-arrow svg {
+  width: 20px;
+}
+.documents-page .library-note {
+  color: #686868;
+  font-size: 12px;
+}
+
+@media (max-width: 650px) {
+  body {
+    background: white;
+  }
+  .main-column {
+    position: relative;
+  }
+  .topbar {
+    height: 82px;
+    padding: 20px 20px 12px;
+  }
+  .mobile-brand .avatar {
+    width: 44px;
+    height: 44px;
+    background: #e8e5dc;
+    font-size: 13px;
+    color: #36342f;
+  }
+  .app-shell:has(.documents-page) .topbar-actions {
+    margin-right: 59px;
+  }
+  .family-selector {
+    font-size: 14px;
+    gap: 7px;
+  }
+  .family-selector select {
+    max-width: 170px;
+    font-weight: 500;
+  }
+  main {
+    padding: 12px 20px 108px;
+  }
+  .documents-page .desktop-upload {
+    display: flex;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: 1px solid #e9e9e9;
+    border-radius: 50%;
+    background: #fff;
+    color: #151515;
+  }
+  .documents-page .desktop-upload span {
+    display: none;
+  }
+  .documents-page .page-heading {
+    margin-bottom: 22px;
+  }
+  .documents-page .page-heading h1 {
+    font-size: 33px;
+    line-height: 1.1;
+    letter-spacing: -1px;
+  }
+  .documents-page .page-heading .eyebrow,
+  .documents-page .subheading {
+    display: none;
+  }
+  .documents-page .library-tools {
+    margin-bottom: 18px;
+    gap: 6px;
+    padding: 3px;
+  }
+  .documents-page .search {
+    padding: 0 12px;
+    gap: 8px;
+  }
+  .documents-page .search input {
+    font-size: 16px;
+  }
+  .documents-page .filter-button {
+    width: 46px;
+    min-width: 46px;
+    height: 46px;
+  }
+  .documents-page .intro-row {
+    margin-bottom: 16px;
+  }
+  .documents-page .hero-card {
+    min-height: 180px;
+    border-radius: 28px;
+  }
+  .documents-page .hero-copy {
+    padding: 20px 18px;
+    min-width: 64%;
+  }
+  .documents-page .small-label {
+    display: none;
+  }
+  .documents-page .hero-copy h2 {
+    font-size: 23px;
+    margin: 0 0 8px;
+    line-height: 1.12;
+    letter-spacing: -0.5px;
+  }
+  .documents-page .hero-copy p {
+    font-size: 12px;
+    line-height: 1.4;
+    max-width: 180px;
+  }
+  .documents-page .hero-copy .button {
+    margin-top: 13px;
+    padding: 10px 14px;
+    font-size: 11px;
+    gap: 7px;
+  }
+  .documents-page .hero-art {
+    width: 38%;
+    right: -8px;
+  }
+  .documents-page .hero-art .paper-scene {
+    transform: scale(0.85) rotate(13deg);
+  }
+  .documents-page .hero-art .file-pill {
+    right: 14%;
+    bottom: 22%;
+  }
+  .documents-page .secure-float {
+    display: none;
+  }
+  .documents-page .category-heading h2 {
+    font-size: 17px;
+  }
+  .documents-page .categories {
+    margin-right: -20px;
+    padding: 2px 20px 15px 0;
+    gap: 8px;
+  }
+  .documents-page .category {
+    font-size: 13px;
+    padding-right: 14px;
+  }
+  .documents-page .section-header {
+    margin-bottom: 10px;
+  }
+  .documents-page .section-header h2 {
+    font-size: 18px;
+    gap: 8px;
+    letter-spacing: -0.35px;
+  }
+  .documents-page .section-header p {
+    display: none;
+  }
+  .documents-page .section-header .text-button {
+    width: 44px;
+    justify-content: center;
+  }
+  .documents-page .document-grid {
+    gap: 12px;
+  }
+  .documents-page .document-card {
+    border-radius: 26px;
+    padding: 12px;
+  }
+  .documents-page .card-top .category-label {
+    font-size: 10px;
+    padding: 5px 7px;
+  }
+  .documents-page .mini-lock {
+    width: 25px;
+    height: 25px;
+  }
+  .documents-page .document-card .paper-scene {
+    height: 126px;
+  }
+  .documents-page .document-card .paper {
+    width: 77px;
+    height: 100px;
+  }
+  .documents-page .document-card .file-pill {
+    font-size: 9px;
+    right: 4%;
+    bottom: 13%;
+  }
+  .documents-page .card-bottom h3 {
+    font-size: 15px;
+    line-height: 1.3;
+    min-height: 39px;
+  }
+  .documents-page .card-bottom > p {
+    font-size: 10px;
+  }
+  .documents-page .card-access {
+    margin-top: 7px;
+    gap: 3px;
+  }
+  .documents-page .card-access > span:first-child {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .documents-page .card-access > span:first-child svg {
+    width: 12px;
+    flex-shrink: 0;
+  }
+  .documents-page .card-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 16px;
+  }
+  .documents-page .library-note {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .mobile-nav {
+    background: #090909;
+    border-color: #090909;
+    gap: 4px;
+    bottom: max(18px, env(safe-area-inset-bottom));
+  }
+  .mobile-nav button {
+    width: 50px;
+    height: 50px;
+    min-width: 50px;
+    padding: 0;
+    background: #303030;
+    color: #eee;
+    font-size: 12px;
+  }
+  .mobile-nav button.active {
+    width: auto;
+    padding: 0 17px;
+    background: #fff;
+    color: #141414;
+  }
+  .mobile-nav button:last-child {
+    width: 50px;
+  }
+  .mobile-initial {
+    border-color: #aaa;
+    font-size: 10px;
+  }
+}
+@media (max-width: 370px) {
+  .family-selector {
+    font-size: 13px;
+  }
+  .family-selector select {
+    max-width: 150px;
+  }
+  .documents-page .hero-copy {
+    padding-left: 15px;
+  }
+  .documents-page .hero-copy h2 {
+    font-size: 21px;
+  }
+  .documents-page .hero-art {
+    right: -15px;
+  }
+  .documents-page .card-access > span:first-child {
+    font-size: 9px;
+  }
+  .documents-page .card-arrow {
+    width: 34px;
+    height: 36px;
+  }
+}
