@@ -8,6 +8,8 @@ Pagina Documente folosește `Helvetica, "Helvetica Neue", Arial, sans-serif`, cu
 
 Capturi din aplicația verificată: [mobil](artifacts/mobile-documents.png) · [desktop](artifacts/documents-desktop.png).
 
+Familia mea: [mobil](artifacts/family-mobile.png) · [desktop](artifacts/family-desktop.png).
+
 ## Deschidere
 
 În acest workspace, PostgreSQL și ClamAV sunt instalate portabil în `.tools/`; datele și configurațiile locale sunt în `.runtime/`. Nu sunt servicii Windows și ascultă exclusiv pe `127.0.0.1`.
@@ -35,6 +37,7 @@ Parola demonstrativă comună: `Familie-Demo-2026!`. Nu reutiliza aceste conturi
 
 - Autentificare cu sesiune Laravel, cookie HttpOnly, regenerarea sesiunii la login și protecție CSRF. Fără tokenuri în localStorage.
 - Selector de familie, listă și căutare locală în documentele autorizate, categorii, filtru de acces, detaliu, descărcare.
+- Pagina Familia mea: carduri pentru membri, căutare după nume, roluri și revocare cu confirmare pentru proprietar. Fără invitații sau schimbarea rolurilor în această etapă.
 - Upload PDF/JPEG/PNG/WebP, maximum 10 MB; cotă cumulată de 100 MB/familie pentru această etapă.
 - Verificarea tipului din conținut, hash SHA-256, scanare ClamAV prin INSTREAM; imagini decodate și recodate cu GD, fără EXIF/metadate. Maximum 16 megapixeli; limitele de dimensiune/cotă se verifică și după recodare.
 - Fișier nou privat implicit. `private`, `family` sau `selected` cu permisiuni de citire pentru membrii aleși. Numai proprietarul documentului schimbă accesul.
@@ -61,6 +64,7 @@ backend/app/Modules/Documents/
 frontend/src/
   app/                autentificare, selector, navigație
   modules/documents/  listă, detaliu, upload, acces
+  modules/families/   membri, căutare și revocare
   shared/             client API tipizat și dialog accesibil
 ops/                  pornire, oprire, configurare, teste
 ```

@@ -9,10 +9,10 @@ import {
   Search,
   ShieldCheck,
   Users,
-  X,
 } from "lucide-react";
-import { api, type Member, type Session } from "../shared/api";
+import { api, type Session } from "../shared/api";
 import { Documents } from "../modules/documents/Documents";
+import { FamilyPage } from "../modules/families/Family";
 import { Modal } from "../shared/Modal";
 
 export default function App() {
@@ -21,6 +21,9 @@ export default function App() {
   const [error, setError] = useState("");
   const [page, setPage] = useState<"documents" | "family">("documents");
   const [account, setAccount] = useState(false);
+  useEffect(() => {
+    document.title = `${page === "documents" ? "Documente" : "Familia mea"} · Memoria Familiei`;
+  }, [page]);
   async function refresh() {
     try {
       const data = await api<Session>("/session");
@@ -173,7 +176,7 @@ export default function App() {
               <FamilyPage
                 key={family.id}
                 familyId={family.id}
-                name={family.name}
+                onExpired={() => void refresh()}
                 isOwner={family.role === "owner"}
                 userId={session.user.id}
               />
@@ -214,11 +217,15 @@ export default function App() {
           <span>Familie</span>
         </button>
         <button
-          aria-label="Caută documente"
+          aria-label={page === "documents" ? "Caută documente" : "Caută membri"}
           onClick={() => {
-            setPage("documents");
             window.setTimeout(
-              () => document.getElementById("document-search")?.focus(),
+              () =>
+                document
+                  .getElementById(
+                    page === "documents" ? "document-search" : "family-search",
+                  )
+                  ?.focus(),
               0,
             );
           }}
@@ -391,149 +398,5 @@ function Login({
         </div>
       </div>
     </div>
-  );
-}
-
-function FamilyPage({
-  familyId,
-  name,
-  isOwner,
-  userId,
-}: {
-  familyId: string;
-  name: string;
-  isOwner: boolean;
-  userId: number;
-}) {
-  const [members, setMembers] = useState<Member[]>([]);
-  const [error, setError] = useState("");
-  const [target, setTarget] = useState<Member | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  async function load() {
-    try {
-      setMembers(await api<Member[]>(`/families/${familyId}/members`));
-    } catch {
-      setMembers([]);
-      setError("Nu am putut încărca membrii.");
-    }
-  }
-  useEffect(() => {
-    void load();
-  }, [familyId]);
-  async function revoke() {
-    if (!target) return;
-    setBusy(true);
-    setError("");
-    try {
-      await api(`/families/${familyId}/members/${target.id}`, {
-        method: "DELETE",
-      });
-      setMessage(`Accesul pentru ${target.name} a fost revocat.`);
-      setTarget(null);
-      await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Revocarea nu a reușit.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <>
-      <section className="page-heading">
-        <div>
-          <p className="eyebrow">OAMENII TĂI</p>
-          <h1>{name}</h1>
-          <p className="subheading">Un spațiu comun. Intimitatea fiecăruia.</p>
-        </div>
-      </section>
-      <div className="family-explainer">
-        <ShieldCheck size={28} />
-        <div>
-          <h3>Proprietarul familiei gestionează membrii.</h3>
-          <p>
-            Documentele private ale fiecăruia sunt vizibile doar cu permisiunea
-            proprietarului documentului.
-          </p>
-        </div>
-      </div>
-      {message && (
-        <p role="status" className="notice">
-          {message}
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="error">
-          {error}
-        </p>
-      )}
-      <div className="members-list">
-        {members.map((member) => (
-          <div className="member-card" key={member.id}>
-            <span className="avatar">
-              {member.name
-                .split(" ")
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join("")}
-            </span>
-            <div>
-              <h3>
-                {member.name}
-                {member.user_id === userId && <span className="you">Tu</span>}
-              </h3>
-              <p>
-                {member.role === "owner"
-                  ? "Proprietar familie"
-                  : member.role === "limited"
-                    ? "Acces limitat"
-                    : "Membru adult"}
-              </p>
-            </div>
-            {isOwner &&
-              member.role !== "owner" &&
-              member.user_id !== userId && (
-                <button
-                  className="text-button danger"
-                  onClick={() => setTarget(member)}
-                >
-                  Revocă accesul <X size={15} />
-                </button>
-              )}
-          </div>
-        ))}
-      </div>
-      {target && (
-        <Modal
-          title="Revoci accesul la familie?"
-          onClose={() => {
-            if (!busy) setTarget(null);
-          }}
-        >
-          <p className="modal-lead">
-            {target.name} nu va mai putea accesa documentele acestei familii,
-            inclusiv prin linkuri salvate anterior.
-          </p>
-          <p className="fine-print">
-            Copiile deja descărcate rămân la persoana respectivă. În această
-            etapă, reactivarea se face administrativ.
-          </p>
-          <button
-            className="button danger-button full"
-            disabled={busy}
-            onClick={() => void revoke()}
-          >
-            {busy ? "Se revocă…" : "Revocă accesul"}
-          </button>
-          <button
-            className="text-button full center"
-            onClick={() => setTarget(null)}
-            disabled={busy}
-          >
-            Păstrează accesul
-          </button>
-        </Modal>
-      )}
-    </>
   );
 }
