@@ -496,14 +496,11 @@ function UploadModal({
   }
   return (
     <Modal
-      title="Un document de păstrat"
+      title="Adaugă document"
       onClose={() => {
         if (!busy) onClose();
       }}
     >
-      <p className="modal-lead">
-        Adaugă-l în spațiul familiei. Accesul începe cu tine.
-      </p>
       <form onSubmit={submit}>
         <button
           type="button"
