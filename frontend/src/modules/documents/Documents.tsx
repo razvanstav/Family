@@ -40,10 +40,10 @@ export const categories = [
 ];
 const categoryName = (id: string) =>
   categories.find((c) => c.id === id)?.label ?? id;
-function FilePreview({ mime }: { mime: string }) {
+function FilePreview({ mime, category }: { mime: string; category: string }) {
   const Icon = mime === "application/pdf" ? FileText : Image;
   return (
-    <div className="file-preview" aria-hidden="true">
+    <div className={`file-preview color-${category}`} aria-hidden="true">
       <Icon size={36} strokeWidth={1.25} />
     </div>
   );
@@ -187,7 +187,7 @@ export function Documents({
           {categories.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
-              className={`category ${category === id ? "selected" : ""}`}
+              className={`category color-${id} ${category === id ? "selected" : ""}`}
               aria-pressed={category === id}
               onClick={() => setCategory(id)}
             >
@@ -281,7 +281,7 @@ export function Documents({
                     )}
                   </span>
                 </div>
-                <FilePreview mime={doc.mime} />
+                <FilePreview mime={doc.mime} category={doc.category} />
                 <div className="card-bottom">
                   <h3>{doc.title}</h3>
                   <p>
@@ -629,7 +629,7 @@ function Detail({
         <>
           <div className="detail-art">
             <span className="category-label">{categoryName(doc.category)}</span>
-            <FilePreview mime={doc.mime} />
+            <FilePreview mime={doc.mime} category={doc.category} />
             <span className="detail-badge">
               <LockKeyhole size={14} />
               {visibilityLabel[doc.visibility]}

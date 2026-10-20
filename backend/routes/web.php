@@ -2,6 +2,7 @@
 
 use App\Modules\Documents\Http\DocumentController;
 use App\Platform\Families\FamilyController;
+use App\Platform\Families\InvitationController;
 use App\Platform\Families\TenantContext;
 use App\Platform\Identity\PrivateResponse;
 use App\Platform\Identity\SessionController;
@@ -11,8 +12,13 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::get('/session', [SessionController::class, 'show']);
     Route::post('/login', [SessionController::class, 'login'])->middleware('throttle:6,1');
     Route::post('/logout', [SessionController::class, 'logout'])->middleware('auth');
+    Route::post('/invitations/{family}/inspect', [InvitationController::class, 'inspect'])->whereUuid('family')->middleware('throttle:30,1');
+    Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
         Route::get('/members', [FamilyController::class, 'members']);
+        Route::get('/invitations', [InvitationController::class, 'index']);
+        Route::post('/invitations', [InvitationController::class, 'store'])->middleware('throttle:10,1');
+        Route::delete('/invitations/{invitation}', [InvitationController::class, 'cancel'])->whereUuid('invitation');
         Route::delete('/members/{member}', [FamilyController::class, 'revoke'])->whereUuid('member');
         Route::get('/documents', [DocumentController::class, 'index']);
         Route::post('/documents', [DocumentController::class, 'store'])->middleware('throttle:20,1');

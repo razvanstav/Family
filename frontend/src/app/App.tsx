@@ -11,6 +11,7 @@ import {
 import { api, type Session } from "../shared/api";
 import { Documents } from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
+import { AcceptInvitation } from "../modules/families/AcceptInvitation";
 import { Modal } from "../shared/Modal";
 
 export default function App() {
@@ -19,9 +20,20 @@ export default function App() {
   const [error, setError] = useState("");
   const [page, setPage] = useState<"documents" | "family">("documents");
   const [account, setAccount] = useState(false);
+  const [invitation, setInvitation] = useState(() =>
+    new URLSearchParams(window.location.hash.slice(1)).get("invite"),
+  );
   useEffect(() => {
-    document.title = `${page === "documents" ? "Documente" : "Familia mea"} · Memoria Familiei`;
-  }, [page]);
+    const changed = () =>
+      setInvitation(
+        new URLSearchParams(window.location.hash.slice(1)).get("invite"),
+      );
+    window.addEventListener("hashchange", changed);
+    return () => window.removeEventListener("hashchange", changed);
+  }, []);
+  useEffect(() => {
+    document.title = `${invitation ? "Invitație" : page === "documents" ? "Documente" : "Familia mea"} · Memoria Familiei`;
+  }, [page, invitation]);
   async function refresh() {
     try {
       const data = await api<Session>("/session");
@@ -53,6 +65,27 @@ export default function App() {
           </button>
         )}
       </div>
+    );
+  if (invitation)
+    return (
+      <AcceptInvitation
+        key={invitation}
+        invitation={invitation}
+        session={session}
+        onSession={setSession}
+        onDone={(data, id) => {
+          setSession(data);
+          setFamilyId(id);
+          setPage("family");
+          setInvitation(null);
+          window.history.replaceState(null, "", window.location.pathname);
+        }}
+        onCancel={() => {
+          setInvitation(null);
+          window.history.replaceState(null, "", window.location.pathname);
+          void refresh();
+        }}
+      />
     );
   if (!session.user)
     return (

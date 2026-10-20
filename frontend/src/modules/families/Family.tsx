@@ -8,8 +8,11 @@ import {
   Users,
   UserRoundMinus,
   X,
+  UserRoundPlus,
+  Mail,
+  Copy,
 } from "lucide-react";
-import { api, ApiError, type Member } from "../../shared/api";
+import { api, ApiError, type Member, type Invitation } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 
 const initials = (name: string) =>
@@ -45,6 +48,13 @@ export function FamilyPage({
   const [busy, setBusy] = useState(false);
   const [revokeError, setRevokeError] = useState("");
   const [message, setMessage] = useState("");
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [inviting, setInviting] = useState(false);
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"adult" | "limited">("adult");
+  const [inviteError, setInviteError] = useState("");
+  const [inviteLink, setInviteLink] = useState("");
+  const [copied, setCopied] = useState(false);
   const sequence = useRef(0);
 
   async function load() {
@@ -52,8 +62,16 @@ export function FamilyPage({
     setLoading(true);
     setError("");
     try {
-      const data = await api<Member[]>(`/families/${familyId}/members`);
-      if (request === sequence.current) setMembers(data);
+      const [data, pending] = await Promise.all([
+        api<Member[]>(`/families/${familyId}/members`),
+        isOwner
+          ? api<Invitation[]>(`/families/${familyId}/invitations`)
+          : Promise.resolve([]),
+      ]);
+      if (request === sequence.current) {
+        setMembers(data);
+        setInvitations(pending);
+      }
     } catch (e) {
       if (request !== sequence.current) return;
       setMembers([]);
@@ -103,6 +121,22 @@ export function FamilyPage({
     <div className="family-page">
       <section className="page-heading">
         <h1>Familia mea</h1>
+        {isOwner && (
+          <button
+            className="button primary"
+            onClick={() => {
+              setEmail("");
+              setRole("adult");
+              setInviteError("");
+              setInviteLink("");
+              setCopied(false);
+              setInviting(true);
+            }}
+          >
+            <UserRoundPlus size={18} />
+            Adaugă membru
+          </button>
+        )}
       </section>
       <div className="family-search search">
         <Search size={20} aria-hidden="true" />
@@ -179,9 +213,6 @@ export function FamilyPage({
               return (
                 <article className="family-member" key={member.id}>
                   <div className="family-member-top">
-                    <span className="family-role-icon" aria-hidden="true">
-                      <RoleIcon size={19} strokeWidth={1.6} />
-                    </span>
                     {member.user_id === userId && (
                       <span className="family-self">Tu</span>
                     )}
@@ -190,7 +221,14 @@ export function FamilyPage({
                     <span>{initials(member.name)}</span>
                   </div>
                   <h3>{member.name}</h3>
-                  <p className="family-role">{roleLabel(member.role)}</p>
+                  <p className="family-role">
+                    <RoleIcon
+                      className={`role-${member.role}`}
+                      size={15}
+                      aria-hidden="true"
+                    />
+                    {roleLabel(member.role)}
+                  </p>
                   {canRevoke && (
                     <button
                       className="family-revoke"
@@ -223,6 +261,196 @@ export function FamilyPage({
           </div>
         )}
       </section>
+      {isOwner && !loading && !error && invitations.length > 0 && (
+        <section
+          className="family-panel invitations-panel"
+          aria-labelledby="invitations-title"
+        >
+          <div className="section-header">
+            <h2 id="invitations-title">
+              Invitații în așteptare{" "}
+              <span className="invitation-count">{invitations.length}</span>
+            </h2>
+          </div>
+          <div className="invitation-list">
+            {invitations.map((invitation) => (
+              <article className="invitation-row" key={invitation.id}>
+                <span className="invitation-icon">
+                  <Mail size={21} aria-hidden="true" />
+                </span>
+                <div>
+                  <h3>{invitation.email}</h3>
+                  <p>
+                    {roleLabel(invitation.role)} · Expiră{" "}
+                    {new Date(invitation.expires_at).toLocaleDateString(
+                      "ro-RO",
+                    )}
+                  </p>
+                </div>
+                <button
+                  className="text-button"
+                  disabled={busy}
+                  aria-label={`Anulează invitația pentru ${invitation.email}`}
+                  onClick={async () => {
+                    setBusy(true);
+                    setMessage("");
+                    try {
+                      await api(
+                        `/families/${familyId}/invitations/${invitation.id}`,
+                        { method: "DELETE" },
+                      );
+                      setMessage("Invitație anulată.");
+                      await load();
+                    } catch (e) {
+                      setError(
+                        e instanceof Error
+                          ? e.message
+                          : "Anularea nu a reușit.",
+                      );
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  <X size={17} aria-hidden="true" />
+                  <span>Anulează</span>
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+      {inviting && (
+        <Modal
+          title={inviteLink ? "Link de invitație" : "Adaugă membru"}
+          onClose={() => {
+            if (!busy) setInviting(false);
+          }}
+        >
+          {inviteLink ? (
+            <>
+              <p className="invited-email">
+                <Mail size={20} aria-hidden="true" />
+                {email}
+              </p>
+              <label className="field">
+                Link
+                <input
+                  readOnly
+                  value={inviteLink}
+                  onFocus={(e) => e.target.select()}
+                />
+              </label>
+              <p className="fine-print">
+                Valabil 7 zile, afișat doar acum. Trimite-l doar persoanei
+                invitate. Nu se trimite automat un email.
+              </p>
+              <button
+                className="button primary full"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(inviteLink);
+                    setCopied(true);
+                    setInviteError("");
+                  } catch {
+                    setInviteError("Selectează și copiază linkul din câmp.");
+                  }
+                }}
+              >
+                {copied ? <Check size={18} /> : <Copy size={18} />}
+                {copied ? "Copiat" : "Copiază linkul"}
+              </button>
+              <span className="sr-only" role="status">
+                {copied ? "Link copiat" : ""}
+              </span>
+            </>
+          ) : (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (busy) return;
+                setBusy(true);
+                setInviteError("");
+                try {
+                  const result = await api<{ token: string }>(
+                    `/families/${familyId}/invitations`,
+                    { method: "POST", body: JSON.stringify({ email, role }) },
+                  );
+                  setInviteLink(
+                    `${new URL("/app/", document.baseURI).origin}/app/#invite=${familyId}.${result.token}`,
+                  );
+                  await load();
+                } catch (e) {
+                  setInviteError(
+                    e instanceof Error
+                      ? e.message
+                      : "Invitația nu a putut fi creată.",
+                  );
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              <label className="field">
+                Adresa de email
+                <input
+                  type="email"
+                  disabled={busy}
+                  autoComplete="email"
+                  required
+                  maxLength={254}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
+              <fieldset className="invite-roles" disabled={busy}>
+                <legend>Rol</legend>
+                {(["adult", "limited"] as const).map((value) => (
+                  <label
+                    className={role === value ? "selected" : ""}
+                    key={value}
+                  >
+                    {value === "adult" ? (
+                      <Users className="role-adult" size={21} />
+                    ) : (
+                      <LockKeyhole className="role-limited" size={21} />
+                    )}
+                    <span>{roleLabel(value)}</span>
+                    <input
+                      type="radio"
+                      name="invite-role"
+                      value={value}
+                      checked={role === value}
+                      onChange={() => setRole(value)}
+                    />
+                  </label>
+                ))}
+              </fieldset>
+              <p className="fine-print">
+                {role === "adult"
+                  ? "Poate adăuga documente și vede ce îi este partajat."
+                  : "Poate vedea documentele partajate cu el. Nu poate încărca documente."}
+              </p>
+              <button className="button primary full" disabled={busy}>
+                <UserRoundPlus size={18} />
+                {busy ? "Se creează…" : "Creează invitația"}
+              </button>
+            </form>
+          )}
+          {inviteError && (
+            <p className="error" role="alert">
+              {inviteError}
+            </p>
+          )}
+          <button
+            className="button secondary full"
+            disabled={busy}
+            onClick={() => setInviting(false)}
+          >
+            {inviteLink ? "Închide" : "Anulează"}
+          </button>
+        </Modal>
+      )}
       {target && (
         <Modal
           title="Revocă accesul"

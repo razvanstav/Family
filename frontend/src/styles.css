@@ -2,15 +2,47 @@
   font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
   font-synthesis: none;
   font-weight: 400;
-  color: #252629;
-  background: #fff;
-  --ink: #252629;
-  --muted: #72757a;
-  --line: #e7e8ea;
-  --panel: #f6f6f7;
-  --surface: #fff;
-  --accent: #4264d6;
-  --shadow: 0 1px 2px #17191f08, 0 2px 5px #17191f03;
+  color: #263831;
+  background: #f8f6f1;
+  --ink: #263831;
+  --muted: #737871;
+  --line: #e9e7df;
+  --panel: #f2f0ea;
+  --surface: #fffefa;
+  --accent: #38654d;
+  --icon-family: #4264c5;
+  --icon-documents: #a66d13;
+  --icon-private: #7954b3;
+  --icon-health: #b54d72;
+  --icon-home: #238472;
+  --shadow: 0 2px 5px #51452d06, 0 6px 18px #51452d03;
+}
+.lucide-users,
+.lucide-user-round-plus,
+.role-adult {
+  color: var(--icon-family);
+}
+.lucide-folder-heart,
+.lucide-file-text,
+.role-owner {
+  color: var(--icon-documents);
+}
+.lucide-lock-keyhole,
+.role-limited {
+  color: var(--icon-private);
+}
+.lucide-heart,
+.lucide-heart-pulse {
+  color: var(--icon-health);
+}
+.lucide-house {
+  color: var(--icon-home);
+}
+.lucide-image {
+  color: #ad703c;
+}
+.button.primary svg {
+  color: inherit;
 }
 * {
   box-sizing: border-box;
@@ -81,13 +113,13 @@ input[type="radio"] {
     border-color 0.15s;
 }
 .primary {
-  background: #28292c;
+  background: #38654d;
   color: #fff;
-  border-color: #28292c;
+  border-color: #38654d;
   box-shadow: var(--shadow);
 }
 .primary:hover:not(:disabled) {
-  background: #414247;
+  background: #2c513d;
 }
 .secondary {
   background: #fff;
@@ -132,13 +164,13 @@ input[type="radio"] {
 .avatar {
   width: 38px;
   height: 38px;
-  border: 1px solid #e3e4e6;
-  border-radius: 11px;
-  background: #f4f4f5;
+  border: 1px solid #dee6dc;
+  border-radius: 50%;
+  background: #eaf0e6;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #555a60;
+  color: #38654d;
   font-size: 12px;
   font-weight: 500;
   flex-shrink: 0;
@@ -162,7 +194,7 @@ input[type="radio"] {
   position: fixed;
   inset: 0 auto 0 0;
   width: 244px;
-  background: #fff;
+  background: #fffefa;
   border-right: 1px solid var(--line);
   padding: 26px 16px 18px;
   display: flex;
@@ -186,7 +218,7 @@ input[type="radio"] {
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: #2c2e31;
+  background: #38654d;
   color: #fff;
   display: flex;
   align-items: center;
@@ -195,6 +227,7 @@ input[type="radio"] {
 }
 .brand-mark svg {
   width: 19px;
+  color: white;
 }
 .sidebar > .brand {
   padding: 0 6px;
@@ -249,8 +282,8 @@ input[type="radio"] {
   background: #fafafa;
 }
 .sidebar nav button.active {
-  color: #26282c;
-  background: #f1f1f2;
+  color: #31553e;
+  background: #e9eee4;
   font-weight: 500;
 }
 .nav-dot {
@@ -290,6 +323,7 @@ input[type="radio"] {
   min-width: 0;
 }
 .topbar {
+  background: #fffefa;
   min-height: 78px;
   display: flex;
   align-items: center;
@@ -620,8 +654,8 @@ main {
   cursor: pointer;
 }
 .access-option.chosen {
-  border-color: #aab7d8;
-  background: #f5f7fc;
+  border-color: #b9cdb6;
+  background: #f3f6ef;
 }
 .access-option > span {
   color: #787d84;
@@ -751,7 +785,7 @@ main {
 }
 .login-page {
   min-height: 100dvh;
-  background: #f7f7f8;
+  background: #f8f6f1;
   padding: 32px;
   display: flex;
   flex-direction: column;
@@ -921,7 +955,7 @@ main {
     gap: 5px;
     border-top: 1px solid var(--line);
     padding: 8px 12px max(8px, env(safe-area-inset-bottom));
-    background: #fffffffa;
+    background: #fffefaf5;
     backdrop-filter: blur(10px);
   }
   .mobile-nav button {
@@ -937,8 +971,8 @@ main {
     font-size: 10px;
   }
   .mobile-nav button.active {
-    color: #26292e;
-    background: #f0f1f3;
+    color: #31553e;
+    background: #e9eee4;
   }
   .mobile-initial {
     display: flex;

@@ -1,6 +1,6 @@
 # Memoria Familiei — prima etapă
 
-Aplicație locală funcțională: două familii, documente private, upload cu verificare antivirus, acces selectiv și revocare. Interfața React urmează [referința de design actuală](artifacts/design-reference.png): suprafețe albe, panouri gri deschis, borduri fine, controale compacte și navigație neutră.
+Aplicație locală funcțională: două familii, documente private, upload cu verificare antivirus, acces selectiv, invitații și revocare. Interfața React urmează [referința de design actuală](artifacts/design-reference-warm.png): fundal crem, carduri deschise, verde închis pentru acțiuni și iconițe colorate pe suporturi discrete.
 
 **Continuare pe alt calculator:** clonează branchul `codex/documente-design` și urmează [instalarea de la zero](ops/SETUP.md). Git conține sursele și datele demo generate de seeder; instalările locale, parolele și documentele încărcate nu sunt transferate.
 
@@ -8,7 +8,7 @@ Toată interfața folosește `Helvetica, "Helvetica Neue", Arial, sans-serif`, c
 
 Capturi din aplicația verificată: [mobil](artifacts/mobile-documents.png) · [desktop](artifacts/documents-desktop.png).
 
-Familia mea: [mobil](artifacts/family-mobile.png) · [desktop](artifacts/family-desktop.png).
+Familia mea: [mobil](artifacts/family-mobile.png) · [desktop](artifacts/family-desktop.png) · [adaugă membru](artifacts/family-invite-mobile.png).
 
 Autentificare: [mobil](artifacts/login-mobile.png).
 
@@ -39,7 +39,8 @@ Parola demonstrativă comună: `Familie-Demo-2026!`. Nu reutiliza aceste conturi
 
 - Autentificare cu sesiune Laravel, cookie HttpOnly, regenerarea sesiunii la login și protecție CSRF. Fără tokenuri în localStorage.
 - Selector de familie, listă și căutare locală în documentele autorizate, categorii, filtru de acces, detaliu, descărcare.
-- Pagina Familia mea: carduri pentru membri, căutare după nume, roluri și revocare cu confirmare pentru proprietar. Fără invitații sau schimbarea rolurilor în această etapă.
+- Pagina Familia mea: carduri pentru membri, căutare după nume, roluri și revocare cu confirmare pentru proprietar. Proprietarul poate crea și anula invitații pentru rolurile adult și acces limitat.
+- Invitație prin link, valabilă 7 zile și utilizabilă o singură dată. Conturile existente se autentifică cu emailul invitat; persoanele noi își aleg numele și parola. Membrii revocați nu pot fi reactivați prin invitație.
 - Upload PDF/JPEG/PNG/WebP, maximum 10 MB; cotă cumulată de 100 MB/familie pentru această etapă.
 - Verificarea tipului din conținut, hash SHA-256, scanare ClamAV prin INSTREAM; imagini decodate și recodate cu GD, fără EXIF/metadate. Maximum 16 megapixeli; limitele de dimensiune/cotă se verifică și după recodare.
 - Fișier nou privat implicit. `private`, `family` sau `selected` cu permisiuni de citire pentru membrii aleși. Numai proprietarul documentului schimbă accesul.
@@ -49,6 +50,8 @@ Parola demonstrativă comună: `Familie-Demo-2026!`. Nu reutiliza aceste conturi
 
 Un fișier respins este eliminat. Dacă scannerul este indisponibil, documentul rămâne în **carantină**, fără descărcare. Proprietarul poate relansa verificarea din detaliu.
 
+Invitațiile nu trimit email automat. Proprietarul copiază linkul afișat o singură dată și îl transmite doar destinatarului. Linkul permite crearea contului pentru emailul invitat dacă acesta nu există; adresa nu este marcată drept verificată. Tokenul are 256 de biți, este stocat numai ca hash SHA-256 și apare în fragmentul URL, nu în path/query. Inspectarea și acceptarea folosesc POST cu CSRF, rate limiting și răspunsuri fără cache. Tokenul nu apare în audit. Linkurile de pe `127.0.0.1` funcționează numai pe calculatorul local; folosirea între dispozitive necesită publicarea aplicației pe HTTPS.
+
 ## Arhitectură și limite de securitate
 
 Laravel 13 / PHP 8.4, React 19 / TypeScript / Vite, PostgreSQL 18.6, ClamAV 1.5.4. Backend și frontend sunt servite pe aceeași origine.
@@ -56,7 +59,7 @@ Laravel 13 / PHP 8.4, React 19 / TypeScript / Vite, PostgreSQL 18.6, ClamAV 1.5.
 ```text
 backend/app/Platform/
   Identity/           sesiune și răspunsuri fără cache
-  Families/           context de familie și revocarea membrilor
+  Families/           context de familie, invitații și revocarea membrilor
   Contracts/          portul PrivateMedia
   Media/              stocare privată și scanner ClamAV
   Audit/              evenimente minimale
@@ -66,12 +69,12 @@ backend/app/Modules/Documents/
 frontend/src/
   app/                autentificare, selector, navigație
   modules/documents/  listă, detaliu, upload, acces
-  modules/families/   membri, căutare și revocare
+  modules/families/   membri, invitații, acceptare și revocare
   shared/             client API tipizat și dialog accesibil
 ops/                  pornire, oprire, configurare, teste
 ```
 
-`memoria_app` este rolul runtime: **nu este proprietarul tabelelor, nu este superuser, nu are BYPASSRLS**. Migrațiile și fixture-urile folosesc separat rolul local de administrare. `FORCE ROW LEVEL SECURITY` și contextul `set_config(..., true)` din tranzacție protejează documentele, fișierele, granturile și auditul. Lipsa contextului nu permite citirea lor. Cheile străine compuse împiedică legarea între familii.
+`memoria_app` este rolul runtime: **nu este proprietarul tabelelor, nu este superuser, nu are BYPASSRLS**. Migrațiile și fixture-urile folosesc separat rolul local de administrare. `FORCE ROW LEVEL SECURITY` și contextul `set_config(..., true)` din tranzacție protejează documentele, fișierele, granturile, invitațiile și auditul. Lipsa contextului nu permite citirea lor. Cheile străine compuse împiedică legarea între familii.
 
 Tabelele bootstrap de identitate/familii nu au RLS; API-ul le filtrează explicit după utilizatorul autentificat și statutul membrului. RLS asigură limita familiei; politica aplicației asigură intimitatea fiecărui adult. Proprietarul familiei nu primește automat acces la documentele private ale altor adulți.
 
@@ -92,6 +95,11 @@ Toate rutele sunt sub `/api/v1`. Obține tokenul CSRF din `GET /session`; trimit
 | POST | `/logout` | Închide sesiunea |
 | GET | `/families/{family}/members` | Membri activi |
 | DELETE | `/families/{family}/members/{member}` | Revocă membru |
+| GET | `/families/{family}/invitations` | Invitații active, numai proprietarul |
+| POST | `/families/{family}/invitations` | email + role; returnează tokenul o singură dată |
+| DELETE | `/families/{family}/invitations/{invitation}` | Anulează invitația |
+| POST | `/invitations/{family}/inspect` | token; informații pentru acceptare |
+| POST | `/invitations/{family}/accept` | token; cont nou: name, password, password_confirmation |
 | GET | `/families/{family}/documents` | Numai documente autorizate |
 | POST | `/families/{family}/documents` | Multipart: title, category, file |
 | GET | `/families/{family}/documents/{id}` | Detaliu și ETag |
@@ -121,6 +129,6 @@ Semnăturile antivirus se actualizează astfel (executabilul poate avea alt dire
 
 ## Ce rămâne pentru etapele următoare
 
-Aceasta este o versiune locală de dezvoltare, nu o lansare în producție. Urmează onboarding/invitații, recuperarea parolei, reactivarea membrilor, ștergere și retenție, worker de scanare, storage S3 privat, backup/restaurare și monitorizare. Celelalte module din blueprint nu sunt încă implementate. PWA offline, service worker și aplicațiile native nu sunt activate; datele private nu sunt păstrate offline.
+Aceasta este o versiune locală de dezvoltare, nu o lansare în producție. Urmează livrarea invitațiilor prin email și verificarea adresei, recuperarea parolei, schimbarea rolurilor, reactivarea membrilor, ștergere și retenție, worker de scanare, storage S3 privat, backup/restaurare și monitorizare. Celelalte module din blueprint nu sunt încă implementate. PWA offline, service worker și aplicațiile native nu sunt activate; datele private nu sunt păstrate offline.
 
 Înainte de publicare: conturi reale fără fixture-uri, HTTPS și `SESSION_SECURE_COOKIE=true`, deployment cu roluri DB separate, actualizarea automată a semnăturilor ClamAV, scanare/cleanup în worker, politici de retenție și backup testat. `.tools`, `.runtime`, `.env`, `.env.testing`, vendor, node_modules și fișierele private sunt excluse din Git.

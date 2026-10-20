@@ -15,6 +15,12 @@ export type Member = {
   name: string;
   role: string;
 };
+export type Invitation = {
+  id: string;
+  email: string;
+  role: "adult" | "limited";
+  expires_at: string;
+};
 export type Document = {
   id: string;
   title: string;
