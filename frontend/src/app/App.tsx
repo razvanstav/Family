@@ -85,7 +85,6 @@ export default function App() {
           <span className="family-symbol">
             <Heart size={23} />
           </span>
-          <p>ACASĂ, ÎMPREUNĂ</p>
           <strong>{family?.name ?? "Familia ta"}</strong>
         </div>
         <nav aria-label="Navigație principală">
@@ -103,14 +102,6 @@ export default function App() {
           </button>
         </nav>
         <div className="sidebar-bottom">
-          <div className="little-heart">
-            <Heart size={30} strokeWidth={1.3} />
-            <p>
-              O familie.
-              <br />
-              Atâtea povești.
-            </p>
-          </div>
           <button className="sidebar-profile" onClick={() => setAccount(true)}>
             <span className="avatar">{initials}</span>
             <span>
@@ -204,12 +195,6 @@ export default function App() {
             </div>
           )}
         </main>
-        <footer className="page-footer">
-          <span>
-            memoria familiei<span className="footer-dot">.</span>
-          </span>
-          <span>Lucrurile care ne țin împreună.</span>
-        </footer>
       </div>
       <nav className="mobile-nav" aria-label="Navigație mobil">
         <button
@@ -252,11 +237,7 @@ export default function App() {
             <p>{session.user.email}</p>
           </div>
           {session.demo && (
-            <p className="demo-note">
-              Spațiu demonstrativ · date fictive. Pentru a verifica
-              permisiunile, te poți deconecta și autentifica folosind un alt
-              cont demo.
-            </p>
+            <p className="demo-note">Cont demo · date fictive.</p>
           )}
           <button className="button primary full" onClick={() => void logout()}>
             <LogOut size={18} /> Deconectează-te

@@ -84,27 +84,40 @@
   margin: -12px 0 24px;
 }
 .documents-page .intro-row {
+  display: block;
   margin-bottom: 24px;
 }
 .documents-page .hero-card {
   background: linear-gradient(110deg, #c6e4ad 15%, #e3e5a0 70%, #f5df92);
   border-radius: 30px;
-  min-height: 224px;
+  min-height: 158px;
 }
 .documents-page .hero-copy {
   padding: 24px 28px;
-}
-.documents-page .hero-copy h2 {
-  font-size: 29px;
-  font-weight: 500;
-  line-height: 1.15;
-  margin: 12px 0 8px;
-  letter-spacing: -0.8px;
 }
 .documents-page .hero-copy p {
   font-size: 13px;
   line-height: 1.5;
   color: #3e4a32;
+}
+.documents-page .hero-copy .upload-formats {
+  color: var(--ink);
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+.documents-page .hero-art .paper-scene {
+  transform: scale(0.65) rotate(9deg);
+}
+.documents-page .document-meta {
+  margin: 20px 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.documents-page .modal-heading h2 {
+  overflow-wrap: anywhere;
+}
+.documents-page .empty .button {
+  margin-top: 20px;
 }
 .documents-page .hero-copy .button {
   min-height: 44px;
@@ -381,7 +394,7 @@
     margin-bottom: 16px;
   }
   .documents-page .hero-card {
-    min-height: 180px;
+    min-height: 150px;
     border-radius: 28px;
   }
   .documents-page .hero-copy {
@@ -391,16 +404,13 @@
   .documents-page .small-label {
     display: none;
   }
-  .documents-page .hero-copy h2 {
-    font-size: 23px;
-    margin: 0 0 8px;
-    line-height: 1.12;
-    letter-spacing: -0.5px;
-  }
   .documents-page .hero-copy p {
     font-size: 12px;
     line-height: 1.4;
     max-width: 180px;
+  }
+  .documents-page .hero-copy .upload-formats {
+    font-size: 14px;
   }
   .documents-page .hero-copy .button {
     margin-top: 13px;
@@ -413,7 +423,7 @@
     right: -8px;
   }
   .documents-page .hero-art .paper-scene {
-    transform: scale(0.85) rotate(13deg);
+    transform: scale(0.65) rotate(13deg);
   }
   .documents-page .hero-art .file-pill {
     right: 14%;
@@ -543,9 +553,6 @@
   }
   .documents-page .hero-copy {
     padding-left: 15px;
-  }
-  .documents-page .hero-copy h2 {
-    font-size: 21px;
   }
   .documents-page .hero-art {
     right: -15px;

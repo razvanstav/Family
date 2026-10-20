@@ -12,7 +12,6 @@ import {
   LockKeyhole,
   Plus,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
   UploadCloud,
   Users,
@@ -145,12 +144,7 @@ export function Documents({
     <div className="documents-page">
       <section className="page-heading">
         <div>
-          <p className="eyebrow">UN LOC PENTRU CE CONTEAZĂ</p>
-          <h1>
-            Documentele
-            <br className="mobile-break" /> familiei.
-          </h1>
-          <p className="subheading">Bine păstrate. Ușor de găsit. Împreună.</p>
+          <h1>Documente</h1>
         </div>
         <button
           className="button primary desktop-upload"
@@ -209,47 +203,19 @@ export function Documents({
       <section className="intro-row">
         <div className="hero-card">
           <div className="hero-copy">
-            <span className="small-label">
-              <span className="dot" /> SPAȚIUL VOSTRU PRIVAT
-            </span>
-            <h2>
-              Un loc pentru
-              <br />
-              ce contează.
-            </h2>
-            <p>
-              Adaugă un document.
-              <br /> Tu alegi cine îl vede.
-            </p>
+            <p className="upload-formats">PDF, JPG, PNG, WebP</p>
+            <p>Maximum 10 MB / fișier</p>
             <button
               className="button primary"
               onClick={() => setUpload(true)}
               disabled={family.role === "limited"}
             >
-              Încarcă un document <ArrowRight size={17} />
+              Adaugă document <ArrowRight size={17} />
             </button>
           </div>
           <div className="hero-art">
             <Paper category="memories" large />
-            <div className="secure-float">
-              <ShieldCheck size={17} /> Doar cu permisiunea ta
-            </div>
           </div>
-        </div>
-        <div className="privacy-card">
-          <span className="privacy-icon">
-            <LockKeyhole size={23} strokeWidth={1.6} />
-          </span>
-          <div>
-            <h3>Privat, de la început.</h3>
-            <p>
-              Un document nou este vizibil doar pentru tine. Îl poți împărtăși
-              când ești pregătit.
-            </p>
-          </div>
-          <span className="privacy-footer">
-            <ShieldCheck size={15} /> Tu controlezi accesul
-          </span>
         </div>
       </section>
       <section className="library" aria-labelledby="library-title">
@@ -284,9 +250,8 @@ export function Documents({
         <div className="section-header">
           <div>
             <h2 id="library-title">
-              Documentele tale <span className="count">{visible.length}</span>
+              {visible.length} {visible.length === 1 ? "document" : "documente"}
             </h2>
-            <p>Documentele la care ai acces în această familie.</p>
           </div>
           <button
             className="text-button"
@@ -327,16 +292,10 @@ export function Documents({
         ) : visible.length === 0 ? (
           <div className="empty">
             <FolderHeart size={40} strokeWidth={1.2} />
-            <h3>
-              {docs.length ? "Niciun document găsit" : "Povestea începe aici."}
-            </h3>
-            <p>
-              {docs.length
-                ? "Încearcă altă căutare sau altă categorie."
-                : "Adaugă primul document. Va fi vizibil doar pentru tine."}
-            </p>
+            <h3>{docs.length ? "Niciun rezultat" : "Niciun document"}</h3>
             <button
               className="button primary"
+              disabled={!docs.length && family.role === "limited"}
               onClick={() =>
                 docs.length
                   ? (setSearch(""), setCategory("all"), setPrivacy("all"))
@@ -406,10 +365,6 @@ export function Documents({
             ))}
           </div>
         )}
-        <p className="library-note">
-          <LockKeyhole size={13} /> Vezi doar documentele tale și cele
-          împărtășite cu tine.
-        </p>
       </section>
       {upload && (
         <UploadModal
@@ -419,7 +374,7 @@ export function Documents({
             setUpload(false);
             setNotice(
               doc.status === "ready"
-                ? "Documentul a fost verificat și salvat. Doar tu îl poți vedea."
+                ? "Document salvat. Acces: doar eu."
                 : doc.status === "quarantine"
                   ? "Document salvat în carantină. Descărcarea rămâne blocată până la verificare."
                   : "Fișier respins la verificare. Conținutul a fost eliminat.",
@@ -541,7 +496,6 @@ function UploadModal({
             onChange={(e) => setTitle(e.target.value)}
             required
             maxLength={160}
-            placeholder="De exemplu, actele casei"
             disabled={busy}
           />
         </label>
@@ -563,11 +517,7 @@ function UploadModal({
         </label>
         <div className="privacy-hint">
           <LockKeyhole size={20} />
-          <p>
-            <strong>Doar tu îl vei putea vedea.</strong>
-            <br />
-            După verificare, poți alege cu cine îl împărtășești.
-          </p>
+          <p>Acces inițial: doar eu.</p>
         </div>
         {error && (
           <p className="error" role="alert">
@@ -586,7 +536,7 @@ function UploadModal({
             </>
           ) : (
             <>
-              <Plus size={18} /> Salvează documentul
+              <Plus size={18} /> Salvează
             </>
           )}
         </button>
@@ -666,9 +616,7 @@ function Detail({
           }),
         }),
       );
-      setMessage(
-        "Accesul a fost actualizat. Permisiunile noi se aplică la următoarea cerere.",
-      );
+      setMessage("Acces actualizat.");
       setSharing(false);
       onChanged();
     } catch (e) {
@@ -705,7 +653,7 @@ function Detail({
       assign(data);
       setMessage(
         data.status === "quarantine"
-          ? "Verificarea nu este disponibilă acum. Fișierul rămâne în siguranță în carantină."
+          ? "Verificarea nu este disponibilă. Descărcarea rămâne blocată."
           : data.status === "ready"
             ? "Verificare încheiată. Fișierul poate fi descărcat."
             : "Fișier respins. Conținutul a fost eliminat.",
@@ -719,7 +667,7 @@ function Detail({
   }
   return (
     <Modal
-      title={sharing ? "Cine poate vedea documentul" : "Detaliu document"}
+      title={sharing ? "Acces" : (doc?.title ?? "Document")}
       onClose={onClose}
       wide
     >
@@ -734,15 +682,10 @@ function Detail({
               {visibilityLabel[doc.visibility]}
             </span>
           </div>
-          <div className="detail-title">
-            <div>
-              <p className="eyebrow">
-                {doc.mime === "application/pdf" ? "DOCUMENT PDF" : "IMAGINE"} ·{" "}
-                {size(doc.bytes)}
-              </p>
-              <h2>{doc.title}</h2>
-            </div>
-          </div>
+          <p className="document-meta">
+            {doc.mime === "application/pdf" ? "PDF" : "Imagine"} ·{" "}
+            {size(doc.bytes)}
+          </p>
           <div className="owner-row">
             <span className="avatar small">
               {doc.owner_name
@@ -753,7 +696,7 @@ function Detail({
             </span>
             <div>
               <strong>{doc.owner_name}</strong>
-              <p>Proprietarul documentului</p>
+              <p>Proprietar</p>
             </div>
             <span className="date">
               {new Date(doc.created_at).toLocaleDateString("ro-RO", {
@@ -769,12 +712,12 @@ function Detail({
               <div>
                 <strong>
                   {doc.status === "quarantine"
-                    ? "Document în verificare"
+                    ? "În așteptarea verificării"
                     : "Fișier respins"}
                 </strong>
                 <p>
                   {doc.status === "quarantine"
-                    ? "Fișierul este în carantină. Îl poți descărca doar după confirmarea scanării."
+                    ? "Descărcarea este blocată până la verificare."
                     : "Conținutul nu a trecut verificările și a fost eliminat."}
                 </p>
               </div>
@@ -833,13 +776,10 @@ function Detail({
                 </span>
                 <div>
                   <strong>{visibilityLabel[value]}</strong>
-                  <p>
-                    {value === "private"
-                      ? "Revocă accesul tuturor celorlalți."
-                      : value === "family"
-                        ? "Toți membrii activi ai acestei familii."
-                        : "Doar membrii pe care îi alegi mai jos."}
-                  </p>
+                  {value === "private" && doc.visibility !== "private" && (
+                    <p>Retrage accesul celorlalți.</p>
+                  )}
+                  {value === "family" && <p>Toți membrii activi.</p>}
                 </div>
               </label>
             ))}
@@ -847,6 +787,9 @@ function Detail({
           {visibility === "selected" && (
             <fieldset className="member-options">
               <legend>Alege persoanele</legend>
+              {!members.some((m) => m.user_id !== userId) && (
+                <p>Niciun alt membru activ.</p>
+              )}
               {members
                 .filter((m) => m.user_id !== userId)
                 .map((m) => (
@@ -876,7 +819,7 @@ function Detail({
             className="button primary full"
             disabled={busy || (visibility === "selected" && !grants.length)}
           >
-            {busy ? "Se salvează…" : "Salvează accesul"}
+            {busy ? "Se salvează…" : "Salvează"}
           </button>
           <button
             className="text-button full center"
