@@ -1,5 +1,7 @@
 # Memoria Familiei — prima etapă
 
+**Dezvoltare modulară:** [punct de reluare](docs/STATE.md) · [module](docs/README.md) · [plan de dezvoltare](docs/ROADMAP.md). La continuare se citește starea și fișa modulului activ, fără reluarea întregii documentații.
+
 Aplicație locală funcțională: două familii, documente private, upload cu verificare antivirus, acces selectiv, invitații și revocare. Interfața React urmează [referința de design actuală](artifacts/design-reference-warm.png): fundal crem, carduri deschise, verde închis pentru acțiuni și iconițe colorate pe suporturi discrete.
 
 Interacțiunile sunt inspirate de iOS: carduri aerisite, titluri clare, feedback discret la apăsare și ferestre care urcă de jos pe mobil. Tranzițiile durează 160–260 ms și sunt dezactivate cu `prefers-reduced-motion`. Dialogurile păstrează focusul, închiderea cu Escape și derularea conținutului; pagina din spate nu se derulează cât timp este deschis un dialog. Verificarea vizuală este făcută în browserul local, nu pe un dispozitiv iOS fizic.

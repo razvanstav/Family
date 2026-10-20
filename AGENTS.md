@@ -23,3 +23,15 @@ Referința actuală aleasă de utilizator este `artifacts/design-reference-warm.
 - Folosește iconuri colorate, fine și aliniate consecvent: albastru pentru familie, ocru pentru documente, violet pentru acces limitat, roz pentru sănătate. Păstrează aceeași culoare pentru același sens în tot proiectul; panourile și cardurile rămân neutre.
 - Păstrează aceeași direcție în autentificare, Documente, Familia mea, ferestre și paginile viitoare. Pe mobil, adaptează coloanele și navigația fără overflow și păstrează controale tactile de minimum 44 px.
 - Stilurile comune și tokenurile sunt în `frontend/src/styles.css`; stilurile specifice rămân în module. Modifică regulile existente, nu suprapune teme care se contrazic.
+
+## Lucru modular și reluare
+
+- La „continuăm de unde am rămas”, citește mai întâi `docs/STATE.md`, apoi numai fișa modulului și pasului indicate acolo. `docs/README.md` este indexul; `docs/ROADMAP.md` se citește când alegi sau schimbi etapa, nu la fiecare sarcină.
+- Lucrează la un singur pas dintr-un singur modul. Include dependențele strict necesare; nu începe automat alte module. Instrucțiunile noi ale utilizatorului actualizează prioritatea salvată.
+- Fișele din `docs/modules/` dețin scopul, pașii și acceptarea. `docs/STATE.md` deține exclusiv punctul de reluare: modul, pas, rezultat, verificări, blocaje și următoarea acțiune. Actualizează-le după fiecare pas semnificativ și înainte de încheierea lucrului sau schimbarea modulului.
+- Separă „planificat”, „în lucru”, „implementat” și „verificat”. Marchează acceptarea numai după verificări observate; consemnează ce nu a fost verificat și nu inventa rezultate din istoricul Git.
+- Citește codul, rutele și testele relevante înainte de modificare. Fișele sunt orientare, nu înlocuiesc implementarea actuală. Respectă și instrucțiunile locale aplicabile căilor modificate.
+- Nu reciti implicit tot `README.md`, toate fișele sau întregul blueprint `Memoria_Familiei_Review_v1.2`. Consultă numai secțiunea ori contractul necesar pasului curent. Blueprintul descrie și funcții neimplementate.
+- Limitează căutările la sursele relevante. Nu enumera recursiv `.tools/`, `.runtime/`, `vendor/`, `node_modules/`, builduri, fișiere private sau capturi. Pentru un fișier mare folosește căutări și fragmente, nu afișarea integrală.
+- Verifică proporțional cu schimbarea: teste relevante pentru comportament, build pentru UI funcțional și verificare vizuală pentru layout. Pentru documentație verifică legăturile, coerența și `git diff --check`; nu porni întreaga aplicație fără motiv.
+- Pașii de reluare se păstrează în repository. Nu crea notificări sau automatizări programate pentru această evidență fără o cerere nouă a utilizatorului.
