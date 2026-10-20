@@ -133,6 +133,6 @@ Setează variabila de mediu `CLAMAV_INTEGRATION=1` pentru cele două teste cu an
 
 La fiecare modificare UI, rulează `npm --prefix frontend run build` și reîncarcă browserul. Pentru backend, adaugă migrații și aplică din nou permisiunile runtime când apar tabele sau secvențe noi.
 
-Ultima verificare pe calculatorul inițial: **35 teste / 211 aserțiuni**, inclusiv invitații, acceptare, anulare, revocare și ClamAV real, și build TypeScript/Vite reușit. Designul a fost inspectat la 360 px, 390 px și desktop. Instalarea de la zero documentată aici nu a fost executată pe un al doilea calculator.
+Ultima verificare pe calculatorul inițial: **45 teste / 274 aserțiuni**, inclusiv invitații, acceptare, anulare, schimbarea rolurilor, revocare și ClamAV real, și build TypeScript/Vite reușit. Designul a fost inspectat la 360 px, 390 px și desktop. Instalarea de la zero documentată aici nu a fost executată pe un al doilea calculator.
 
 Punctul de continuare: finisarea celorlalte pagini. Documente, detaliu, upload și gestionarea accesului sunt funcționale; arhitectura extinsă din `Memoria_Familiei_Review_v1.2` descrie și module încă neimplementate. Fișierele și datele private existente pe calculatorul inițial nu sunt incluse în clone; seederul recreează doar exemplele fictive.

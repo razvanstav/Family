@@ -10,7 +10,7 @@ Toată interfața folosește `Helvetica, "Helvetica Neue", Arial, sans-serif`, c
 
 Capturi din aplicația verificată: [mobil](artifacts/mobile-documents.png) · [desktop](artifacts/documents-desktop.png).
 
-Familia mea: [mobil](artifacts/family-mobile.png) · [desktop](artifacts/family-desktop.png) · [adaugă membru](artifacts/family-invite-mobile.png).
+Familia mea: [mobil](artifacts/family-mobile.png) · [desktop](artifacts/family-desktop.png) · [adaugă membru](artifacts/family-invite-mobile.png) · [gestionează membrul](artifacts/family-manage-mobile.png).
 
 Autentificare: [mobil](artifacts/login-mobile.png).
 
@@ -41,7 +41,8 @@ Parola demonstrativă comună: `Familie-Demo-2026!`. Nu reutiliza aceste conturi
 
 - Autentificare cu sesiune Laravel, cookie HttpOnly, regenerarea sesiunii la login și protecție CSRF. Fără tokenuri în localStorage.
 - Selector de familie, listă și căutare locală în documentele autorizate, categorii, filtru de acces, detaliu, descărcare.
-- Pagina Familia mea: carduri pentru membri, căutare după nume, roluri și revocare cu confirmare pentru proprietar. Proprietarul poate crea și anula invitații pentru rolurile adult și acces limitat.
+- Pagina Familia mea: carduri compacte de aproximativ 80 px pe mobil, avatare și iconițe colorate după rol, căutare după nume și administrare prin butonul cu trei puncte. Proprietarul poate crea/anula invitații, schimba rolurile adult/acces limitat și revoca accesul cu confirmare.
+- Schimbarea rolului se aplică la cererile următoare, inclusiv sesiunilor existente. „Acces limitat” blochează încărcările noi; păstrează documentele proprii și accesul la cele partajate. Rolul proprietarului este protejat. Formularul refuză salvarea dacă rolul curent s-a schimbat între timp, iar aplicația reverifică sesiunea la revenirea în tab.
 - Invitație prin link, valabilă 7 zile și utilizabilă o singură dată. Conturile existente se autentifică cu emailul invitat; persoanele noi își aleg numele și parola. Membrii revocați nu pot fi reactivați prin invitație.
 - Upload PDF/JPEG/PNG/WebP, maximum 10 MB; cotă cumulată de 100 MB/familie pentru această etapă.
 - Verificarea tipului din conținut, hash SHA-256, scanare ClamAV prin INSTREAM; imagini decodate și recodate cu GD, fără EXIF/metadate. Maximum 16 megapixeli; limitele de dimensiune/cotă se verifică și după recodare.
@@ -96,6 +97,7 @@ Toate rutele sunt sub `/api/v1`. Obține tokenul CSRF din `GET /session`; trimit
 | POST | `/login` | Email + parolă |
 | POST | `/logout` | Închide sesiunea |
 | GET | `/families/{family}/members` | Membri activi |
+| PATCH | `/families/{family}/members/{member}/role` | role + expected_role (adult/limited); numai proprietarul; 409 dacă rolul curent diferă |
 | DELETE | `/families/{family}/members/{member}` | Revocă membru |
 | GET | `/families/{family}/invitations` | Invitații active, numai proprietarul |
 | POST | `/families/{family}/invitations` | email + role; returnează tokenul o singură dată |
@@ -131,6 +133,6 @@ Semnăturile antivirus se actualizează astfel (executabilul poate avea alt dire
 
 ## Ce rămâne pentru etapele următoare
 
-Aceasta este o versiune locală de dezvoltare, nu o lansare în producție. Urmează livrarea invitațiilor prin email și verificarea adresei, recuperarea parolei, schimbarea rolurilor, reactivarea membrilor, ștergere și retenție, worker de scanare, storage S3 privat, backup/restaurare și monitorizare. Celelalte module din blueprint nu sunt încă implementate. PWA offline, service worker și aplicațiile native nu sunt activate; datele private nu sunt păstrate offline.
+Aceasta este o versiune locală de dezvoltare, nu o lansare în producție. Urmează livrarea invitațiilor prin email și verificarea adresei, recuperarea parolei, reactivarea membrilor, transferul proprietății familiei, ștergere și retenție, worker de scanare, storage S3 privat, backup/restaurare și monitorizare. Celelalte module din blueprint nu sunt încă implementate. PWA offline, service worker și aplicațiile native nu sunt activate; datele private nu sunt păstrate offline.
 
 Înainte de publicare: conturi reale fără fixture-uri, HTTPS și `SESSION_SECURE_COOKIE=true`, deployment cu roluri DB separate, actualizarea automată a semnăturilor ClamAV, scanare/cleanup în worker, politici de retenție și backup testat. `.tools`, `.runtime`, `.env`, `.env.testing`, vendor, node_modules și fișierele private sunt excluse din Git.

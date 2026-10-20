@@ -16,6 +16,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
         Route::get('/members', [FamilyController::class, 'members']);
+        Route::patch('/members/{member}/role', [FamilyController::class, 'updateRole'])->whereUuid('member')->middleware('throttle:20,1');
         Route::get('/invitations', [InvitationController::class, 'index']);
         Route::post('/invitations', [InvitationController::class, 'store'])->middleware('throttle:10,1');
         Route::delete('/invitations/{invitation}', [InvitationController::class, 'cancel'])->whereUuid('invitation');

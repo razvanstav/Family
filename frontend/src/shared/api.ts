@@ -13,7 +13,7 @@ export type Member = {
   id: string;
   user_id: number;
   name: string;
-  role: string;
+  role: "owner" | "adult" | "limited";
 };
 export type Invitation = {
   id: string;

@@ -11,6 +11,7 @@ import {
   UserRoundPlus,
   Mail,
   Copy,
+  MoreHorizontal,
 } from "lucide-react";
 import { api, ApiError, type Member, type Invitation } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
@@ -28,6 +29,47 @@ const roleLabel = (role: string) =>
     : role === "limited"
       ? "Acces limitat"
       : "Membru adult";
+
+type EditableRole = "adult" | "limited";
+function RolePicker({
+  value,
+  onChange,
+  disabled = false,
+}: {
+  value: EditableRole;
+  onChange: (value: EditableRole) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <>
+      <fieldset className="invite-roles" disabled={disabled}>
+        <legend>Rol</legend>
+        {(["adult", "limited"] as const).map((role) => (
+          <label className={value === role ? "selected" : ""} key={role}>
+            {role === "adult" ? (
+              <Users className="role-adult" size={21} />
+            ) : (
+              <LockKeyhole className="role-limited" size={21} />
+            )}
+            <span>{roleLabel(role)}</span>
+            <input
+              type="radio"
+              name="member-role"
+              value={role}
+              checked={value === role}
+              onChange={() => onChange(role)}
+            />
+          </label>
+        ))}
+      </fieldset>
+      <p className="fine-print">
+        {value === "adult"
+          ? "Poate adăuga documente și gestiona accesul la cele proprii."
+          : "Poate vedea documentele proprii și cele partajate. Nu poate încărca documente noi."}
+      </p>
+    </>
+  );
+}
 
 export function FamilyPage({
   familyId,
@@ -47,6 +89,10 @@ export function FamilyPage({
   const [target, setTarget] = useState<Member | null>(null);
   const [busy, setBusy] = useState(false);
   const [revokeError, setRevokeError] = useState("");
+  const [managing, setManaging] = useState<Member | null>(null);
+  const [memberRole, setMemberRole] = useState<EditableRole>("adult");
+  const [roleError, setRoleError] = useState("");
+  const [roleStale, setRoleStale] = useState(false);
   const [message, setMessage] = useState("");
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -107,6 +153,35 @@ export function FamilyPage({
       await load();
     } catch (e) {
       setRevokeError(e instanceof Error ? e.message : "Revocarea nu a reușit.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveRole() {
+    if (!managing || busy || roleStale) return;
+    setBusy(true);
+    setRoleError("");
+    try {
+      await api(`/families/${familyId}/members/${managing.id}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          role: memberRole,
+          expected_role: managing.role,
+        }),
+      });
+      setMessage(`Rol actualizat pentru ${managing.name}.`);
+      setManaging(null);
+      await load();
+    } catch (e) {
+      setRoleError(
+        e instanceof Error ? e.message : "Rolul nu a putut fi salvat.",
+      );
+      if (e instanceof ApiError && [403, 404, 409].includes(e.status)) {
+        setRoleStale(true);
+        await load();
+      }
+      if (e instanceof ApiError && [401, 419].includes(e.status)) onExpired();
     } finally {
       setBusy(false);
     }
@@ -212,35 +287,46 @@ export function FamilyPage({
               const canRevoke =
                 isOwner && member.role !== "owner" && member.user_id !== userId;
               return (
-                <article className="family-member" key={member.id}>
-                  <div className="family-member-top">
-                    {member.user_id === userId && (
-                      <span className="family-self">Tu</span>
-                    )}
-                  </div>
-                  <div className="family-portrait" aria-hidden="true">
+                <article
+                  className={`family-member member-${member.role}`}
+                  key={member.id}
+                >
+                  <div
+                    className={`family-portrait portrait-${member.role}`}
+                    aria-hidden="true"
+                  >
                     <span>{initials(member.name)}</span>
                   </div>
-                  <h3>{member.name}</h3>
-                  <p className="family-role">
-                    <RoleIcon
-                      className={`role-${member.role}`}
-                      size={15}
-                      aria-hidden="true"
-                    />
-                    {roleLabel(member.role)}
-                  </p>
+                  <div className="family-member-info">
+                    <h3 title={member.name}>{member.name}</h3>
+                    <p className="family-role">
+                      <RoleIcon
+                        className={`role-${member.role}`}
+                        size={15}
+                        aria-hidden="true"
+                      />
+                      {roleLabel(member.role)}
+                    </p>
+                  </div>
+                  {member.user_id === userId && (
+                    <span className="family-self">Tu</span>
+                  )}
                   {canRevoke && (
                     <button
-                      className="family-revoke"
-                      aria-label={`Revocă accesul pentru ${member.name}`}
+                      className="family-manage"
+                      aria-label={`Gestionează ${member.name}`}
+                      aria-haspopup="dialog"
+                      disabled={busy}
                       onClick={() => {
-                        setRevokeError("");
-                        setTarget(member);
+                        setRoleError("");
+                        setRoleStale(false);
+                        setMemberRole(
+                          member.role === "limited" ? "limited" : "adult",
+                        );
+                        setManaging(member);
                       }}
                     >
-                      <UserRoundMinus size={17} />
-                      Revocă accesul
+                      <MoreHorizontal size={21} aria-hidden="true" />
                     </button>
                   )}
                 </article>
@@ -404,34 +490,7 @@ export function FamilyPage({
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </label>
-              <fieldset className="invite-roles" disabled={busy}>
-                <legend>Rol</legend>
-                {(["adult", "limited"] as const).map((value) => (
-                  <label
-                    className={role === value ? "selected" : ""}
-                    key={value}
-                  >
-                    {value === "adult" ? (
-                      <Users className="role-adult" size={21} />
-                    ) : (
-                      <LockKeyhole className="role-limited" size={21} />
-                    )}
-                    <span>{roleLabel(value)}</span>
-                    <input
-                      type="radio"
-                      name="invite-role"
-                      value={value}
-                      checked={role === value}
-                      onChange={() => setRole(value)}
-                    />
-                  </label>
-                ))}
-              </fieldset>
-              <p className="fine-print">
-                {role === "adult"
-                  ? "Poate adăuga documente și vede ce îi este partajat."
-                  : "Poate vedea documentele partajate cu el. Nu poate încărca documente."}
-              </p>
+              <RolePicker value={role} onChange={setRole} disabled={busy} />
               <button className="button primary full" disabled={busy}>
                 <UserRoundPlus size={18} />
                 {busy ? "Se creează…" : "Creează invitația"}
@@ -449,6 +508,69 @@ export function FamilyPage({
             onClick={() => setInviting(false)}
           >
             {inviteLink ? "Închide" : "Anulează"}
+          </button>
+        </Modal>
+      )}
+      {managing && (
+        <Modal
+          title="Gestionează membrul"
+          onClose={() => {
+            if (!busy) setManaging(null);
+          }}
+        >
+          <div className="revoke-person">
+            <span
+              className={`family-portrait portrait-${managing.role}`}
+              aria-hidden="true"
+            >
+              {initials(managing.name)}
+            </span>
+            <strong>{managing.name}</strong>
+          </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void saveRole();
+            }}
+          >
+            <RolePicker
+              value={memberRole}
+              onChange={setMemberRole}
+              disabled={busy || roleStale}
+            />
+            {roleError && (
+              <p className="error" role="alert">
+                {roleError}
+              </p>
+            )}
+            {roleStale ? (
+              <button
+                type="button"
+                className="button secondary full"
+                onClick={() => setManaging(null)}
+              >
+                Înapoi la membri
+              </button>
+            ) : (
+              <button
+                className="button primary full"
+                disabled={busy || memberRole === managing.role}
+              >
+                {busy ? "Se salvează…" : "Salvează rolul"}
+              </button>
+            )}
+          </form>
+          <button
+            className="button member-revoke-action full"
+            disabled={busy || roleStale}
+            onClick={() => {
+              setTarget(managing);
+              setManaging(null);
+              setRevokeError("");
+            }}
+          >
+            <UserRoundMinus size={18} />
+            Revocă accesul
           </button>
         </Modal>
       )}

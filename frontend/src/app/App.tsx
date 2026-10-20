@@ -52,6 +52,11 @@ export default function App() {
   }
   useEffect(() => {
     void refresh();
+    const checkSession = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", checkSession);
+    return () => document.removeEventListener("visibilitychange", checkSession);
   }, []);
   const family = session?.families.find((f) => f.id === familyId);
   if (!session)
