@@ -3,10 +3,9 @@
   margin-bottom: 20px;
 }
 .family-panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 16px;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 .family-grid {
   display: grid;
@@ -16,7 +15,7 @@
 .family-member {
   position: relative;
   min-width: 0;
-  border-radius: 12px;
+  border-radius: 20px;
   border: 1px solid var(--line);
   background: var(--surface);
   padding: 22px;
@@ -66,7 +65,7 @@
   grid-column: 2;
   grid-row: 1;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.3px;
   line-height: 1.4;
   padding-top: 4px;
@@ -79,7 +78,7 @@
   gap: 6px;
   grid-column: 2;
   grid-row: 2;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   margin-top: 5px;
 }
@@ -95,7 +94,7 @@
   min-height: 44px;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   background: white;
   color: #8f4d46;
   font-size: 12px;
@@ -149,7 +148,7 @@
   padding: 16px;
   background: white;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 18px;
 }
 .invitation-row > div {
   flex: 1;
@@ -208,11 +207,14 @@
   align-items: center;
   gap: 12px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 15px;
   min-height: 56px;
   padding: 12px 14px;
   cursor: pointer;
   font-size: 14px;
+  transition:
+    background-color var(--motion-fast),
+    border-color var(--motion-fast);
 }
 .invite-roles label.selected {
   border-color: #b9cdb6;
@@ -278,9 +280,7 @@
     display: none;
   }
   .family-panel {
-    padding: 12px;
-    border-radius: 14px;
-    margin-inline: -4px;
+    padding: 0;
   }
   .family-member {
     padding: 18px;
@@ -296,7 +296,7 @@
     font-size: 18px;
   }
   .family-member h3 {
-    font-size: 15px;
+    font-size: 17px;
   }
   .family-self {
     top: 12px;

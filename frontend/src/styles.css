@@ -2,11 +2,14 @@
   font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
   font-synthesis: none;
   font-weight: 400;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
   color: #263831;
   background: #f8f6f1;
   --ink: #263831;
   --muted: #737871;
-  --line: #e9e7df;
+  --line: #48443714;
   --panel: #f2f0ea;
   --surface: #fffefa;
   --accent: #38654d;
@@ -15,7 +18,10 @@
   --icon-private: #7954b3;
   --icon-health: #b54d72;
   --icon-home: #238472;
-  --shadow: 0 2px 5px #51452d06, 0 6px 18px #51452d03;
+  --shadow: 0 1px 3px #51452d04, 0 5px 20px #51452d06;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-fast: 160ms;
+  --motion-enter: 260ms;
 }
 .lucide-users,
 .lucide-user-round-plus,
@@ -50,6 +56,9 @@
 body {
   margin: 0;
 }
+html:has(dialog[open]) {
+  overflow: hidden;
+}
 button,
 input,
 select {
@@ -63,6 +72,60 @@ button {
   color: inherit;
   cursor: pointer;
   border: 0;
+  touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast),
+    opacity var(--motion-fast),
+    box-shadow var(--motion-fast);
+}
+button:active:not(:disabled) {
+  transform: scale(0.975);
+}
+button:disabled:active {
+  transform: none;
+}
+.documents-page,
+.family-page {
+  animation: page-enter 200ms var(--ease-out);
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes sheet-enter {
+  from {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 button:disabled {
   cursor: not-allowed;
@@ -103,14 +166,11 @@ input[type="radio"] {
   gap: 8px;
   min-height: 44px;
   padding: 11px 17px;
-  border-radius: 9px;
-  font-size: 13px;
-  font-weight: 500;
+  border-radius: 13px;
+  font-size: 14px;
+  font-weight: 600;
   text-decoration: none;
   border: 1px solid transparent;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
 }
 .primary {
   background: #38654d;
@@ -142,7 +202,7 @@ input[type="radio"] {
   width: 44px;
   height: 44px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 13px;
   background: #fff;
   flex-shrink: 0;
 }
@@ -394,8 +454,8 @@ main {
   margin-bottom: 24px;
 }
 .page-heading h1 {
-  font-size: 27px;
-  font-weight: 500;
+  font-size: 30px;
+  font-weight: 600;
   letter-spacing: -0.7px;
   line-height: 1.2;
 }
@@ -405,10 +465,10 @@ main {
   gap: 10px;
   padding: 0 13px;
   min-height: 44px;
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  box-shadow: var(--shadow);
+  background: #eae8e17a;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  box-shadow: none;
   color: #85888d;
   min-width: 0;
 }
@@ -453,14 +513,14 @@ main {
   margin-bottom: 12px;
 }
 .section-header h2 {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: #61656b;
 }
 .modal {
   border: 1px solid var(--line);
   padding: 24px;
-  border-radius: 16px;
+  border-radius: 24px;
   max-width: 490px;
   width: calc(100% - 32px);
   max-height: 90dvh;
@@ -468,13 +528,17 @@ main {
   color: var(--ink);
   background: #fff;
   box-shadow: 0 18px 60px #17191f24;
+  overscroll-behavior: contain;
+  animation: modal-enter var(--motion-enter) var(--ease-out);
 }
 .modal.wide {
   max-width: 550px;
 }
 .modal::backdrop {
-  background: #1f232845;
-  backdrop-filter: blur(2px);
+  background: #1f23283d;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: backdrop-enter 180ms ease-out;
 }
 .modal-heading {
   display: flex;
@@ -482,12 +546,12 @@ main {
   justify-content: space-between;
   gap: 15px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
   margin-bottom: 20px;
 }
 .modal-heading h2 {
-  font-size: 19px;
-  font-weight: 500;
+  font-size: 21px;
+  font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
   letter-spacing: -0.3px;
@@ -495,6 +559,8 @@ main {
 .modal-heading .icon-button {
   border: 0;
   color: #797d83;
+  background: #f1f0ec;
+  border-radius: 50%;
 }
 .modal-lead {
   font-size: 14px;
@@ -508,7 +574,7 @@ main {
   flex-direction: column;
   gap: 8px;
   margin: 18px 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
 }
 .field input,
@@ -519,7 +585,7 @@ main {
   padding: 11px 12px;
   border: 1px solid #dddfe2;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 12px;
   color: var(--ink);
   font-size: 14px;
   font-weight: 400;
@@ -900,7 +966,7 @@ main {
   }
   .topbar {
     min-height: 70px;
-    padding: 12px 18px;
+    padding: max(12px, env(safe-area-inset-top)) 20px 12px;
   }
   .mobile-brand {
     display: block;
@@ -921,15 +987,15 @@ main {
     min-height: 44px;
   }
   main {
-    padding: 24px 18px 105px;
+    padding: 26px 20px calc(106px + env(safe-area-inset-bottom));
   }
   .page-heading {
     margin-bottom: 20px;
     gap: 10px;
   }
   .page-heading h1 {
-    font-size: 24px;
-    letter-spacing: -0.5px;
+    font-size: 29px;
+    letter-spacing: -0.8px;
   }
   .search input,
   .field input,
@@ -957,6 +1023,7 @@ main {
     padding: 8px 12px max(8px, env(safe-area-inset-bottom));
     background: #fffefaf5;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
   .mobile-nav button {
     display: flex;
@@ -968,7 +1035,7 @@ main {
     background: transparent;
     border-radius: 9px;
     color: #777c83;
-    font-size: 10px;
+    font-size: 11px;
   }
   .mobile-nav button.active {
     color: #31553e;
@@ -985,12 +1052,38 @@ main {
     font-size: 8px;
   }
   .modal {
-    padding: 20px;
+    position: fixed;
+    inset: auto 0 0;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 100%;
+    padding: 22px 22px max(24px, env(safe-area-inset-bottom));
+    border-radius: 26px 26px 0 0;
+    max-height: 90dvh;
+    animation-name: sheet-enter;
+  }
+  .modal.wide {
+    max-width: 100%;
+  }
+  .page-heading > .button {
+    width: 46px;
+    height: 46px;
+    padding: 0;
+    flex-shrink: 0;
     border-radius: 14px;
-    max-height: 92dvh;
+  }
+  .page-heading > .button > span {
+    display: none;
+  }
+  .page-heading > .button > svg {
+    width: 22px;
+    height: 22px;
+  }
+  .modal-heading {
+    margin-bottom: 12px;
   }
   .modal-heading h2 {
-    font-size: 18px;
+    font-size: 21px;
   }
   .detail-actions {
     flex-direction: column;
@@ -1006,6 +1099,9 @@ main {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  button:active:not(:disabled) {
+    transform: none;
+  }
   *,
   *::before,
   *::after {

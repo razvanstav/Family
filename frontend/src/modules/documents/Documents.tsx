@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowDownToLine,
-  ArrowRight,
   Check,
   ChevronDown,
   FileText,
@@ -264,9 +263,11 @@ export function Documents({
               <button
                 className="document-card"
                 key={doc.id}
+                aria-label={`${doc.title} · ${categoryName(doc.category)} · ${visibilityLabel[doc.visibility]}${doc.status === "quarantine" ? " · În verificare" : doc.status === "rejected" ? " · Respins" : ""}`}
                 onClick={() => setSelected(doc.id)}
               >
                 <div className="card-top">
+                  <FilePreview mime={doc.mime} category={doc.category} />
                   <span className="category-label">
                     {categoryName(doc.category)}
                   </span>
@@ -281,38 +282,28 @@ export function Documents({
                     )}
                   </span>
                 </div>
-                <FilePreview mime={doc.mime} category={doc.category} />
                 <div className="card-bottom">
-                  <h3>{doc.title}</h3>
-                  <p>
-                    {doc.mime === "application/pdf" ? "PDF" : "Imagine"}{" "}
-                    <span>·</span> {size(doc.bytes)}
-                  </p>
-                  <div className="card-access">
-                    <span>
+                  <h3 title={doc.title}>{doc.title}</h3>
+                  {doc.status === "ready" ? (
+                    <p>
+                      {doc.mime === "application/pdf" ? "PDF" : "Imagine"}{" "}
+                      <span>·</span> {size(doc.bytes)}
+                    </p>
+                  ) : (
+                    <p className={`card-status ${doc.status}`}>
                       {doc.status === "quarantine" ? (
                         <>
-                          <Clock3 size={13} /> În verificare
-                        </>
-                      ) : doc.status === "rejected" ? (
-                        <>
-                          <AlertCircle size={13} /> Respins
+                          <Clock3 size={13} />
+                          În verificare
                         </>
                       ) : (
                         <>
-                          {doc.visibility === "private" ? (
-                            <LockKeyhole size={13} />
-                          ) : (
-                            <Users size={13} />
-                          )}
-                          {visibilityLabel[doc.visibility]}
+                          <AlertCircle size={13} />
+                          Respins
                         </>
                       )}
-                    </span>
-                    <span className="card-arrow">
-                      <ArrowRight size={19} />
-                    </span>
-                  </div>
+                    </p>
+                  )}
                 </div>
               </button>
             ))}

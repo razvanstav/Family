@@ -37,10 +37,9 @@
   max-width: 250px;
 }
 .library {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 16px;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 .category-heading {
   display: flex;
@@ -67,10 +66,10 @@
   flex-shrink: 0;
   padding: 10px 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 13px;
   background: #fff;
   color: #6c7077;
-  font-size: 12px;
+  font-size: 13px;
   box-shadow: var(--shadow);
 }
 .category > span {
@@ -135,10 +134,13 @@
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 20px;
   padding: 16px;
+  min-height: 166px;
+  gap: 14px;
   box-shadow: var(--shadow);
   transition:
+    transform var(--motion-fast) var(--ease-out),
     border-color 0.15s,
     box-shadow 0.15s;
 }
@@ -152,12 +154,28 @@
   justify-content: space-between;
   gap: 8px;
 }
+.card-top .category-label {
+  flex: 1;
+  min-width: 0;
+}
+.card-top .file-preview {
+  width: 34px;
+  height: 36px;
+  margin: 0;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+.card-top .file-preview svg {
+  width: 23px;
+  height: 23px;
+}
 .category-label {
   font-size: 11px;
   color: #71767e;
 }
 .mini-lock {
   display: flex;
+  flex-shrink: 0;
   color: #92969d;
 }
 .file-preview {
@@ -177,51 +195,34 @@
 }
 .card-bottom h3 {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.2px;
   line-height: 1.4;
   min-height: 42px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   overflow-wrap: anywhere;
 }
 .card-bottom > p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 7px;
 }
 .card-bottom > p span {
   padding: 0 3px;
 }
-.card-access {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 5px;
-  padding-top: 12px;
-  margin-top: 15px;
-  border-top: 1px solid #f0f0f2;
-}
-.card-access > span:first-child {
+.card-status {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
-  color: #727780;
 }
-.card-access > span:first-child svg {
-  flex-shrink: 0;
+.card-bottom .quarantine {
+  color: #936415;
 }
-.card-arrow {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #787f88;
-}
-.card-arrow svg {
-  width: 15px;
+.card-bottom .rejected {
+  color: #a84037;
 }
 .detail-art {
   position: relative;
@@ -307,30 +308,18 @@
     max-width: none;
   }
   .library {
-    padding: 12px;
-    border-radius: 14px;
-    margin-inline: -4px;
+    padding: 0;
   }
   .document-grid {
-    gap: 9px;
+    gap: 12px;
   }
   .document-card {
-    padding: 12px;
-    border-radius: 10px;
+    padding: 14px;
+    min-height: 156px;
+    gap: 12px;
   }
   .card-bottom h3 {
-    font-size: 14px;
-  }
-  .card-access > span:first-child {
-    font-size: 10px;
-  }
-  .card-access > span:first-child svg {
-    width: 11px;
-  }
-  .card-arrow {
-    width: 23px;
-    height: 25px;
-    flex-shrink: 0;
+    font-size: 15px;
   }
   .file-preview {
     width: 48px;

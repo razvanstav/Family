@@ -124,6 +124,7 @@ export function FamilyPage({
         {isOwner && (
           <button
             className="button primary"
+            aria-label="Adaugă membru"
             onClick={() => {
               setEmail("");
               setRole("adult");
@@ -134,7 +135,7 @@ export function FamilyPage({
             }}
           >
             <UserRoundPlus size={18} />
-            Adaugă membru
+            <span>Adaugă membru</span>
           </button>
         )}
       </section>
