@@ -1,14 +1,16 @@
 # Memoria Familiei — prima etapă
 
-Aplicație locală funcțională: două familii, documente private, upload cu verificare antivirus, acces selectiv și revocare. Interfața React adaptează mock-upul furnizat: alb, verde pastel, albastru, carduri rotunjite și navigație neagră pe mobil.
+Aplicație locală funcțională: două familii, documente private, upload cu verificare antivirus, acces selectiv și revocare. Interfața React urmează [referința de design actuală](artifacts/design-reference.png): suprafețe albe, panouri gri deschis, borduri fine, controale compacte și navigație neutră.
 
 **Continuare pe alt calculator:** clonează branchul `codex/documente-design` și urmează [instalarea de la zero](ops/SETUP.md). Git conține sursele și datele demo generate de seeder; instalările locale, parolele și documentele încărcate nu sunt transferate.
 
-Pagina Documente folosește `Helvetica, "Helvetica Neue", Arial, sans-serif`, cu căutare înaintea bannerului, categorii orizontale, carduri pastel și patru acțiuni reale în navigația mobilă. Helvetica este folosită dacă există pe dispozitiv; Windows folosește de regulă Arial. Nu este inclus un fișier de font proprietar. Pentru același font exact pe toate dispozitivele este necesară o versiune web Helvetica cu licență potrivită.
+Toată interfața folosește `Helvetica, "Helvetica Neue", Arial, sans-serif`, cu căutare, categorii și acțiuni reale. Helvetica este folosită dacă există pe dispozitiv; Windows folosește de regulă Arial. Nu este inclus un fișier de font proprietar. Pentru același font exact pe toate dispozitivele este necesară o versiune web Helvetica cu licență potrivită. Regulile pentru paginile viitoare sunt în `AGENTS.md`; stilurile comune sunt centralizate în `frontend/src/styles.css`.
 
 Capturi din aplicația verificată: [mobil](artifacts/mobile-documents.png) · [desktop](artifacts/documents-desktop.png).
 
 Familia mea: [mobil](artifacts/family-mobile.png) · [desktop](artifacts/family-desktop.png).
+
+Autentificare: [mobil](artifacts/login-mobile.png).
 
 ## Deschidere
 

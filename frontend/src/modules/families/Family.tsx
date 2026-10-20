@@ -120,107 +120,109 @@ export function FamilyPage({
           </button>
         )}
       </div>
-      <div className="section-header">
-        <h2 id="members-title">
-          {loading
-            ? "Membri"
-            : `${visible.length} ${visible.length === 1 ? "membru" : "membri"}`}
-        </h2>
-        <button
-          className="text-button"
-          aria-label="Actualizează membrii"
-          onClick={() => void load()}
-          disabled={loading || busy}
-        >
-          <RefreshCw size={17} className={loading ? "spin" : ""} />
-          <span>Actualizează</span>
-        </button>
-      </div>
-      {message && (
-        <div role="status" className="notice">
-          <Check size={18} />
-          <span>{message}</span>
+      <section className="family-panel" aria-labelledby="members-title">
+        <div className="section-header">
+          <h2 id="members-title">
+            {loading
+              ? "Membri"
+              : `${visible.length} ${visible.length === 1 ? "membru" : "membri"}`}
+          </h2>
           <button
-            aria-label="Închide notificarea"
-            onClick={() => setMessage("")}
+            className="text-button"
+            aria-label="Actualizează membrii"
+            onClick={() => void load()}
+            disabled={loading || busy}
           >
-            <X size={16} />
+            <RefreshCw size={17} className={loading ? "spin" : ""} />
+            <span>Actualizează</span>
           </button>
         </div>
-      )}
-      {error ? (
-        <div role="alert" className="error">
-          {error}
-          <button className="text-button" onClick={() => void load()}>
-            Reîncearcă
-          </button>
-        </div>
-      ) : loading ? (
-        <div
-          className="family-grid"
-          role="status"
-          aria-label="Se încarcă membrii"
-        >
-          <div className="family-skeleton skeleton" />
-          <div className="family-skeleton skeleton" />
-        </div>
-      ) : visible.length ? (
-        <section className="family-grid" aria-labelledby="members-title">
-          {visible.map((member) => {
-            const RoleIcon =
-              member.role === "owner"
-                ? Crown
-                : member.role === "limited"
-                  ? LockKeyhole
-                  : Users;
-            const canRevoke =
-              isOwner && member.role !== "owner" && member.user_id !== userId;
-            return (
-              <article
-                className={`family-member family-color-${members.indexOf(member) % 4}`}
-                key={member.id}
-              >
-                <div className="family-member-top">
-                  <span className="family-role-icon" aria-hidden="true">
-                    <RoleIcon size={19} strokeWidth={1.6} />
-                  </span>
-                  {member.user_id === userId && (
-                    <span className="family-self">Tu</span>
-                  )}
-                </div>
-                <div className="family-portrait" aria-hidden="true">
-                  <span>{initials(member.name)}</span>
-                </div>
-                <h3>{member.name}</h3>
-                <p className="family-role">{roleLabel(member.role)}</p>
-                {canRevoke && (
-                  <button
-                    className="family-revoke"
-                    aria-label={`Revocă accesul pentru ${member.name}`}
-                    onClick={() => {
-                      setRevokeError("");
-                      setTarget(member);
-                    }}
-                  >
-                    <UserRoundMinus size={17} />
-                    Revocă accesul
-                  </button>
-                )}
-              </article>
-            );
-          })}
-        </section>
-      ) : (
-        <div className="empty">
-          <Users size={36} />
-          <h3>{search ? "Niciun rezultat" : "Niciun membru"}</h3>
-          {search && (
-            <button className="button secondary" onClick={() => setSearch("")}>
-              Resetează căutarea
+        {message && (
+          <div role="status" className="notice">
+            <Check size={18} />
+            <span>{message}</span>
+            <button
+              aria-label="Închide notificarea"
+              onClick={() => setMessage("")}
+            >
+              <X size={16} />
             </button>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+        {error ? (
+          <div role="alert" className="error">
+            {error}
+            <button className="text-button" onClick={() => void load()}>
+              Reîncearcă
+            </button>
+          </div>
+        ) : loading ? (
+          <div
+            className="family-grid"
+            role="status"
+            aria-label="Se încarcă membrii"
+          >
+            <div className="family-skeleton skeleton" />
+            <div className="family-skeleton skeleton" />
+          </div>
+        ) : visible.length ? (
+          <section className="family-grid" aria-labelledby="members-title">
+            {visible.map((member) => {
+              const RoleIcon =
+                member.role === "owner"
+                  ? Crown
+                  : member.role === "limited"
+                    ? LockKeyhole
+                    : Users;
+              const canRevoke =
+                isOwner && member.role !== "owner" && member.user_id !== userId;
+              return (
+                <article className="family-member" key={member.id}>
+                  <div className="family-member-top">
+                    <span className="family-role-icon" aria-hidden="true">
+                      <RoleIcon size={19} strokeWidth={1.6} />
+                    </span>
+                    {member.user_id === userId && (
+                      <span className="family-self">Tu</span>
+                    )}
+                  </div>
+                  <div className="family-portrait" aria-hidden="true">
+                    <span>{initials(member.name)}</span>
+                  </div>
+                  <h3>{member.name}</h3>
+                  <p className="family-role">{roleLabel(member.role)}</p>
+                  {canRevoke && (
+                    <button
+                      className="family-revoke"
+                      aria-label={`Revocă accesul pentru ${member.name}`}
+                      onClick={() => {
+                        setRevokeError("");
+                        setTarget(member);
+                      }}
+                    >
+                      <UserRoundMinus size={17} />
+                      Revocă accesul
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+          </section>
+        ) : (
+          <div className="empty">
+            <Users size={36} />
+            <h3>{search ? "Niciun rezultat" : "Niciun membru"}</h3>
+            {search && (
+              <button
+                className="button secondary"
+                onClick={() => setSearch("")}
+              >
+                Resetează căutarea
+              </button>
+            )}
+          </div>
+        )}
+      </section>
       {target && (
         <Modal
           title="Revocă accesul"

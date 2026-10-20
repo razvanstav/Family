@@ -40,42 +40,11 @@ export const categories = [
 ];
 const categoryName = (id: string) =>
   categories.find((c) => c.id === id)?.label ?? id;
-const colors: Record<string, string> = {
-  home: "green",
-  personal: "blue",
-  health: "peach",
-  memories: "yellow",
-};
-
-function Paper({
-  category,
-  large = false,
-  mime = "application/pdf",
-}: {
-  category: string;
-  large?: boolean;
-  mime?: string;
-}) {
-  const Icon = categories.find((c) => c.id === category)?.icon ?? FileText;
+function FilePreview({ mime }: { mime: string }) {
+  const Icon = mime === "application/pdf" ? FileText : Image;
   return (
-    <div className={`paper-scene ${large ? "large" : ""}`} aria-hidden="true">
-      <div className="orbit orbit-one" />
-      <div className="orbit orbit-two" />
-      <div className="paper paper-back" />
-      <div className="paper paper-front">
-        <span className="paper-stamp">
-          <Icon strokeWidth={1.5} size={26} />
-        </span>
-        <span className="paper-line long" />
-        <span className="paper-line" />
-        <span className="paper-line short" />
-        <span className="paper-seal">
-          <Check size={14} />
-        </span>
-      </div>
-      <span className="file-pill">
-        {mime === "application/pdf" ? "PDF" : mime.split("/")[1]?.toUpperCase()}
-      </span>
+    <div className="file-preview" aria-hidden="true">
+      <Icon size={36} strokeWidth={1.25} />
     </div>
   );
 }
@@ -200,24 +169,6 @@ export function Documents({
           </select>
         </div>
       )}
-      <section className="intro-row">
-        <div className="hero-card">
-          <div className="hero-copy">
-            <p className="upload-formats">PDF, JPG, PNG, WebP</p>
-            <p>Maximum 10 MB / fișier</p>
-            <button
-              className="button primary"
-              onClick={() => setUpload(true)}
-              disabled={family.role === "limited"}
-            >
-              Adaugă document <ArrowRight size={17} />
-            </button>
-          </div>
-          <div className="hero-art">
-            <Paper category="memories" large />
-          </div>
-        </div>
-      </section>
       <section className="library" aria-labelledby="library-title">
         <div className="category-heading">
           <h2>Categorii</h2>
@@ -250,7 +201,9 @@ export function Documents({
         <div className="section-header">
           <div>
             <h2 id="library-title">
-              {visible.length} {visible.length === 1 ? "document" : "documente"}
+              {loading
+                ? "Documente"
+                : `${visible.length} ${visible.length === 1 ? "document" : "documente"}`}
             </h2>
           </div>
           <button
@@ -309,7 +262,7 @@ export function Documents({
           <div className="document-grid">
             {visible.map((doc) => (
               <button
-                className={`document-card ${colors[doc.category]}`}
+                className="document-card"
                 key={doc.id}
                 onClick={() => setSelected(doc.id)}
               >
@@ -328,7 +281,7 @@ export function Documents({
                     )}
                   </span>
                 </div>
-                <Paper category={doc.category} mime={doc.mime} />
+                <FilePreview mime={doc.mime} />
                 <div className="card-bottom">
                   <h3>{doc.title}</h3>
                   <p>
@@ -674,9 +627,9 @@ function Detail({
       {!doc && !error && <p className="loading-text">Se încarcă…</p>}
       {doc && !sharing && (
         <>
-          <div className={`detail-art ${colors[doc.category]}`}>
+          <div className="detail-art">
             <span className="category-label">{categoryName(doc.category)}</span>
-            <Paper category={doc.category} mime={doc.mime} large />
+            <FilePreview mime={doc.mime} />
             <span className="detail-badge">
               <LockKeyhole size={14} />
               {visibilityLabel[doc.visibility]}

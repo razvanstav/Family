@@ -1,271 +1,170 @@
-.family-page .page-heading {
-  margin-bottom: 24px;
-}
-.family-page .page-heading h1 {
-  font-weight: 700;
-  letter-spacing: -1.4px;
-}
 .family-search {
-  border-radius: 32px;
-  padding: 4px 18px;
-  min-height: 56px;
-  background: #f3f3f3;
-  border: 4px solid white;
-  outline: 1px solid #e8e8e8;
-  margin-bottom: 25px;
-  color: #333;
+  max-width: 520px;
+  margin-bottom: 20px;
 }
-.family-search input {
-  font-size: 14px;
-  color: var(--ink);
-}
-.family-search input::placeholder {
-  color: #707070;
-}
-.family-search input::-webkit-search-cancel-button {
-  display: none;
-}
-.family-search button {
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  margin: -4px -10px -4px 0;
-}
-.family-page .section-header {
-  margin-bottom: 16px;
-}
-.family-page .section-header h2 {
-  font-size: 20px;
-  font-weight: 700;
-}
-.family-page .section-header .text-button {
-  min-height: 44px;
-  font-size: 12px;
-  color: #555;
+.family-panel {
+  background: var(--panel);
+  border: 1px solid #f0f0f1;
+  border-radius: 18px;
+  padding: 16px;
 }
 .family-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 .family-member {
   position: relative;
   min-width: 0;
-  border-radius: 30px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-height: 320px;
-}
-.family-color-0 {
-  background: var(--green);
-}
-.family-color-1 {
-  background: var(--blue);
-}
-.family-color-2 {
-  background: var(--yellow);
-}
-.family-color-3 {
-  background: #f1cdb9;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 22px;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 55px minmax(0, 1fr);
+  grid-template-rows: auto auto auto;
+  column-gap: 14px;
+  align-content: start;
+  box-shadow: var(--shadow);
 }
 .family-member-top {
+  position: absolute;
+  right: 15px;
+  top: 15px;
   display: flex;
-  width: 100%;
-  justify-content: space-between;
   align-items: center;
-  min-height: 32px;
+  gap: 6px;
 }
 .family-role-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #ffffff66;
-  color: #394735;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: none;
 }
 .family-self {
-  border: 1px solid #ffffffa0;
-  padding: 6px 12px;
-  border-radius: 24px;
-  font-size: 12px;
-  background: #ffffff70;
+  font-size: 10px;
+  background: #f6f6f7;
+  border: 1px solid var(--line);
+  padding: 4px 7px;
+  border-radius: 6px;
+  color: #6a7078;
 }
 .family-portrait {
-  width: 112px;
-  height: 112px;
-  border: 1px solid #ffffff90;
-  border-radius: 50%;
-  padding: 8px;
-  margin: 12px 0 18px;
-}
-.family-portrait > span {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
+  grid-column: 1;
+  grid-row: 1 / 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffffbb;
-  font-size: 32px;
-  font-weight: 500;
-  letter-spacing: -1px;
-  color: #34442d;
+  height: 55px;
+  width: 55px;
+  border: 1px solid #e4e6ea;
+  border-radius: 12px;
+  background: #f5f6f8;
+  color: #69717d;
 }
-.family-color-1 .family-portrait > span {
-  color: #31566b;
-}
-.family-color-2 .family-portrait > span {
-  color: #6a5c29;
-}
-.family-color-3 .family-portrait > span {
-  color: #754c36;
+.family-portrait > span {
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.5px;
 }
 .family-member h3 {
-  text-align: center;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: -0.35px;
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+  line-height: 1.4;
+  padding-top: 4px;
+  padding-right: 24px;
   overflow-wrap: anywhere;
 }
 .family-role {
-  font-size: 13px;
-  color: #404b3b;
-  margin: 6px 0 20px;
+  grid-column: 2;
+  grid-row: 2;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
 }
 .family-revoke {
-  margin-top: auto;
+  grid-column: 1 / -1;
+  align-self: end;
+  justify-self: start;
+  margin-top: 27px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 7px;
   min-height: 44px;
-  padding: 10px 17px;
-  border: 1px solid #ffffffb0;
-  border-radius: 26px;
-  background: #ffffffb3;
-  color: #70372e;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  color: #8f4d46;
   font-size: 12px;
+  box-shadow: var(--shadow);
 }
 .family-revoke:hover {
-  background: #fff;
+  background: #fcf5f4;
+  border-color: #e3c8c3;
 }
 .family-skeleton {
-  min-height: 320px;
-  border-radius: 30px;
-}
-.family-page .empty .button {
-  margin-top: 20px;
-}
-.family-page .error .text-button {
-  display: block;
-  margin-top: 8px;
+  height: 206px;
 }
 .revoke-person {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 4px 0 22px;
+  margin-bottom: 20px;
 }
 .revoke-person strong {
+  font-size: 15px;
+  font-weight: 500;
   overflow-wrap: anywhere;
-  font-size: 16px;
 }
 .revoke-consequence {
   font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 14px;
-}
-.family-page .modal .fine-print {
-  font-size: 12px;
-  color: #606060;
   line-height: 1.6;
 }
 .family-page .modal .secondary {
   margin-top: 10px;
 }
-@media (max-width: 1100px) {
-  .family-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.family-page .error .text-button {
+  display: block;
+  margin-top: 6px;
 }
-@media (max-width: 650px) {
-  .family-page .page-heading h1 {
-    font-size: 33px;
-    letter-spacing: -1px;
-    line-height: 1.1;
-  }
-  .family-search {
-    margin-bottom: 17px;
-    min-height: 54px;
-    padding-left: 12px;
-  }
-  .family-search input {
-    font-size: 16px;
-  }
-  .family-page .section-header {
-    margin-bottom: 10px;
-  }
-  .family-page .section-header h2 {
-    font-size: 18px;
-  }
-  .family-page .section-header .text-button {
-    width: 44px;
-    justify-content: center;
-  }
-  .family-grid {
-    gap: 12px;
-  }
-  .family-member {
-    border-radius: 26px;
-    padding: 13px;
-    min-height: 286px;
-  }
-  .family-role-icon {
-    width: 29px;
-    height: 29px;
-  }
-  .family-self {
-    font-size: 11px;
-    padding: 5px 9px;
-  }
-  .family-portrait {
-    height: 88px;
-    width: 88px;
-    padding: 6px;
-    margin: 12px 0 16px;
-  }
-  .family-portrait > span {
-    font-size: 27px;
-  }
-  .family-member h3 {
-    font-size: 17px;
-  }
-  .family-role {
-    font-size: 12px;
-    margin-bottom: 17px;
-  }
-  .family-revoke {
-    width: 100%;
-    padding: 9px 5px;
-    gap: 5px;
-    font-size: 11px;
-  }
-  .family-revoke svg {
-    width: 15px;
-    flex-shrink: 0;
-  }
-  .family-skeleton {
-    min-height: 286px;
-  }
-}
-@media (max-width: 350px) {
+@media (max-width: 900px) {
   .family-grid {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .family-panel {
+    padding: 12px;
+    border-radius: 14px;
+    margin-inline: -4px;
+  }
+  .family-member {
+    padding: 18px;
+    min-height: 0;
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 0 12px;
+  }
+  .family-portrait {
+    width: 48px;
+    height: 48px;
+  }
+  .family-portrait > span {
+    font-size: 18px;
+  }
+  .family-member h3 {
+    font-size: 15px;
+  }
+  .family-self {
+    top: 12px;
+    right: 12px;
+  }
+  .family-revoke {
+    margin-top: 20px;
+  }
+  .family-skeleton {
+    height: 158px;
   }
 }

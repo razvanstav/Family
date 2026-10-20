@@ -4,10 +4,8 @@ import {
   ChevronDown,
   FolderHeart,
   Heart,
-  LockKeyhole,
   LogOut,
   Search,
-  ShieldCheck,
   Users,
 } from "lucide-react";
 import { api, type Session } from "../shared/api";
@@ -231,9 +229,13 @@ export default function App() {
           }}
         >
           <Search size={21} />
+          <span>Caută</span>
         </button>
         <button onClick={() => setAccount(true)} aria-label="Contul meu">
-          <span className="mobile-initial">{initials}</span>
+          <span className="mobile-initial" aria-hidden="true">
+            {initials}
+          </span>
+          <span>Cont</span>
         </button>
       </nav>
       {account && (
@@ -263,8 +265,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
       </span>
       {!compact && (
         <span>
-          memoria
-          <br />
+          memoria{" "}
           <strong>
             familiei<span className="brand-dot">.</span>
           </strong>
@@ -303,36 +304,12 @@ function Login({
   }
   return (
     <div className="login-page">
-      <div className="login-story">
+      <div className="login-brand">
         <Brand />
-        <div>
-          <p className="eyebrow">PENTRU OAMENII TĂI</p>
-          <h1>
-            O familie.
-            <br />
-            Un loc pentru
-            <br />
-            <em>ce contează.</em>
-          </h1>
-          <p>
-            Documente, amintiri și lucruri de păstrat.
-            <br />
-            Aproape de tine și de cei dragi.
-          </p>
-        </div>
-        <div className="login-seal">
-          <ShieldCheck size={19} /> Spațiu privat. Acces ales de tine.
-        </div>
-        <div className="story-orbit" />
       </div>
       <div className="login-form-wrap">
         <div className="login-form">
-          <span className="welcome-icon">
-            <FolderHeart size={30} strokeWidth={1.4} />
-          </span>
-          <p className="eyebrow">BINE AI REVENIT</p>
-          <h2>Acasă începe aici.</h2>
-          <p className="modal-lead">Intră în spațiul familiei tale.</p>
+          <h1>Autentificare</h1>
           <form onSubmit={login}>
             <label className="field">
               Adresa de email
@@ -368,7 +345,7 @@ function Login({
           </form>
           {demo && (
             <div className="demo-accounts">
-              <p>EXPLOREAZĂ CU UN CONT DEMO</p>
+              <p>Conturi demo</p>
               <div>
                 {["ana", "mihai", "elena"].map((name) => (
                   <button
@@ -387,14 +364,9 @@ function Login({
                   </button>
                 ))}
               </div>
-              <small>
-                Conturi și documente fictive, doar pentru testarea locală.
-              </small>
+              <small>Date fictive.</small>
             </div>
           )}
-          <p className="login-bottom">
-            <LockKeyhole size={13} /> Documentele tale rămân ale tale.
-          </p>
         </div>
       </div>
     </div>
