@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Archive,
   CalendarDays,
-  ChevronLeft,
   ChevronRight,
   Clock3,
   LockKeyhole,
@@ -11,36 +10,61 @@ import {
   RotateCcw,
   Users,
 } from "lucide-react";
-import { api, ApiError, type Family, visibilityLabel } from "../../shared/api";
-import { Modal } from "../../shared/Modal";
 import {
-  bucharestToday,
-  dateLabel,
-  monthDays,
-  moveMonth,
-  type CalendarItem,
-} from "./calendarDates";
+  api,
+  ApiError,
+  type Family,
+  type CalendarRequest,
+  visibilityLabel,
+} from "../../shared/api";
+import { Modal } from "../../shared/Modal";
+import { bucharestToday, dateLabel } from "../../shared/calendarDates";
+import type { CalendarItem } from "./calendarTypes";
+import { CalendarMonth } from "../../shared/CalendarMonth";
 import "./calendar.css";
+import { ReminderFields } from "./ReminderFields";
 
 export function CalendarPage({
   family,
+  userId,
+  requestedEvent,
+  onEventOpened,
+  onChanged,
   onExpired,
 }: {
   family: Family;
+  userId: number;
+  requestedEvent: CalendarRequest | null;
+  onEventOpened: () => void;
+  onChanged: () => void;
   onExpired: () => void;
 }) {
   const today = bucharestToday();
-  const [month, setMonth] = useState(today.slice(0, 7));
-  const [day, setDay] = useState<string | null>(null);
+  const [month, setMonth] = useState(
+    (requestedEvent?.date ?? today).slice(0, 7),
+  );
+  const [day, setDay] = useState<string | null>(
+    requestedEvent?.monthOnly ? null : (requestedEvent?.date ?? null),
+  );
   const [archived, setArchived] = useState(false);
   const [items, setItems] = useState<CalendarItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [revision, setRevision] = useState(0);
-  const [editor, setEditor] = useState<string | null>(null);
+  const [editor, setEditor] = useState<string | null>(
+    requestedEvent?.id ?? null,
+  );
   const sequence = useRef(0);
   const endpoint = `/families/${family.id}/calendar-items`;
+  useEffect(() => {
+    if (!requestedEvent) return;
+    setMonth(requestedEvent.date.slice(0, 7));
+    setDay(requestedEvent.monthOnly ? null : requestedEvent.date);
+    setArchived(false);
+    setEditor(requestedEvent.id ?? null);
+    onEventOpened();
+  }, [requestedEvent]);
   useEffect(() => {
     const request = ++sequence.current;
     setLoading(true);
@@ -77,6 +101,7 @@ export function CalendarPage({
   const visible = day ? items.filter((item) => item.event_date === day) : items;
   function saved(item: CalendarItem, action: string) {
     setEditor(null);
+    onChanged();
     setMonth(item.event_date.slice(0, 7));
     setDay(item.event_date);
     if (action === "restore") setArchived(false);
@@ -108,79 +133,19 @@ export function CalendarPage({
         </p>
       )}
       <div className="calendar-layout">
-        <section className="calendar-month" aria-label="Calendar lunar">
-          <div className="calendar-month-heading">
-            <h2>
-              {dateLabel(`${month}-01`, { month: "long", year: "numeric" })}
-            </h2>
-            <div>
-              <button
-                className="icon-button"
-                aria-label="Luna precedentă"
-                disabled={month === "1900-01"}
-                onClick={() => selectMonth(moveMonth(month, -1))}
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                className="icon-button"
-                aria-label="Luna următoare"
-                disabled={month === "2100-12"}
-                onClick={() => selectMonth(moveMonth(month, 1))}
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-          <div className="calendar-weekdays" aria-hidden="true">
-            {["L", "M", "M", "J", "V", "S", "D"].map((label, i) => (
-              <span key={i}>{label}</span>
-            ))}
-          </div>
-          <div className="calendar-days">
-            {monthDays(month).map((date, i) =>
-              date ? (
-                <button
-                  key={date}
-                  className={`${day === date ? "selected " : ""}${date === today ? "today" : ""}`}
-                  aria-label={dateLabel(date)}
-                  aria-pressed={day === date}
-                  aria-current={date === today ? "date" : undefined}
-                  onClick={() => setDay(date)}
-                >
-                  <span>{Number(date.slice(-2))}</span>
-                  {!loading &&
-                    items.some((item) => item.event_date === date) && (
-                      <span
-                        className="calendar-dot"
-                        aria-label="Are evenimente"
-                      />
-                    )}
-                </button>
-              ) : (
-                <span key={`blank-${i}`} />
-              ),
-            )}
-          </div>
-          <div className="calendar-month-footer">
-            <button
-              className="text-button"
-              onClick={() => {
-                setMonth(today.slice(0, 7));
-                setDay(today);
-              }}
-            >
-              Astăzi
-            </button>
-            <button
-              className="text-button"
-              aria-pressed={day === null}
-              onClick={() => setDay(null)}
-            >
-              Toată luna
-            </button>
-          </div>
-        </section>
+        <CalendarMonth
+          month={month}
+          day={day}
+          today={today}
+          markedDates={loading ? [] : items.map((item) => item.event_date)}
+          onMonth={selectMonth}
+          onDay={setDay}
+          onToday={() => {
+            setMonth(today.slice(0, 7));
+            setDay(today);
+          }}
+          onAllMonth={() => setDay(null)}
+        />
         <section className="calendar-agenda" aria-labelledby="agenda-title">
           <div className="calendar-agenda-heading">
             <h2 id="agenda-title">
@@ -273,6 +238,8 @@ export function CalendarPage({
       </div>
       {editor && (
         <EventEditor
+          familyId={family.id}
+          userId={userId}
           key={editor}
           id={editor}
           endpoint={endpoint}
@@ -293,6 +260,8 @@ export function CalendarPage({
 }
 
 function EventEditor({
+  familyId,
+  userId,
   id,
   endpoint,
   initialItem,
@@ -301,6 +270,8 @@ function EventEditor({
   onSaved,
   onUnavailable,
 }: {
+  familyId: string;
+  userId: number;
   id: string;
   endpoint: string;
   initialItem: CalendarItem | null;
@@ -322,6 +293,12 @@ function EventEditor({
   const [allDay, setAllDay] = useState(initialItem?.all_day ?? true);
   const [time, setTime] = useState(initialItem?.time ?? "10:00");
   const [notes, setNotes] = useState(initialItem?.notes ?? "");
+  const [reminderOffset, setReminderOffset] = useState<number | null>(
+    initialItem?.reminder?.offset_minutes ?? null,
+  );
+  const [recipients, setRecipients] = useState<string[]>(
+    initialItem?.reminder?.recipients ?? [],
+  );
   const [visibility, setVisibility] = useState<"private" | "family">(
     initialItem?.visibility ?? "private",
   );
@@ -342,6 +319,8 @@ function EventEditor({
         setTime(data.time ?? "10:00");
         setNotes(data.notes ?? "");
         setVisibility(data.visibility);
+        setReminderOffset(data.reminder?.offset_minutes ?? null);
+        setRecipients(data.reminder?.recipients ?? []);
       })
       .catch((e) => {
         if (active) handleError(e, true);
@@ -388,6 +367,8 @@ function EventEditor({
             time: allDay ? null : time,
             notes,
             visibility,
+            reminder_offset_minutes: reminderOffset,
+            reminder_recipients: reminderOffset === null ? [] : recipients,
           }),
         }),
         "save",
@@ -466,7 +447,15 @@ function EventEditor({
                   <input
                     type="checkbox"
                     checked={allDay}
-                    onChange={(e) => setAllDay(e.target.checked)}
+                    onChange={(e) => {
+                      setAllDay(e.target.checked);
+                      if (
+                        e.target.checked &&
+                        reminderOffset !== null &&
+                        ![0, 1440].includes(reminderOffset)
+                      )
+                        setReminderOffset(0);
+                    }}
                   />
                   Toată ziua
                 </label>
@@ -499,6 +488,35 @@ function EventEditor({
                       : "Evenimentul este vizibil doar pentru tine."}
                   </small>
                 </label>
+                <ReminderFields
+                  familyId={familyId}
+                  userId={userId}
+                  allDay={allDay}
+                  visibility={visibility}
+                  offset={reminderOffset}
+                  recipients={recipients}
+                  onOffset={setReminderOffset}
+                  onRecipients={setRecipients}
+                />
+                {item?.reminder && (
+                  <div className="calendar-reminder-state" role="status">
+                    {item.reminder.deliveries
+                      .map(
+                        (delivery) =>
+                          ({
+                            pending: "Programat",
+                            delivered: "Livrat",
+                            cancelled: "Anulat",
+                            expired: "Moment depășit",
+                          })[delivery.state],
+                      )
+                      .filter(
+                        (value, index, values) =>
+                          values.indexOf(value) === index,
+                      )
+                      .join(" · ")}
+                  </div>
+                )}
                 <label className="field">
                   Notițe (opțional)
                   <textarea
@@ -510,7 +528,10 @@ function EventEditor({
                 </label>
                 <button
                   className="button primary full"
-                  disabled={!title.trim()}
+                  disabled={
+                    !title.trim() ||
+                    (reminderOffset !== null && !recipients.length)
+                  }
                   type="submit"
                 >
                   {busy ? "Se salvează…" : "Salvează"}

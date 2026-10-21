@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import ts from "typescript";
 const source = await readFile(
-  new URL("../src/modules/calendar/calendarDates.ts", import.meta.url),
+  new URL("../src/shared/calendarDates.ts", import.meta.url),
   "utf8",
 );
 const js = ts.transpileModule(source, {

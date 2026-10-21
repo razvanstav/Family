@@ -10,7 +10,12 @@ interface PrivateMedia
     /** @return array{id:string,status:string} */
     public function receive(string $familyId, int $actorId, UploadedFile $file): array;
 
+    /** @return array{id:string,status:string} */
+    public function receiveImage(string $familyId, int $actorId, UploadedFile $file): array;
+
     public function retry(string $familyId, string $assetId): string;
 
     public function download(string $familyId, string $assetId): StreamedResponse;
+
+    public function image(string $familyId, string $assetId): StreamedResponse;
 }

@@ -6,6 +6,8 @@ Pornim de la aplicația locală existentă și livrăm un singur pas verificabil
 
 **Prioritate actualizată la 21 octombrie 2026, la cererea utilizatorului:** după A1, livrăm Calendar C1 pentru testarea locală, apoi C3 pentru remindere in-app ale evenimentelor manuale și dashboardul cu date reale. Aceste felii preced restul M03–M06; folosesc numai dependențele necesare. A2–A3 și emailul extern rămân deschise pentru etapa de utilizare din afara mediului demo. C2/D4 și integrarea surselor se fac separat; livrarea C1 nu închide integral M07.
 
+Rezultat la 21 octombrie 2026: C1, C3 in-app, [Acasă H1](modules/interface.md#acasa-h1), [Bucătărie K1, K2 și K3a](modules/kitchen.md) sunt implementate și verificate local. După mesele din rețete, cu vot binar personal și comentariu, utilizatorul a cerut editarea și istoricul: K2 creează versiuni noi și păstrează mesele pe versiunea folosită. Secțiunea Bucătărie este după Documente, înainte de Calendar; Acasă rămâne prima și implicită. Se folosesc media privată, contextul de familie, RLS și auditul existente; M04 și restul K3–K4 rămân deschise.
+
 | Etapă | Modul și pașii | Rezultat înainte de continuare | Dependențe |
 | --- | --- | --- | --- |
 | M00 | Organizare | Index, fișe și punct de reluare salvate | Documentația existentă |
@@ -13,7 +15,7 @@ Pornim de la aplicația locală existentă și livrăm un singur pas verificabil
 | M02 | [Documente D1–D3](modules/documents.md) | Acces privat și partajat, upload, carantină și descărcare verificate | M01, media existentă |
 | M03 | [Autentificare A1–A3](modules/identity.md), apoi [Familie F4](modules/families.md) | Recuperare parolă, email și reguli pentru familie/profil clarificate și implementate în pași separați | M01–M02; furnizor email pentru livrare reală |
 | M04 | [Platformă P1–P4](modules/platform.md), [Documente D4](modules/documents.md), [Operare O1](modules/operations.md) | Contracte necesare, subiecți, media/worker, evenimente durabile și CI pregătite pentru noile module | M02–M03; stocare privată configurată înainte de staging |
-| M05 | [Bucătărie K1–K4](modules/kitchen.md) | Rețete versionate și preparări cu participanți și ratinguri | M04 |
+| M05 | [Bucătărie K1–K4](modules/kitchen.md) | Rețete versionate, mese, voturi personale și comentarii | M04 |
 | M06 | [Amintiri AM1–AM3](modules/memory.md) | Momente, fotografii și timeline autorizat, inclusiv preparările din Bucătărie | M04–M05 |
 | M07 | [Calendar C1–C4](modules/calendar.md) | Evenimente și scadențe cu remindere in-app/email, editare și anulare consecvente | M03–M04, D4 |
 | M08 | [Animale AN1–AN4](modules/pets.md) | Profil, greutate și îngrijire cu documente și scadențe | M02, M04, M07 |

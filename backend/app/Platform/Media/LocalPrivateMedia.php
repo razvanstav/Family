@@ -16,10 +16,23 @@ final class LocalPrivateMedia implements PrivateMedia
 
     public function receive(string $familyId, int $actorId, UploadedFile $file): array
     {
+        return $this->receiveFile($familyId, $actorId, $file, false);
+    }
+
+    public function receiveImage(string $familyId, int $actorId, UploadedFile $file): array
+    {
+        return $this->receiveFile($familyId, $actorId, $file, true);
+    }
+
+    private function receiveFile(string $familyId, int $actorId, UploadedFile $file, bool $imageOnly): array
+    {
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getRealPath());
         $allowed = ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if ($imageOnly) {
+            unset($allowed['application/pdf']);
+        }
         if (! isset($allowed[$mime]) || ! $file->isValid() || $file->getSize() < 1 || $file->getSize() > config('memoria.max_upload_bytes')) {
-            throw ValidationException::withMessages(['file' => 'Alege un PDF, JPG, PNG sau WebP de cel mult 10 MB.']);
+            throw ValidationException::withMessages(['file' => $imageOnly ? 'Alege un JPG, PNG sau WebP de cel mult 10 MB.' : 'Alege un PDF, JPG, PNG sau WebP de cel mult 10 MB.']);
         }
         if (DB::table('media_assets')->where('family_id', $familyId)->sum('bytes') + $file->getSize() > config('memoria.family_quota_bytes')) {
             throw ValidationException::withMessages(['file' => 'Spațiul familiei este plin (100 MB în această etapă).']);
@@ -112,6 +125,20 @@ final class LocalPrivateMedia implements PrivateMedia
         imagedestroy($image);
 
         return $ok;
+    }
+
+    public function image(string $familyId, string $assetId): StreamedResponse
+    {
+        $asset = DB::table('media_assets')->where('family_id', $familyId)->where('id', $assetId)->firstOrFail();
+        abort_unless($asset->status === 'ready', 409, 'Fotografia nu este disponibilă până la finalizarea verificării.');
+        abort_unless(in_array($asset->mime, ['image/jpeg', 'image/png', 'image/webp'], true), 404);
+        $disk = Storage::disk('local');
+        abort_unless($disk->exists($asset->storage_key), 404);
+
+        return $disk->response($asset->storage_key, 'fotografie', [
+            'Content-Type' => $asset->mime, 'Cache-Control' => 'private, no-store, max-age=0',
+            'X-Content-Type-Options' => 'nosniff', 'Content-Security-Policy' => "default-src 'none'; sandbox",
+        ], 'inline');
     }
 
     public function download(string $familyId, string $assetId): StreamedResponse

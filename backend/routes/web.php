@@ -1,7 +1,11 @@
 <?php
 
 use App\Modules\Calendar\Http\CalendarController;
+use App\Modules\Calendar\Http\CalendarNotificationController;
 use App\Modules\Documents\Http\DocumentController;
+use App\Modules\Home\Http\HomeController;
+use App\Modules\Kitchen\Http\MealController;
+use App\Modules\Kitchen\Http\RecipeController;
 use App\Platform\Families\FamilyController;
 use App\Platform\Families\InvitationController;
 use App\Platform\Families\TenantContext;
@@ -16,6 +20,25 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/invitations/{family}/inspect', [InvitationController::class, 'inspect'])->whereUuid('family')->middleware('throttle:30,1');
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
+        Route::get('/home', HomeController::class);
+        Route::get('/meals', [MealController::class, 'index']);
+        Route::post('/meals', [MealController::class, 'store'])->middleware('throttle:20,1');
+        Route::get('/meals/{meal}', [MealController::class, 'show'])->whereUuid('meal');
+        Route::get('/meals/{meal}/photo', [MealController::class, 'photo'])->whereUuid('meal');
+        Route::get('/meals/{meal}/recipe', [MealController::class, 'recipe'])->whereUuid('meal');
+        Route::put('/meals/{meal}/vote', [MealController::class, 'vote'])->whereUuid('meal')->middleware('throttle:30,1');
+        Route::delete('/meals/{meal}/vote', [MealController::class, 'withdraw'])->whereUuid('meal')->middleware('throttle:30,1');
+        Route::get('/recipes', [RecipeController::class, 'index']);
+        Route::post('/recipes', [RecipeController::class, 'store'])->middleware('throttle:20,1');
+        Route::get('/recipes/{recipe}', [RecipeController::class, 'show'])->whereUuid('recipe');
+        Route::get('/recipes/{recipe}/versions', [RecipeController::class, 'history'])->whereUuid('recipe');
+        Route::post('/recipes/{recipe}/versions', [RecipeController::class, 'revise'])->whereUuid('recipe')->middleware('throttle:20,1');
+        Route::get('/recipes/{recipe}/versions/{version}', [RecipeController::class, 'version'])->whereUuid(['recipe', 'version']);
+        Route::get('/recipes/{recipe}/versions/{version}/photo', [RecipeController::class, 'photo'])->whereUuid(['recipe', 'version']);
+        Route::get('/recipes/{recipe}/photo', [RecipeController::class, 'photo'])->whereUuid('recipe');
+        Route::post('/recipes/{recipe}/photo/scan', [RecipeController::class, 'retryPhoto'])->whereUuid('recipe')->middleware('throttle:10,1');
+        Route::get('/calendar-notifications', [CalendarNotificationController::class, 'index']);
+        Route::patch('/calendar-notifications/{notification}', [CalendarNotificationController::class, 'read'])->whereUuid('notification');
         Route::get('/calendar-items', [CalendarController::class, 'index']);
         Route::post('/calendar-items', [CalendarController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/calendar-items/{event}', [CalendarController::class, 'show'])->whereUuid('event');

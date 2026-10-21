@@ -25,6 +25,7 @@ final class FamilyController
         DB::table('family_memberships')->where('id', $member)->update(['revoked_at' => now()]);
         DB::table('document_grants')->where('family_id', $family)->where('membership_id', $member)->delete();
         DB::table('families')->where('id', $family)->increment('authz_revision');
+        event(new MembershipRevoked($family, $member));
         Audit::record($family, $request->user()->id, 'membership.revoked', $member);
 
         return response()->noContent();

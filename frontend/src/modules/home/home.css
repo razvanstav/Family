@@ -1,0 +1,123 @@
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(340px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.home-main,
+.home-side {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+.home-section {
+  min-width: 0;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+}
+.home-main .categories {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-bottom: 0;
+}
+.home-document-grid.document-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.home-section-link {
+  margin-top: 12px;
+}
+.home-rows {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.home-rows li + li {
+  border-top: 1px solid var(--line);
+}
+.home-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 0;
+  text-align: left;
+  background: transparent;
+}
+.home-row > svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.home-row > span:first-of-type {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.home-row strong {
+  font-size: 14px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.home-row small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.home-row:hover strong {
+  text-decoration: underline;
+}
+.home-access {
+  display: flex;
+  flex-shrink: 0;
+}
+.home-side .lucide-bell {
+  color: var(--icon-documents);
+}
+.home-empty {
+  padding-block: 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.home-error {
+  margin-bottom: 20px;
+}
+.home-loading {
+  margin-bottom: 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+@media (max-width: 1100px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+  .home-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+  .home-side .calendar-month {
+    grid-row: span 2;
+  }
+}
+@media (max-width: 700px) {
+  .home-layout,
+  .home-main,
+  .home-side {
+    gap: 18px;
+  }
+  .home-side {
+    grid-template-columns: 1fr;
+  }
+  .home-side .calendar-month {
+    grid-row: auto;
+  }
+  .home-section {
+    padding: 18px 0;
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+    border-radius: 0;
+  }
+}

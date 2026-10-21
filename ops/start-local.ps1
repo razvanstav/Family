@@ -24,5 +24,8 @@ if (-not $httpProcess) {
     $httpProcess = Start-Process $PhpPath -ArgumentList "-d extension=pdo_pgsql -d extension=gd -d upload_max_filesize=10M -d post_max_size=12M -S 127.0.0.1:8000 -t `"$root/backend/public`" `"$root/ops/router.php`"" -WorkingDirectory "$root/backend" -WindowStyle Hidden -PassThru -RedirectStandardOutput "$root/.runtime/http.out.log" -RedirectStandardError "$root/.runtime/http.err.log"
 }
 Write-Output 'Aplicație: http://127.0.0.1:8000/app/'
+if (-not (Get-CimInstance Win32_Process -Filter "Name='php.exe'" | Where-Object { $_.CommandLine -like "*$root/backend/artisan*calendar:deliver-reminders*--watch*" })) {
+    Start-Process $PhpPath -ArgumentList "-d extension=pdo_pgsql `"$root/backend/artisan`" calendar:deliver-reminders --watch --no-interaction" -WorkingDirectory "$root/backend" -WindowStyle Hidden -RedirectStandardOutput "$root/.runtime/reminders.out.log" -RedirectStandardError "$root/.runtime/reminders.err.log" | Out-Null
+}
 Write-Output 'Previzualizare mobil: http://127.0.0.1:8000/preview/mobile'
 Write-Output 'ClamAV poate avea nevoie de câteva secunde pentru încărcarea semnăturilor.'

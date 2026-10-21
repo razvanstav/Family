@@ -118,10 +118,12 @@ Actualizarea manuală a semnăturilor și pornirea pe acest Windows, din rădăc
 
 ```powershell
 & .\.tools\clamav\clamav-1.5.4.win.x64\freshclam.exe --quiet --config-file=.runtime/freshclam.conf
-.\ops\start-local.ps1 -PhpPath "$PWD\.tools\php84\php.exe"
+.\ops\start-local.ps1
 ```
 
-FreshClam rulează la cerere, fără actualizare programată configurată aici. Logurile sunt `.runtime/freshclam.log`, `.runtime/clamd.log` și `.runtime/clamd.err.log`. După pornire, clamd încarcă bazele în memorie înainte să poată scana. `ops/stop-local.ps1` oprește procesele acestui checkout.
+Scriptul caută PHP în PATH, apoi în `~/php84/php.exe`; poți indica altă instalare prin `-PhpPath`. Pornește și workerul `calendar:deliver-reminders --watch`, care verifică reminderele in-app la fiecare 15 secunde. Logurile lui sunt `.runtime/reminders.out.log` și `.runtime/reminders.err.log`; pentru o singură verificare rulează `php -d extension=pdo_pgsql backend/artisan calendar:deliver-reminders`. În afara acestui mediu local, comanda trebuie ținută pornită de managerul de procese al serverului.
+
+FreshClam rulează la cerere, fără actualizare programată configurată aici. Logurile sunt `.runtime/freshclam.log`, `.runtime/clamd.log` și `.runtime/clamd.err.log`. După pornire, clamd încarcă bazele în memorie înainte să poată scana. `ops/stop-local.ps1` oprește procesele acestui checkout, inclusiv workerul pentru remindere.
 
 Din rădăcina proiectului, cu extensiile PHP deja activate:
 

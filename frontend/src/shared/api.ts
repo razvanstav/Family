@@ -36,6 +36,20 @@ export type Document = {
   original_name?: string;
   grants?: string[];
 };
+export type DocumentSummary = Pick<
+  Document,
+  "id" | "title" | "category" | "visibility" | "mime" | "status"
+>;
+export type DocumentRequest = {
+  id?: string;
+  category?: string;
+  upload?: boolean;
+};
+export type CalendarRequest = {
+  id?: string;
+  date: string;
+  monthOnly?: boolean;
+};
 let csrf = "";
 const sessionListeners = new Set<() => void>();
 export function onSessionInvalidated(listener: () => void) {

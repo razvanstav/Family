@@ -5,9 +5,6 @@ import {
   ChevronDown,
   FileText,
   FolderHeart,
-  HeartPulse,
-  House,
-  Image,
   LockKeyhole,
   Plus,
   Search,
@@ -16,7 +13,6 @@ import {
   Users,
   X,
   Clock3,
-  AlertCircle,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -27,58 +23,54 @@ import {
   type Document,
   type Family,
   type Member,
+  type DocumentRequest,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { filterDocuments } from "./documentFilters";
-
-const categoryPhotos: Record<string, string> = {
-  personal: new URL("../../assets/categories/personal.webp", import.meta.url)
-    .href,
-  home: new URL("../../assets/categories/home.webp", import.meta.url).href,
-  health: new URL("../../assets/categories/health.webp", import.meta.url).href,
-  memories: new URL("../../assets/categories/memories.webp", import.meta.url)
-    .href,
-};
-
-export const categories = [
-  { id: "all", label: "Toate", icon: FolderHeart },
-  { id: "personal", label: "Personale", icon: FileText },
-  { id: "home", label: "Casă", icon: House },
-  { id: "health", label: "Sănătate", icon: HeartPulse },
-  { id: "memories", label: "Amintiri", icon: Image },
-];
-const categoryName = (id: string) =>
-  categories.find((c) => c.id === id)?.label ?? id;
-function FilePreview({ mime, category }: { mime: string; category: string }) {
-  const Icon = mime === "application/pdf" ? FileText : Image;
-  return (
-    <div className={`file-preview color-${category}`} aria-hidden="true">
-      <Icon size={36} strokeWidth={1.25} />
-    </div>
-  );
-}
+import {
+  categories,
+  categoryName,
+  FilePreview,
+  DocumentCard,
+  DocumentCategories,
+} from "../../shared/DocumentCard";
 
 export function Documents({
   family,
   userId,
+  requestedAction,
+  onActionOpened,
   onExpired,
 }: {
   family: Family;
   userId: number;
+  requestedAction: DocumentRequest | null;
+  onActionOpened: () => void;
   onExpired: () => void;
 }) {
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
+  const [category, setCategory] = useState(requestedAction?.category ?? "all");
   const [privacy, setPrivacy] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [upload, setUpload] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [upload, setUpload] = useState(
+    Boolean(requestedAction?.upload && family.role !== "limited"),
+  );
+  const [selected, setSelected] = useState<string | null>(
+    requestedAction?.id ?? null,
+  );
   const [notice, setNotice] = useState("");
   const endpoint = `/families/${family.id}`;
   const sequence = useRef(0);
+  useEffect(() => {
+    if (!requestedAction) return;
+    setCategory(requestedAction.category ?? "all");
+    setSelected(requestedAction.id ?? null);
+    setUpload(Boolean(requestedAction.upload && family.role !== "limited"));
+    onActionOpened();
+  }, [requestedAction]);
   async function load() {
     const id = ++sequence.current;
     setLoading(true);
@@ -185,31 +177,7 @@ export function Documents({
             Vezi toate
           </button>
         </div>
-        <div className="categories" aria-label="Categorii">
-          {categories
-            .filter(({ id }) => id !== "all")
-            .map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                className={`category color-${id} ${category === id ? "selected" : ""}`}
-                aria-pressed={category === id}
-                onClick={() => setCategory(id)}
-              >
-                <img src={categoryPhotos[id]} alt="" width="768" height="512" />
-                <span className="category-caption">
-                  <Icon size={16} strokeWidth={1.7} aria-hidden="true" />
-                  {label}
-                </span>
-                {category === id && (
-                  <Check
-                    className="category-check"
-                    size={15}
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
-            ))}
-        </div>
+        <DocumentCategories selected={category} onSelect={setCategory} />
         <div className="section-header">
           <h2 id="library-title">
             {loading || error
@@ -271,49 +239,7 @@ export function Documents({
         ) : (
           <div className="document-grid">
             {visible.map((doc) => (
-              <button
-                className="document-card"
-                key={doc.id}
-                aria-label={`${doc.title} · ${categoryName(doc.category)} · ${visibilityLabel[doc.visibility]}${doc.status === "quarantine" ? " · În verificare" : doc.status === "rejected" ? " · Respins" : ""}`}
-                onClick={() => setSelected(doc.id)}
-              >
-                <div className="card-top">
-                  <FilePreview mime={doc.mime} category={doc.category} />
-                  <span className="category-label">
-                    {categoryName(doc.category)}
-                  </span>
-                  <span
-                    className="mini-lock"
-                    aria-label={visibilityLabel[doc.visibility]}
-                  >
-                    {doc.visibility === "private" ? (
-                      <LockKeyhole size={15} />
-                    ) : (
-                      <Users size={15} />
-                    )}
-                  </span>
-                </div>
-                <div className="card-bottom">
-                  <h3 title={doc.title}>{doc.title}</h3>
-                  {doc.status === "ready" ? (
-                    <p>{doc.mime === "application/pdf" ? "PDF" : "Imagine"}</p>
-                  ) : (
-                    <p className={`card-status ${doc.status}`}>
-                      {doc.status === "quarantine" ? (
-                        <>
-                          <Clock3 size={13} />
-                          În verificare
-                        </>
-                      ) : (
-                        <>
-                          <AlertCircle size={13} />
-                          Respins
-                        </>
-                      )}
-                    </p>
-                  )}
-                </div>
-              </button>
+              <DocumentCard document={doc} key={doc.id} onOpen={setSelected} />
             ))}
           </div>
         )}
@@ -449,8 +375,8 @@ function UploadModal({
           {file && <span>Apasă pentru a înlocui</span>}
         </button>
         <p className="upload-limits">
-          PDF, JPG, PNG, WebP · maximum 10 MB/fișier și 100 MB/familie.
-          Imagini de maximum 16 megapixeli.
+          PDF, JPG, PNG, WebP · maximum 10 MB/fișier și 100 MB/familie. Imagini
+          de maximum 16 megapixeli.
         </p>
         <input
           ref={input}

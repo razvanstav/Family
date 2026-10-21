@@ -1,6 +1,6 @@
 # Interfață comună
 
-Stare: direcția vizuală și componentele comune există. Această fișă se aplică fluxului UI modificat în fiecare etapă; nu introduce o etapă separată de redesenare generală.
+Stare: direcția vizuală și componentele comune există. H1 Acasă este implementat și verificat local la 21 octombrie 2026, în limitele consemnate mai jos. Fișa se aplică și fluxului UI modificat în fiecare etapă; nu introduce o redesenare generală.
 
 ## Fișiere relevante
 
@@ -9,6 +9,7 @@ Stare: direcția vizuală și componentele comune există. Această fișă se ap
 - Dialog accesibil: `frontend/src/shared/Modal.tsx`.
 - Client API: `frontend/src/shared/api.ts`; se aliniază rutelor efectiv implementate.
 - Referință principală de structură: [mock-up ales](../../artifacts/design-reference-layout.jpeg). Paletă și atmosferă: `artifacts/design-reference-warm.png`; referință secundară: `artifacts/design-reference.png`.
+- Bucătărie are și [referința specifică aleasă](../../artifacts/kitchen-reference.png): rețete în interiorul Bucătăriei, fotografii, carduri și etichete compacte; funcțiile se adaugă numai când sunt reale. K3a adaugă secțiunea „Mese”, zile, vot binar și comentariu personal, la cererea utilizatorului. Implementare și probe: [Bucătărie](kitchen.md).
 
 ## Referință pe ecrane — 21 octombrie 2026
 
@@ -28,7 +29,7 @@ Decizie de design salvată, nu funcționalitate deja implementată. Numerotare d
 ## Adaptare desktop și legături între ecrane
 
 - Sidebar pentru modulele disponibile; antet cu familia activă, căutare contextuală, notificări și cont. Ierarhia și spațierea provin din mock-up, cu fotografii personale și carduri neutre.
-- Dashboard Acasă planificat: zonă principală de aproximativ două treimi pentru conținutul familiei; coloană de aproximativ o treime pentru calendar compact, evenimente apropiate și remindere. Grila se restrânge la o singură coloană pe ecrane înguste; listele extinse au pagini proprii. Nu umple coloana cu statistici sau elemente fictive.
+- Dashboard Acasă H1 implementat: zonă principală pentru categorii și documente recente; coloană pentru calendar compact, evenimente apropiate și remindere personale. Grila se restrânge la o singură coloană pe ecrane înguste; listele extinse au pagini proprii. Fără statistici sau elemente fictive.
 - Calendarul selectează ziua și arată evenimentele ei; reminderele sunt o listă separată cu sursa, scadența și starea. Crearea/editarea folosesc structura ecranului 3. O notificare deschide evenimentul ori documentul asociat, după verificarea accesului.
 - Clopoțelul deschide un panou pe desktop și o foaie/pagină pe mobil. Indicatorul necitit reflectă date reale; stările goale/eroare sunt explicite. Implementarea se leagă de Calendar C3 și transportul comun P4, fără modul de mesagerie.
 - Detaliile desktop folosesc două coloane când există galerie și informații suficiente; formularele scurte rămân într-un dialog. Acțiunea principală rămâne ușor de găsit, fără bare fixe care acoperă conținutul sau tastatura.
@@ -42,6 +43,31 @@ Decizie de design salvată, nu funcționalitate deja implementată. Numerotare d
 - [ ] Tastatura poate parcurge fluxul; focusul este vizibil. Dialogul captează/restabilește focusul, Escape funcționează, iar fundalul nu se derulează.
 - [ ] Încărcarea, lipsa datelor, lipsa rezultatelor, eroarea și retry au comportament real. Previne dublul submit și gestionează răspunsurile întârziate după schimbarea familiei.
 - [ ] Feedbackul și tranzițiile sunt discrete; `prefers-reduced-motion` și safe areas sunt respectate.
+
+## Acasa H1
+
+Stare: **implementat și verificat local**, 21 octombrie 2026. Utilizatorul a confirmat Acasă prima în meniu și ca pagină după autentificare. După K1, ordinea confirmată este identică pe desktop și mobil: Acasă → Familia mea → Documente → Bucătărie → Calendar; Cont rămâne accesibil separat și în bara mobilă. Datele provin din baza aplicației, inclusiv datele demo existente; H1 nu a adăugat exemple permanente pentru a umple dashboardul.
+
+### Contract și surse
+
+- GET `/api/v1/families/{family}/home?month=YYYY-MM`, autentificat prin `TenantContext`, RLS și `PrivateResponse`; răspuns privat fără cache. Luna este validată în intervalul 1900–2100. Endpointul nu scrie date și nu introduce tabele/migrații.
+- Documents expune `DocumentAccess::recent`: primele patru documente autorizate după creare, cu ordine stabilă după ID la egalitate. Politica existentă include proprietatea, familia și granturile selective. Rezumatul conține numai ID, titlu, categorie, acces, MIME și starea verificării; fără chei de stocare, bytes, granturi, date de profil sau numele fișierului original.
+- Calendar expune `CalendarOverview::home`, folosind `CalendarAccess::visible`, politica comună cu C1. Marcajele calendarului provin numai din evenimente vizibile, active, ale lunii selectate. Sunt returnate maximum cinci evenimente în următoarele 30 de zile, inclusiv azi; evenimentele cu oră deja trecute sunt excluse, cele fără oră rămân vizibile în ziua lor. Nu se transmit notițele.
+- `CalendarReminders::upcoming` returnează maximum cinci ocurențe în așteptare adresate utilizatorului curent, cu sursă/versiune și apartenențe încă autorizate, neexpirate, până la 30 de zile înainte. Ocurențele livrate/anulate sunt excluse; momentele sunt serializate cu offset explicit.
+- Home consumă aceste contracte publice și nu citește direct tabelele altor module. Interogările listelor sunt limitate, cu joinuri și fără lookupuri per element. Detaliile și fișierele se deschid pe rutele canonice și verifică accesul actual; rezumatele nu acordă drepturi suplimentare.
+- Interfața se reîncarcă la revenirea pe Acasă, schimbarea lunii, „Actualizează” și la 60 de secunde cât pagina este vizibilă. Remontarea după schimbarea familiei/contului și protecția contra răspunsurilor întârziate împiedică afișarea rezultatului cererii precedente. Nu există cache offline pentru date private.
+- `frontend/src/shared/DocumentCard.tsx`, `documentCards.css`, `CalendarMonth.tsx`, `calendarMonth.css` și `calendarDates.ts` sunt refolosite de paginile canonice și de Acasă. Tipul C1 este în `modules/calendar/calendarTypes.ts`. Stilurile mutate au fost scoase din CSS-ul modulelor, păstrând numai regulile specifice. Navigarea din Acasă este coordonată de `App.tsx`; modulele nu importă ecranele altor module.
+- Fișiere de intrare: `backend/app/Modules/Home/Http/HomeController.php`, `backend/app/Modules/Calendar/Application/CalendarOverview.php`, `frontend/src/modules/home/Home.tsx` și `home.css`, ruta din `backend/routes/web.php`.
+
+### Verificare H1 — 21 octombrie 2026
+
+- `HomeOverviewTest.php`: **7 teste / 84 aserțiuni** trecute. Acoperă autentificarea, familie străină/invalidă, revocare în sesiune existentă, privat/selectiv și grant retras, răspuns fără metadate de stocare, headere fără cache, zile/liste autorizate, arhivare, date cu/fără oră, fereastra de timp și luna, remindere personale/livrate și autor revocat, rol limitat, listă goală și luni invalide. Proba cu 12 documente/evenimente/remindere suplimentare păstrează numărul de interogări și limitele 4/5/5.
+- După extragerea politicii Calendar au trecut și cele 9 teste C1. Prima rulare comună a avut o eroare în fixture-ul de sortare Home: seederul pornea înaintea ceasului controlat. S-a corectat exclusiv setupul Home și s-au reluat cele șapte teste Home; C1 nu a fost rerulat fără schimbări suplimentare. Nu s-au reluat suitele backend F/D/A/C3 încheiate.
+- Build TypeScript/Vite, 20 teste frontend, Pint și `git diff --check` trecute. Testele de date/calendar folosesc acum utilitarul din shared.
+- Browser desktop 1376 × 1244 și mobil 360 × 800: card/categorie → Documente, detaliu și formular upload, creare eveniment din Acasă, marker de zi și apariția evenimentului/reminderului în dashboard, zi selectată și „Toată luna”, reminder → detaliu canonic, arhivare → dispariție din dashboard. Popescu/Ionescu afișează date separate; schimbarea familiei pe Acasă păstrează pagina. Deconectare și autentificare demo Ana → Acasă verificate. Escape închide dialogurile; Tab/Shift+Tab și Enter în meniu, cu focus vizibil, verificate.
+- La 360 px: fără overflow, carduri de documente de 156 px, zile de 45 × 44 px și aceeași ordine a meniului. Capturi ignorate: `.runtime/h1-home-desktop.png` și `.runtime/h1-home-mobile.png`; captura mobilă include proba fictivă înainte de curățare.
+- Evenimentul de probă `4edba548-20ca-4023-b295-6617eacfd3e1` a fost arhivat și apoi eliminat împreună cu destinatarii, ocurențele și două intrări de audit; verificare DB: zero rânduri rămase pentru acel ID în cele patru tabele. Baza aplicației, documentele, apartenențele și parolele existente nu au fost resetate.
+- Nu s-au provocat separat eroarea de rețea/reîncercarea în browser, nu s-au verificat dispozitive fizice și nu s-a făcut un audit general de securitate. Acceptarea privește suprafața H1 și contractele modificate, nu pregătirea întregului produs pentru producție. Modulele noi, emailul, exporturile și infrastructura de găzduire rămân pași separați.
 
 ## Limite de arhitectură
 

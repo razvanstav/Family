@@ -2,6 +2,8 @@
 
 namespace App\Modules\Calendar\Http;
 
+use App\Modules\Calendar\Application\CalendarAccess;
+use App\Modules\Calendar\Application\CalendarReminders;
 use App\Platform\Audit\Audit;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -17,26 +19,34 @@ final class CalendarController
 {
     private const TIMEZONE = 'Europe/Bucharest';
 
+    public function __construct(private readonly CalendarReminders $reminders, private readonly CalendarAccess $access) {}
+
     private function visible(Request $request, string $family): Builder
     {
-        return DB::table('calendar_items')
+        return $this->access->visible($family, $request->user()->id)
             ->join('users as u', 'u.id', '=', 'calendar_items.owner_id')
-            ->where('calendar_items.family_id', $family)
-            ->where(function (Builder $query) use ($request) {
-                $query->where('calendar_items.owner_id', $request->user()->id)
-                    ->orWhere('calendar_items.visibility', 'family');
-            })
-            ->select('calendar_items.*', 'u.name as owner_name');
+            ->leftJoinSub(DB::table('calendar_reminder_recipients')->selectRaw('calendar_item_id, json_agg(membership_id ORDER BY membership_id) as recipients_json')->groupBy('calendar_item_id'), 'r', 'r.calendar_item_id', '=', 'calendar_items.id')
+            ->leftJoinSub(DB::table('calendar_reminder_deliveries')->selectRaw("calendar_item_id, source_version, json_agg(json_build_object('membership_id', membership_id, 'state', state) ORDER BY membership_id) as deliveries_json")
+                ->groupBy('calendar_item_id', 'source_version'), 'd', function ($join) {
+                    $join->on('d.calendar_item_id', '=', 'calendar_items.id')->on('d.source_version', '=', 'calendar_items.version');
+                })
+            ->select('calendar_items.*', 'u.name as owner_name', 'r.recipients_json', 'd.deliveries_json');
     }
 
     private function payload(Request $request, object $event): array
     {
         $data = (array) $event;
-        unset($data['family_id']);
+        unset($data['family_id'], $data['recipients_json'], $data['deliveries_json'], $data['reminder_offset_minutes']);
         $startsAt = $event->starts_at ? new DateTimeImmutable($event->starts_at) : null;
         $data['time'] = $startsAt?->setTimezone(new DateTimeZone(self::TIMEZONE))->format('H:i');
         $data['starts_at'] = $startsAt?->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
         $data['can_edit'] = $event->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited';
+        $data['reminder'] = $event->reminder_offset_minutes !== null && $event->owner_id === $request->user()->id ? [
+            'offset_minutes' => $event->reminder_offset_minutes,
+            'recipients' => json_decode($event->recipients_json ?? '[]', true),
+            'due_at' => $this->reminders->schedule($event)['due_at']->toIso8601String(),
+            'deliveries' => json_decode($event->deliveries_json ?? '[]', true),
+        ] : null;
 
         return $data;
     }
@@ -66,6 +76,8 @@ final class CalendarController
             'event_date' => 'required|date_format:Y-m-d|after_or_equal:1900-01-01|before_or_equal:2100-12-31',
             'all_day' => 'required|boolean', 'time' => 'nullable|required_if:all_day,false|date_format:H:i',
             'visibility' => ['required', Rule::in(['private', 'family'])],
+            'reminder_offset_minutes' => 'sometimes|nullable|integer|in:0,15,60,1440',
+            'reminder_recipients' => 'sometimes|array|max:100', 'reminder_recipients.*' => 'required|uuid|distinct',
             'owner_id' => 'prohibited', 'family_id' => 'prohibited', 'starts_at' => 'prohibited', 'timezone' => 'prohibited',
         ], [
             'time.required_if' => 'Alege ora evenimentului.', 'time.date_format' => 'Introdu o oră validă.',
@@ -101,14 +113,23 @@ final class CalendarController
     {
         abort_if($request->attributes->get('membership')->role === 'limited', 403, 'Rolul tău permite doar consultarea calendarului.');
         $data = $this->validated($request);
-        $id = (string) Str::uuid();
-        DB::table('calendar_items')->insert($data + [
-            'id' => $id, 'family_id' => $family, 'owner_id' => $request->user()->id,
-            'created_at' => now(), 'updated_at' => now(),
-        ]);
-        Audit::record($family, $request->user()->id, 'calendar.created', $id);
 
-        return $this->show($request, $family, $id)->setStatusCode(201);
+        return DB::transaction(function () use ($request, $family, $data): JsonResponse {
+            $recipients = $data['reminder_recipients'] ?? [];
+            unset($data['reminder_recipients']);
+            $data['reminder_offset_minutes'] ??= null;
+            $id = (string) Str::uuid();
+            DB::table('calendar_items')->insert($data + [
+                'id' => $id, 'family_id' => $family, 'owner_id' => $request->user()->id,
+                'created_at' => now(), 'updated_at' => now(),
+            ]);
+            $item = DB::table('calendar_items')->where('id', $id)->firstOrFail();
+            $this->reminders->configure($family, $item, $item->reminder_offset_minutes, $recipients);
+            $this->reminders->replan($family, $item);
+            Audit::record($family, $request->user()->id, 'calendar.created', $id);
+
+            return $this->show($request, $family, $id)->setStatusCode(201);
+        });
     }
 
     private function editable(Request $request, string $family, string $event): object
@@ -125,11 +146,21 @@ final class CalendarController
     {
         $item = $this->editable($request, $family, $event);
         abort_if($item->archived_at !== null, 409, 'Restaurează evenimentul înainte de a-l modifica.');
-        DB::table('calendar_items')->where('id', $event)->where('family_id', $family)
-            ->update($this->validated($request) + ['version' => $item->version + 1, 'updated_at' => now()]);
-        Audit::record($family, $request->user()->id, 'calendar.updated', $event);
+        $data = $this->validated($request);
 
-        return $this->show($request, $family, $event);
+        return DB::transaction(function () use ($request, $family, $event, $item, $data): JsonResponse {
+            $offset = array_key_exists('reminder_offset_minutes', $data) ? $data['reminder_offset_minutes'] : $item->reminder_offset_minutes;
+            $recipients = $data['reminder_recipients'] ?? ($offset === null ? [] : json_decode($item->recipients_json ?? '[]', true));
+            unset($data['reminder_recipients']);
+            DB::table('calendar_items')->where('id', $event)->where('family_id', $family)
+                ->update($data + ['version' => $item->version + 1, 'updated_at' => now()]);
+            $updated = DB::table('calendar_items')->where('id', $event)->firstOrFail();
+            $this->reminders->configure($family, $updated, $offset, $recipients);
+            $this->reminders->replan($family, $updated);
+            Audit::record($family, $request->user()->id, 'calendar.updated', $event);
+
+            return $this->show($request, $family, $event);
+        });
     }
 
     public function archive(Request $request, string $family, string $event): JsonResponse
@@ -149,6 +180,7 @@ final class CalendarController
             DB::table('calendar_items')->where('id', $event)->where('family_id', $family)->update([
                 'archived_at' => $archived ? now() : null, 'version' => $item->version + 1, 'updated_at' => now(),
             ]);
+            $this->reminders->replan($family, DB::table('calendar_items')->where('id', $event)->firstOrFail());
             Audit::record($family, $request->user()->id, $archived ? 'calendar.archived' : 'calendar.restored', $event);
         }
 

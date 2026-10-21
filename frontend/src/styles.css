@@ -61,6 +61,7 @@ html:has(dialog[open]) {
 }
 button,
 input,
+textarea,
 select {
   font: inherit;
 }
@@ -87,7 +88,9 @@ button:disabled:active {
 }
 .documents-page,
 .family-page,
-.calendar-page {
+.calendar-page,
+.kitchen-page,
+.home-page {
   animation: page-enter 200ms var(--ease-out);
 }
 @keyframes page-enter {
@@ -577,6 +580,7 @@ main {
 }
 .field input,
 .field select,
+.field textarea,
 .filter-panel select {
   width: 100%;
   min-height: 44px;
@@ -590,6 +594,16 @@ main {
 }
 .field input::placeholder {
   color: #8b8e93;
+}
+.field textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+.field small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
 }
 .dropzone {
   display: flex;
@@ -998,6 +1012,7 @@ main {
   .search input,
   .field input,
   .field select,
+  .field textarea,
   .filter-panel select {
     font-size: 16px;
   }
@@ -1015,7 +1030,7 @@ main {
     right: 0;
     bottom: 0;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 5px;
     border-top: 1px solid var(--line);
     padding: 8px 12px max(8px, env(safe-area-inset-bottom));
@@ -1033,7 +1048,7 @@ main {
     background: transparent;
     border-radius: 9px;
     color: #777c83;
-    font-size: 11px;
+    font-size: 10px;
   }
   .mobile-nav button.active {
     color: #31553e;

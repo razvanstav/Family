@@ -4,9 +4,11 @@ import {
   ChevronDown,
   FolderHeart,
   Heart,
+  House,
   LogOut,
   CalendarDays,
   Users,
+  UtensilsCrossed,
 } from "lucide-react";
 import {
   api,
@@ -14,6 +16,8 @@ import {
   initials,
   onSessionInvalidated,
   type Session,
+  type DocumentRequest,
+  type CalendarRequest,
 } from "../shared/api";
 import { Documents } from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
@@ -21,15 +25,31 @@ import { AcceptInvitation } from "../modules/families/AcceptInvitation";
 import { Modal } from "../shared/Modal";
 import { observeSessionLifecycle } from "./sessionLifecycle";
 import { CalendarPage } from "../modules/calendar/Calendar";
+import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
+import { Home } from "../modules/home/Home";
+import { Kitchen } from "../modules/kitchen/Kitchen";
+
+const pageLabels = {
+  home: "Acasă",
+  family: "Familia mea",
+  documents: "Documente",
+  kitchen: "Bucătărie",
+  calendar: "Calendar",
+};
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [familyId, setFamilyId] = useState("");
   const [error, setError] = useState("");
-  const [page, setPage] = useState<"documents" | "family" | "calendar">(
-    "documents",
+  const [page, setPage] = useState<keyof typeof pageLabels>("home");
+  const [documentTarget, setDocumentTarget] = useState<DocumentRequest | null>(
+    null,
   );
   const [account, setAccount] = useState(false);
+  const [calendarRevision, setCalendarRevision] = useState(0);
+  const [calendarTarget, setCalendarTarget] = useState<CalendarRequest | null>(
+    null,
+  );
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionNotice, setSessionNotice] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
@@ -50,14 +70,16 @@ export default function App() {
     return () => window.removeEventListener("hashchange", changed);
   }, []);
   useEffect(() => {
-    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? "Autentificare" : page === "documents" ? "Documente" : page === "calendar" ? "Calendar" : "Familia mea"} · Memoria Familiei`;
+    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? "Autentificare" : pageLabels[page]} · Memoria Familiei`;
   }, [page, invitation, session?.user, checkingSession]);
   function acceptSession(data: Session) {
     sessionRevision.current++;
     knownActor.current = data.user?.id ?? null;
     setSession(data);
     setFamilyId(data.families[0]?.id ?? "");
-    setPage("documents");
+    setPage("home");
+    setDocumentTarget(null);
+    setCalendarTarget(null);
     setAccount(false);
     setError("");
     setSessionNotice(false);
@@ -207,6 +229,12 @@ export default function App() {
         </div>
         <nav aria-label="Navigație principală">
           <button
+            className={page === "home" ? "active" : ""}
+            onClick={() => setPage("home")}
+          >
+            <House size={21} /> Acasă
+          </button>
+          <button
             className={page === "family" ? "active" : ""}
             onClick={() => setPage("family")}
           >
@@ -217,6 +245,12 @@ export default function App() {
             onClick={() => setPage("documents")}
           >
             <FolderHeart size={21} /> Documente
+          </button>
+          <button
+            className={page === "kitchen" ? "active" : ""}
+            onClick={() => setPage("kitchen")}
+          >
+            <UtensilsCrossed size={21} /> Bucătărie
           </button>
           <button
             className={page === "calendar" ? "active" : ""}
@@ -249,13 +283,7 @@ export default function App() {
           </div>
           <span className="desktop-breadcrumb">
             Spațiul familiei <span>/</span>{" "}
-            <strong>
-              {page === "documents"
-                ? "Documente"
-                : page === "calendar"
-                  ? "Calendar"
-                  : "Membri"}
-            </strong>
+            <strong>{page === "family" ? "Membri" : pageLabels[page]}</strong>
           </span>
           <div className="topbar-actions">
             <label className="family-selector">
@@ -263,7 +291,11 @@ export default function App() {
               <select
                 aria-label="Familia activă"
                 value={familyId}
-                onChange={(e) => setFamilyId(e.target.value)}
+                onChange={(e) => {
+                  setFamilyId(e.target.value);
+                  setCalendarTarget(null);
+                  setDocumentTarget(null);
+                }}
               >
                 {session.families.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -273,6 +305,18 @@ export default function App() {
               </select>
               <ChevronDown size={14} />
             </label>
+            {family && (
+              <CalendarNotifications
+                key={`${session.user.id}:${family.id}`}
+                familyId={family.id}
+                revision={calendarRevision}
+                onExpired={() => void refresh()}
+                onOpenEvent={(event) => {
+                  setCalendarTarget(event);
+                  setPage("calendar");
+                }}
+              />
+            )}
             <button
               className="avatar profile-button"
               aria-label="Contul meu"
@@ -294,8 +338,31 @@ export default function App() {
             </p>
           )}
           {family ? (
-            page === "documents" ? (
+            page === "home" ? (
+              <Home
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                onExpired={() => void refresh()}
+                onDocuments={(request) => {
+                  setDocumentTarget(request);
+                  setPage("documents");
+                }}
+                onCalendar={(target) => {
+                  setCalendarTarget(target);
+                  setPage("calendar");
+                }}
+              />
+            ) : page === "documents" ? (
               <Documents
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                userId={session.user.id}
+                requestedAction={documentTarget}
+                onActionOpened={() => setDocumentTarget(null)}
+                onExpired={() => void refresh()}
+              />
+            ) : page === "kitchen" ? (
+              <Kitchen
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 userId={session.user.id}
@@ -305,6 +372,10 @@ export default function App() {
               <CalendarPage
                 key={`${session.user.id}:${family.id}`}
                 family={family}
+                userId={session.user.id}
+                requestedEvent={calendarTarget}
+                onEventOpened={() => setCalendarTarget(null)}
+                onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
               />
             ) : (
@@ -336,6 +407,14 @@ export default function App() {
       </div>
       <nav className="mobile-nav" aria-label="Navigație mobil">
         <button
+          aria-label="Acasă"
+          className={page === "home" ? "active" : ""}
+          onClick={() => setPage("home")}
+        >
+          <House size={21} />
+          <span>Acasă</span>
+        </button>
+        <button
           aria-label="Familia mea"
           className={page === "family" ? "active" : ""}
           onClick={() => setPage("family")}
@@ -350,6 +429,14 @@ export default function App() {
         >
           <FolderHeart size={21} />
           <span>Documente</span>
+        </button>
+        <button
+          aria-label="Bucătărie"
+          className={page === "kitchen" ? "active" : ""}
+          onClick={() => setPage("kitchen")}
+        >
+          <UtensilsCrossed size={21} />
+          <span>Bucătărie</span>
         </button>
         <button
           aria-label="Calendar"
