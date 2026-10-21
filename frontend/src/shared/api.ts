@@ -37,6 +37,13 @@ export type Document = {
   grants?: string[];
 };
 let csrf = "";
+const sessionListeners = new Set<() => void>();
+export function onSessionInvalidated(listener: () => void) {
+  sessionListeners.add(listener);
+  return () => {
+    sessionListeners.delete(listener);
+  };
+}
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -61,15 +68,19 @@ export async function api<T>(
     cache: "no-store",
   });
   if (!response.ok) {
+    if (response.status === 401 || response.status === 419) {
+      csrf = "";
+      if (path !== "/session")
+        sessionListeners.forEach((listener) => listener());
+    }
     const body = await response.json().catch(() => ({}));
     const firstError = body.errors
       ? Object.values(body.errors).flat()[0]
       : undefined;
+    const message = String(firstError ?? body.message ?? "").trim();
     throw new ApiError(
       response.status,
-      String(
-        firstError ?? body.message ?? "Acțiunea nu a putut fi finalizată.",
-      ),
+      message || "Acțiunea nu a putut fi finalizată.",
     );
   }
   if (response.status === 204) return undefined as T;
@@ -77,12 +88,6 @@ export async function api<T>(
   if (data.csrf_token) csrf = data.csrf_token;
   return data as T;
 }
-export const size = (bytes: number) =>
-  bytes < 1024
-    ? `${bytes} B`
-    : bytes < 1048576
-      ? `${Math.round(bytes / 1024)} KB`
-      : `${(bytes / 1048576).toFixed(1)} MB`;
 export const visibilityLabel = {
   private: "Doar eu",
   family: "Familia mea",

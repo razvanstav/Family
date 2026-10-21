@@ -4,6 +4,8 @@ Pornim de la aplicația locală existentă și livrăm un singur pas verificabil
 
 ## Ordinea etapelor
 
+**Prioritate actualizată la 21 octombrie 2026, la cererea utilizatorului:** după A1, livrăm Calendar C1 pentru testarea locală, apoi C3 pentru remindere in-app ale evenimentelor manuale și dashboardul cu date reale. Aceste felii preced restul M03–M06; folosesc numai dependențele necesare. A2–A3 și emailul extern rămân deschise pentru etapa de utilizare din afara mediului demo. C2/D4 și integrarea surselor se fac separat; livrarea C1 nu închide integral M07.
+
 | Etapă | Modul și pașii | Rezultat înainte de continuare | Dependențe |
 | --- | --- | --- | --- |
 | M00 | Organizare | Index, fișe și punct de reluare salvate | Documentația existentă |

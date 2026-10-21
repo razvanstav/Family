@@ -112,6 +112,17 @@ AlertEncrypted yes
 
 Ascultarea TCP rămâne exclusiv locală. Fără un scanner funcțional, uploadurile rămân în carantină; autentificarea și explorarea documentelor demo funcționează.
 
+În checkoutul Windows verificat la 21 octombrie 2026, distribuția portabilă [ClamAV 1.5.4](https://www.clamav.net/downloads) este în `.tools/clamav/clamav-1.5.4.win.x64/`. Configurațiile locale `.runtime/clamd.conf` și `.runtime/freshclam.conf` folosesc `DatabaseDirectory` cu calea absolută către `.runtime/clamav-db`; FreshClam folosește `DatabaseMirror database.clamav.net`. Configurația clamd include limitele de mai sus. Aceste fișiere, semnăturile și executabilele sunt ignorate de Git și se recreează la altă clonare.
+
+Actualizarea manuală a semnăturilor și pornirea pe acest Windows, din rădăcina proiectului:
+
+```powershell
+& .\.tools\clamav\clamav-1.5.4.win.x64\freshclam.exe --quiet --config-file=.runtime/freshclam.conf
+.\ops\start-local.ps1 -PhpPath "$PWD\.tools\php84\php.exe"
+```
+
+FreshClam rulează la cerere, fără actualizare programată configurată aici. Logurile sunt `.runtime/freshclam.log`, `.runtime/clamd.log` și `.runtime/clamd.err.log`. După pornire, clamd încarcă bazele în memorie înainte să poată scana. `ops/stop-local.ps1` oprește procesele acestui checkout.
+
 Din rădăcina proiectului, cu extensiile PHP deja activate:
 
 ```sh

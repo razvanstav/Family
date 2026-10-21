@@ -1,6 +1,6 @@
 # Documente
 
-Stare: bază implementată local. D1–D3 verifică M02; D4 extinde modulul în M04, după contractele necesare din Platformă.
+Stare: **D1–D3 verificate la 21 octombrie 2026; M02 închis local.** D4 extinde modulul în M04, după contractele necesare din Platformă.
 
 ## Ce există
 
@@ -8,16 +8,16 @@ Listă, căutare locală, categorii, filtru de acces, detaliu, upload PDF/JPEG/P
 
 ## Fișiere relevante
 
-- UI: `frontend/src/modules/documents/Documents.tsx`, `documents.css`.
+- UI: `frontend/src/modules/documents/Documents.tsx`, `documentFilters.ts`, `documents.css`.
 - API și autorizare: `backend/app/Modules/Documents/Http/DocumentController.php`, `Application/DocumentAccess.php`.
 - Teste: `backend/tests/Feature/DocumentSecurityTest.php`.
 - Bytes, scanner și cotă: [Platformă](platform.md). Aspect și dialoguri: [Interfață](interface.md).
 
 ## Pași
 
-- [ ] **D1 — Listă și detaliu.** Verifică cele două familii, căutarea, filtrele, titlurile lungi, stările goale/eroare și rolurile. Titlul complet rămâne accesibil în detaliu și cititorului de ecran; cardurile mobile rămân compacte.
-- [ ] **D2 — Acces și descărcare.** Verifică private/family/selected, grantul retras, membrul revocat, accesul direct prin ID și versiunea învechită. Acoperă metadata și bytes; proprietarul familiei nu poate ocoli intimitatea altui adult.
-- [ ] **D3 — Upload și verificare.** Verifică MIME falsificat, fișier prea mare, cotă, imagine recodată, scanner indisponibil, retry și fișier infectat. Rulează testele relevante și integrarea ClamAV reală înainte de închiderea pasului; nu prezenta dublul de test drept scanner real.
+- [x] **D1 — Listă și detaliu.** Verifică cele două familii, căutarea, filtrele, titlurile lungi, stările goale/eroare și rolurile. Titlul complet rămâne accesibil în detaliu și cititorului de ecran; cardurile mobile rămân compacte.
+- [x] **D2 — Acces și descărcare.** Verifică private/family/selected, grantul retras, membrul revocat, accesul direct prin ID și versiunea învechită. Acoperă metadata și bytes; proprietarul familiei nu poate ocoli intimitatea altui adult.
+- [x] **D3 — Upload și verificare.** Verifică MIME falsificat, fișier prea mare, cotă, imagine recodată, scanner indisponibil, retry și fișier infectat. Rulează testele relevante și integrarea ClamAV reală înainte de închiderea pasului; nu prezenta dublul de test drept scanner real.
 - [ ] **D4 — Contract pentru celelalte module.** După P1–P2, stabilește și implementează incremental paginile/atașamentele, subiecții și expirarea independentă a documentului. Expune contractele de asociere și acces pentru Pets/Vehicles; nu permite citirea tabelelor interne din alte module. Verifică modelul de media cu un singur proprietar și migrarea documentelor existente.
 
 ## Acceptare
@@ -26,6 +26,41 @@ Listă, căutare locală, categorii, filtru de acces, detaliu, upload PDF/JPEG/P
 - `If-Match` învechit nu suprascrie accesul nou; granturi și ID-uri străine nu lărgesc vizibilitatea.
 - Un fișier respins este eliminat; scannerul indisponibil păstrează carantina fără descărcare. Un rollback nu lasă fișier nou utilizabil.
 - Limitele actuale rămân 10 MB/fișier, 100 MB/familie și 16 megapixeli până la o schimbare explicită, verificată și comunicată în formular.
+
+## Ajustări UI — 21 octombrie 2026
+
+- La cererea utilizatorului: cele patru categorii au fotografii calde de acasă și etichete albe compacte. Imaginile WebP sunt în `frontend/src/assets/categories/`; sursa și prompturile Imagegen sunt în [manifest](../../artifacts/category-images.json).
+- Dimensiunea fișierului nu se mai afișează în card, detaliu sau selecția de upload. Limita reală de 10 MB și validarea rămân.
+- Build TypeScript/Vite trecut. Browser local la 1366 și 360 px: patru fotografii încărcate, patru coloane desktop/două mobil, fără overflow, carduri mobile de 156 px. Filtrul Casă arată un document; „Vezi toate” readuce cele patru documente. Captura desktop: `.runtime/categories-desktop.jpg` (ignorată de Git).
+- Corecția uploadului când se schimbă rolul și verificarea accesului după revocare sunt documentate la [F2](families.md#verificare-f2--21-octombrie-2026). Aceste ajustări nu închid acceptarea integrală D1–D3.
+
+## Verificare D1 — 21 octombrie 2026
+
+- Corecții: căutarea ignoră spațiile de la capete; eroarea listei nu mai afișează simultan „Niciun document” sau un număr fals de rezultate; eroarea de conexiune din detaliu are mesaj distinct și „Reîncearcă”. Starea accesibilă „Vezi toate” ține cont și de căutare/filtrul de acces.
+- Browser local, Ana: patru documente în Familia Popescu, unul în Familia Ionescu. Schimbarea familiei resetează filtrele. Detaliul documentului Elenei arată proprietarul și nu oferă administrarea accesului. Restricțiile rolului limitat și efectul revocării se preiau din F2, fără repetare.
+- Filtre Doar eu/Familia mea/Persoane alese, combinații cu căutare/categorie, lipsa rezultatelor și resetare verificate. Trei teste noi acoperă spațiile și majusculele românești, intersecția filtrelor și resetarea/listele goale.
+- Familie temporară fără documente: stare goală reală și acțiune de adăugare. Două înregistrări fictive au verificat „În verificare”/„Respins”, descărcarea dezactivată în detaliu și titlul de 160 de caractere, inclusiv segment fără spații. La 360 × 800, cardurile au 156 px, numele accesibil și detaliul păstrează titlul complet, fără overflow orizontal. Familia și înregistrările au fost eliminate după verificare; nu s-a executat scannerul.
+- Întreruperea controlată a serverului local a reprodus erorile înainte de corecție. După corecție, detaliul și lista se recuperează prin „Reîncearcă”; lista readuce cele patru documente și elimină eroarea. Serverul a fost repornit și a rămas disponibil.
+- Verificări: **10 teste frontend trecute, dintre care 3 noi pentru D1**, și build TypeScript/Vite reușit. Backendul nu a fost modificat; suitele F1–F3 nu au fost rerulate. Capturi ignorate de Git: `.runtime/d1-search.jpg`, `.runtime/d1-list-error.jpg`, `.runtime/d1-long-title-mobile.jpg`.
+- Contract D1: lista/detaliul folosesc GET-urile existente ale documentelor din familia activă; filtrarea este locală asupra listei deja autorizate. D2 verifică accesul și descărcarea, D3 verifică uploadul/scannerul. Acestea rămân deschise.
+
+## Verificare D2 — 21 octombrie 2026
+
+- Corecție UI: un conflict 412 lasă formularul în stare învechită, dezactivează opțiunile și salvarea și oferă „Reîncarcă accesul”. Reîncărcarea citește documentul și membrii actuali, înlocuiește selecția veche și permite revizuirea fără salvare automată. Deschiderea administrării citește și ea versiunea actuală. Controalele sunt dezactivate pe durata cererii.
+- Browser local: două ferestre Ana reproduc conflictul după private → family → selected. Formularul vechi nu suprascrie accesul, iar reîncărcarea arată „Persoane alese” și Mihai bifat. Fără destinatar, salvarea accesului selectat este dezactivată.
+- Sesiune independentă Mihai: documentul selectat poate fi deschis și descărcat, fără buton de administrare. Descărcarea PDF efectivă a fost observată în browser. După retragerea grantului, descărcarea din detaliul deja deschis este refuzată, detaliul și cardul dispar; mesajul spune explicit că documentul nu mai este disponibil sau accesibil. Nu se poate retrage copia deja descărcată.
+- „Jurnal de călătorie” a fost readus la „Doar eu”, fără granturi. Nu au fost modificați membrii sau celelalte documente. Revocarea apartenenței și restricțiile adultului sunt preluate din F2, fără repetare.
+- Comandă din `backend`: `../.tools/php84/php.exe -d extension=pdo_pgsql -d extension=gd vendor/bin/phpunit tests/Feature/DocumentSecurityTest.php --filter='test_family_owner_cannot_read_other_adults_private_metadata_or_bytes|test_foreign_document_identifiers_and_wrong_parent_are_hidden|test_explicit_grant_and_revocation_apply_to_metadata_and_each_download|test_stale_versions_and_foreign_grants_cannot_change_access' --testdox`. **4 teste / 29 aserțiuni trecute**: document privat al altui adult, ID/părinte străin, grant retras pentru metadata și bytes, versiune veche și grant străin.
+- Build TypeScript/Vite trecut; backendul nu a necesitat modificări. Fereastra de acces la 360 px: fără overflow orizontal, butoane de minimum 44 px. Contractul de descărcare rămâne cel existent: serverul verifică accesul la fiecare cerere. D3 și integrarea scannerului rămân deschise.
+
+## Verificare D3 — 21 octombrie 2026
+
+- ClamAV **1.5.4** instalat portabil din distribuția oficială în `.tools/clamav/clamav-1.5.4.win.x64`. FreshClam a validat bazele `daily` **28160**, `main` **63**, `bytecode` **339**. Configurațiile și bazele sunt în `.runtime/`, ignorate de Git. `clamd` ascultă numai pe `127.0.0.1:3310`; pornirea prin `ops/start-local.ps1` a fost verificată. Instrucțiunile sunt în [configurarea locală](../../ops/SETUP.md#4-clamav-și-pornire).
+- Corecție reprodusă în browser: înlocuirea unui fișier valid cu unul prea mare lăsa fișierul vechi selectat și „Salvează” activ. Acum selecția se golește și salvarea se dezactivează. Inputul se resetează după alegere pentru a permite reselectarea aceluiași fișier. Limitele de 10 MB/fișier, 100 MB/familie și 16 megapixeli rămân vizibile inclusiv după selecție; dimensiunea fișierului nu este afișată.
+- **6 teste D3 / 34 aserțiuni trecute**, cu dublu de scanner: MIME real și acces inițial privat; scanner indisponibil → carantină → retry; respingere și ștergerea bytes; depășirea limitei și cotei; recodarea imaginii și eliminarea datelor adăugate; curățarea fișierului după rollback. Filtrul PHPUnit: `test_clean_upload_is_private_and_checks_real_mime|test_scanner_failure_quarantines_and_retry_can_release_clean_bytes|test_infected_bytes_are_rejected_and_deleted|test_oversized_files_tenant_override_and_quota_are_rejected|test_image_reencoding_removes_extra_payload|test_failed_database_transaction_removes_new_private_bytes`, din `tests/Feature/DocumentSecurityTest.php`.
+- **2 teste ClamAV reale / 7 aserțiuni trecute**, cu `CLAMAV_INTEGRATION=1` și filtrul `test_live_clamav`: upload de PDF curat până la descărcare și detectarea semnăturii inofensive EICAR transmisă numai în memorie. EICAR nu a fost încărcat prin formular; ștergerea după verdict infectat este verificată separat cu dublul de scanner, nu prezentată drept upload infectat complet prin ClamAV.
+- Browser local: PDF salvat privat în carantină înainte de pornirea scannerului, descărcare dezactivată; după pornire, „Reîncearcă verificarea” produce starea disponibilă și activează descărcarea. HTML redenumit `.pdf` refuzat de server. PNG de 4001 × 4000 pixeli respins, cu `bytes=0` și absența fișierului confirmată pe disc. Cele două documente temporare, bytes și evenimentele lor au fost eliminate; documentele demo sunt păstrate.
+- Build TypeScript/Vite trecut. Formular la 360 × 800: limite lizibile, fără overflow orizontal, buton „Salvează” de 44 px. Capturi ignorate de Git: `.runtime/d3-scan-ready.jpg`, `.runtime/d3-upload-mobile.jpg`. Backendul nu a necesitat modificări. F1–F3 și D1–D2 nu au fost repetate.
 
 ## Regula pentru scadențe
 

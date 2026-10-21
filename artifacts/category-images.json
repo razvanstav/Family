@@ -1,0 +1,29 @@
+{
+  "generator": "Built-in imagegen",
+  "date": "2026-10-21",
+  "purpose": "Decorative photographic backgrounds for document categories. Generated scenes; no user photos.",
+  "prompt_template": "Use case: photorealistic-natural. Asset type: photographic background for a category tile in a private family app. Create one landscape editorial lifestyle photograph, approximately 3:2 composition. {scene} Style: warm candid analog photography, subtle natural grain, cream linen, wood, muted earthy colors and softly directional window light. Believable ordinary home, unstyled warmth, gentle shallow depth of field, rich photographic detail. Compose the important objects in the middle and upper half, with a quiet uncluttered lower-left area for a UI label that will be added separately. Full-bleed photograph only, no collage, no typography, no labels, no interface, no borders, no watermark. Avoid corporate stock imagery, vector illustration, glossy advertising and oversaturated colors.",
+  "export": "768 × 512 WebP, quality 82. Original PNGs retained in the generator output directory.",
+  "images": [
+    {
+      "category": "personal",
+      "path": "frontend/src/assets/categories/personal.webp",
+      "scene": "A blue linen notebook, a closed cream document folder and simple reading glasses on a honey oak dining table near a window. A small sprig in a ceramic vase softly out of focus behind them. Personal family papers, quietly lived-in and organized. No legible writing."
+    },
+    {
+      "category": "home",
+      "path": "frontend/src/assets/categories/home.webp",
+      "scene": "A welcoming lived-in family living room with a warm ivory sofa, rumpled linen throw, small wooden coffee table with a ceramic mug, leafy plant and soft morning sunshine. Cozy modest European home, natural and affectionate, no people."
+    },
+    {
+      "category": "health",
+      "path": "frontend/src/assets/categories/health.webp",
+      "scene": "A small open cream linen family care pouch, adhesive bandages, a simple unbranded thermometer and folded soft towel on a light wood surface at home, with a tiny green plant in the background. Reassuring everyday care, no pills, no medical logos, no clinic."
+    },
+    {
+      "category": "memories",
+      "path": "frontend/src/assets/categories/memories.webp",
+      "scene": "A real open family photo album with cream pages on a wooden table, a few loose small vacation photographs and a vintage compact camera beside it. The snapshots show softly indistinct family moments at the seaside. Nostalgic and intimate without any legible writing."
+    }
+  ]
+}

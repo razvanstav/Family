@@ -130,13 +130,8 @@ export function FamilyPage({
   }
   useEffect(() => {
     void load();
-    const check = () => {
-      if (document.visibilityState === "visible") void load();
-    };
-    document.addEventListener("visibilitychange", check);
     return () => {
       sequence.current++;
-      document.removeEventListener("visibilitychange", check);
     };
   }, [familyId]);
 

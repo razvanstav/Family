@@ -1,25 +1,42 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowRight,
   ChevronDown,
   FolderHeart,
   Heart,
   LogOut,
-  Search,
+  CalendarDays,
   Users,
 } from "lucide-react";
-import { api, type Session } from "../shared/api";
+import {
+  api,
+  ApiError,
+  onSessionInvalidated,
+  type Session,
+} from "../shared/api";
 import { Documents } from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
 import { AcceptInvitation } from "../modules/families/AcceptInvitation";
 import { Modal } from "../shared/Modal";
+import { observeSessionLifecycle } from "./sessionLifecycle";
+import { CalendarPage } from "../modules/calendar/Calendar";
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [familyId, setFamilyId] = useState("");
   const [error, setError] = useState("");
-  const [page, setPage] = useState<"documents" | "family">("documents");
+  const [page, setPage] = useState<"documents" | "family" | "calendar">(
+    "documents",
+  );
   const [account, setAccount] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [sessionNotice, setSessionNotice] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const sessionRevision = useRef(0);
+  const knownActor = useRef<number | null>(null);
+  const sessionChannel = useRef<BroadcastChannel | null>(null);
+  const sessionRequest = useRef<Promise<void> | null>(null);
   const [invitation, setInvitation] = useState(() =>
     new URLSearchParams(window.location.hash.slice(1)).get("invite"),
   );
@@ -32,38 +49,99 @@ export default function App() {
     return () => window.removeEventListener("hashchange", changed);
   }, []);
   useEffect(() => {
-    document.title = `${invitation ? "Invitație" : page === "documents" ? "Documente" : "Familia mea"} · Memoria Familiei`;
-  }, [page, invitation]);
-  async function refresh() {
-    try {
-      const data = await api<Session>("/session");
-      setSession(data);
-      setFamilyId((id) =>
-        data.families.some((f) => f.id === id)
-          ? id
-          : (data.families[0]?.id ?? ""),
-      );
-      setError("");
-    } catch {
-      setError(
-        "Nu am putut contacta aplicația. Verifică dacă serverul este pornit.",
-      );
-    }
+    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? "Autentificare" : page === "documents" ? "Documente" : page === "calendar" ? "Calendar" : "Familia mea"} · Memoria Familiei`;
+  }, [page, invitation, session?.user, checkingSession]);
+  function acceptSession(data: Session) {
+    sessionRevision.current++;
+    knownActor.current = data.user?.id ?? null;
+    setSession(data);
+    setFamilyId(data.families[0]?.id ?? "");
+    setPage("documents");
+    setAccount(false);
+    setError("");
+    setSessionNotice(false);
+    setCheckingSession(document.visibilityState !== "visible");
+    sessionChannel.current?.postMessage("changed");
+  }
+  function refresh(): Promise<void> {
+    if (sessionRequest.current) return sessionRequest.current;
+    const revision = ++sessionRevision.current;
+    setCheckingSession(true);
+    setAccount(false);
+    setError("");
+    const pending = (async () => {
+      try {
+        const data = await api<Session>("/session");
+        if (revision !== sessionRevision.current) return;
+        if (knownActor.current !== null && !data.user) setSessionNotice(true);
+        knownActor.current = data.user?.id ?? null;
+        setSession(data);
+        setFamilyId((id) =>
+          data.families.some((f) => f.id === id)
+            ? id
+            : (data.families[0]?.id ?? ""),
+        );
+        setCheckingSession(document.visibilityState !== "visible");
+      } catch {
+        if (revision !== sessionRevision.current) return;
+        setSession(null);
+        setFamilyId("");
+        setError(
+          "Nu am putut verifica sesiunea. Verifică conexiunea și reîncearcă.",
+        );
+      }
+    })();
+    sessionRequest.current = pending;
+    void pending.finally(() => {
+      if (sessionRequest.current === pending) sessionRequest.current = null;
+    });
+    return pending;
   }
   useEffect(() => {
     void refresh();
-    const checkSession = () => {
-      if (document.visibilityState === "visible") void refresh();
+    const stopObserving = observeSessionLifecycle(document, window, {
+      resume: () => {
+        void refresh();
+      },
+      suspend: () => {
+        sessionRevision.current++;
+        sessionRequest.current = null;
+        setCheckingSession(true);
+        setAccount(false);
+      },
+    });
+    const channel =
+      typeof BroadcastChannel === "undefined"
+        ? null
+        : new BroadcastChannel("memoria-session");
+    sessionChannel.current = channel;
+    if (channel)
+      channel.onmessage = (event) => {
+        if (event.data === "changed") {
+          sessionRequest.current = null;
+          void refresh();
+        }
+      };
+    const unsubscribe = onSessionInvalidated(() => {
+      setSessionNotice(true);
+      sessionRequest.current = null;
+      void refresh();
+    });
+    return () => {
+      sessionRevision.current++;
+      sessionRequest.current = null;
+      unsubscribe();
+      stopObserving();
+      channel?.close();
+      sessionChannel.current = null;
     };
-    document.addEventListener("visibilitychange", checkSession);
-    return () => document.removeEventListener("visibilitychange", checkSession);
   }, []);
   const family = session?.families.find((f) => f.id === familyId);
-  if (!session)
+  if (!session || checkingSession)
     return (
       <div className="startup">
         <Brand />
-        <p role="status">{error || "Pregătim spațiul familiei…"}</p>
+        <p role="status">{error || "Se verifică sesiunea…"}</p>
         {error && (
           <button className="button primary" onClick={() => void refresh()}>
             Reîncearcă
@@ -77,9 +155,9 @@ export default function App() {
         key={invitation}
         invitation={invitation}
         session={session}
-        onSession={setSession}
+        onSession={acceptSession}
         onDone={(data, id) => {
-          setSession(data);
+          acceptSession(data);
           setFamilyId(id);
           setPage("family");
           setInvitation(null);
@@ -96,19 +174,23 @@ export default function App() {
     return (
       <Login
         demo={session.demo}
-        onLogin={(data) => {
-          setSession(data);
-          setFamilyId(data.families[0]?.id ?? "");
-        }}
+        expired={sessionNotice}
+        onLogin={acceptSession}
       />
     );
   async function logout() {
+    if (logoutBusy) return;
+    setLogoutBusy(true);
+    setLogoutError("");
     try {
-      setSession(await api<Session>("/logout", { method: "POST" }));
-      setAccount(false);
-      setFamilyId("");
-    } catch {
-      setError("Deconectarea nu a reușit. Reîncearcă.");
+      acceptSession(await api<Session>("/logout", { method: "POST" }));
+    } catch (e) {
+      if (!(e instanceof ApiError && [401, 419].includes(e.status)))
+        setLogoutError(
+          "Deconectarea nu a reușit. Verifică conexiunea și reîncearcă.",
+        );
+    } finally {
+      setLogoutBusy(false);
     }
   }
   const initials = session.user.name
@@ -127,6 +209,12 @@ export default function App() {
           <strong>{family?.name ?? "Familia ta"}</strong>
         </div>
         <nav aria-label="Navigație principală">
+          <button
+            className={page === "calendar" ? "active" : ""}
+            onClick={() => setPage("calendar")}
+          >
+            <CalendarDays size={21} /> Calendar
+          </button>
           <button
             className={page === "documents" ? "active" : ""}
             onClick={() => setPage("documents")}
@@ -164,7 +252,13 @@ export default function App() {
           </div>
           <span className="desktop-breadcrumb">
             Spațiul familiei <span>/</span>{" "}
-            <strong>{page === "documents" ? "Documente" : "Membri"}</strong>
+            <strong>
+              {page === "documents"
+                ? "Documente"
+                : page === "calendar"
+                  ? "Calendar"
+                  : "Membri"}
+            </strong>
           </span>
           <div className="topbar-actions">
             <label className="family-selector">
@@ -174,7 +268,7 @@ export default function App() {
                 value={familyId}
                 onChange={(e) => {
                   setFamilyId(e.target.value);
-                  setPage("documents");
+                  if (page !== "calendar") setPage("documents");
                 }}
               >
                 {session.families.map((f) => (
@@ -195,6 +289,11 @@ export default function App() {
           </div>
         </header>
         <main>
+          {sessionNotice && (
+            <p className="notice" role="status">
+              Sesiunea s-a schimbat. Reia acțiunea.
+            </p>
+          )}
           {error && (
             <p className="error" role="alert">
               {error}
@@ -203,14 +302,20 @@ export default function App() {
           {family ? (
             page === "documents" ? (
               <Documents
-                key={family.id}
+                key={`${session.user.id}:${family.id}`}
                 family={family}
                 userId={session.user.id}
                 onExpired={() => void refresh()}
               />
+            ) : page === "calendar" ? (
+              <CalendarPage
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                onExpired={() => void refresh()}
+              />
             ) : (
               <FamilyPage
-                key={family.id}
+                key={`${session.user.id}:${family.id}`}
                 familyId={family.id}
                 onExpired={() => void refresh()}
                 isOwner={family.role === "owner"}
@@ -253,21 +358,12 @@ export default function App() {
           <span>Familie</span>
         </button>
         <button
-          aria-label={page === "documents" ? "Caută documente" : "Caută membri"}
-          onClick={() => {
-            window.setTimeout(
-              () =>
-                document
-                  .getElementById(
-                    page === "documents" ? "document-search" : "family-search",
-                  )
-                  ?.focus(),
-              0,
-            );
-          }}
+          aria-label="Calendar"
+          className={page === "calendar" ? "active" : ""}
+          onClick={() => setPage("calendar")}
         >
-          <Search size={21} />
-          <span>Caută</span>
+          <CalendarDays size={21} />
+          <span>Calendar</span>
         </button>
         <button onClick={() => setAccount(true)} aria-label="Contul meu">
           <span className="mobile-initial" aria-hidden="true">
@@ -286,8 +382,18 @@ export default function App() {
           {session.demo && (
             <p className="demo-note">Cont demo · date fictive.</p>
           )}
-          <button className="button primary full" onClick={() => void logout()}>
-            <LogOut size={18} /> Deconectează-te
+          {logoutError && (
+            <p className="error" role="alert">
+              {logoutError}
+            </p>
+          )}
+          <button
+            className="button primary full"
+            disabled={logoutBusy}
+            onClick={() => void logout()}
+          >
+            <LogOut size={18} />{" "}
+            {logoutBusy ? "Se deconectează…" : "Deconectează-te"}
           </button>
         </Modal>
       )}
@@ -314,9 +420,11 @@ function Brand({ compact = false }: { compact?: boolean }) {
 }
 function Login({
   demo,
+  expired,
   onLogin,
 }: {
   demo: boolean;
+  expired: boolean;
   onLogin: (session: Session) => void;
 }) {
   const [email, setEmail] = useState("");
@@ -325,6 +433,7 @@ function Login({
   const [error, setError] = useState("");
   async function login(e: FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError("");
     try {
@@ -348,12 +457,18 @@ function Login({
       <div className="login-form-wrap">
         <div className="login-form">
           <h1>Autentificare</h1>
+          {expired && (
+            <p className="notice" role="status">
+              Sesiunea nu mai este activă. Intră din nou în cont.
+            </p>
+          )}
           <form onSubmit={login}>
             <label className="field">
               Adresa de email
               <input
                 type="email"
                 autoComplete="username"
+                disabled={busy}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -365,6 +480,7 @@ function Login({
               <input
                 type="password"
                 autoComplete="current-password"
+                disabled={busy}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -388,6 +504,7 @@ function Login({
                 {["ana", "mihai", "elena"].map((name) => (
                   <button
                     key={name}
+                    disabled={busy}
                     onClick={() => {
                       setEmail(`${name}@example.test`);
                       setPassword("Familie-Demo-2026!");

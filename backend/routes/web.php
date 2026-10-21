@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\Calendar\Http\CalendarController;
 use App\Modules\Documents\Http\DocumentController;
 use App\Platform\Families\FamilyController;
 use App\Platform\Families\InvitationController;
@@ -15,6 +16,12 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/invitations/{family}/inspect', [InvitationController::class, 'inspect'])->whereUuid('family')->middleware('throttle:30,1');
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
+        Route::get('/calendar-items', [CalendarController::class, 'index']);
+        Route::post('/calendar-items', [CalendarController::class, 'store'])->middleware('throttle:20,1');
+        Route::get('/calendar-items/{event}', [CalendarController::class, 'show'])->whereUuid('event');
+        Route::patch('/calendar-items/{event}', [CalendarController::class, 'update'])->whereUuid('event');
+        Route::post('/calendar-items/{event}/archive', [CalendarController::class, 'archive'])->whereUuid('event');
+        Route::post('/calendar-items/{event}/restore', [CalendarController::class, 'restore'])->whereUuid('event');
         Route::get('/members', [FamilyController::class, 'members']);
         Route::patch('/members/{member}/role', [FamilyController::class, 'updateRole'])->whereUuid('member')->middleware('throttle:20,1');
         Route::get('/invitations', [InvitationController::class, 'index']);

@@ -22,13 +22,22 @@ import {
 import {
   api,
   ApiError,
-  size,
   visibilityLabel,
   type Document,
   type Family,
   type Member,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
+import { filterDocuments } from "./documentFilters";
+
+const categoryPhotos: Record<string, string> = {
+  personal: new URL("../../assets/categories/personal.webp", import.meta.url)
+    .href,
+  home: new URL("../../assets/categories/home.webp", import.meta.url).href,
+  health: new URL("../../assets/categories/health.webp", import.meta.url).href,
+  memories: new URL("../../assets/categories/memories.webp", import.meta.url)
+    .href,
+};
 
 export const categories = [
   { id: "all", label: "Toate", icon: FolderHeart },
@@ -82,7 +91,9 @@ export function Documents({
       if (e instanceof ApiError && [401, 419, 404].includes(e.status))
         onExpired();
       setError(
-        e instanceof Error ? e.message : "Nu am putut încărca documentele.",
+        e instanceof ApiError
+          ? e.message
+          : "Nu am putut încărca documentele. Verifică conexiunea și reîncearcă.",
       );
     } finally {
       if (id === sequence.current) setLoading(false);
@@ -94,20 +105,10 @@ export function Documents({
       sequence.current++;
     };
   }, [family.id]);
-  // Recheck when returning to the tab; never persist private lists in local storage.
   useEffect(() => {
-    const check = () => {
-      if (document.visibilityState === "visible") void load();
-    };
-    document.addEventListener("visibilitychange", check);
-    return () => document.removeEventListener("visibilitychange", check);
-  }, [family.id]);
-  const visible = docs.filter(
-    (d) =>
-      (category === "all" || d.category === category) &&
-      (privacy === "all" || d.visibility === privacy) &&
-      d.title.toLocaleLowerCase("ro").includes(search.toLocaleLowerCase("ro")),
-  );
+    if (family.role === "limited") setUpload(false);
+  }, [family.role]);
+  const visible = filterDocuments(docs, search, category, privacy);
   return (
     <div className="documents-page">
       <section className="page-heading">
@@ -173,6 +174,9 @@ export function Documents({
           <h2>Categorii</h2>
           <button
             className="text-button"
+            aria-pressed={
+              category === "all" && privacy === "all" && !search.trim()
+            }
             onClick={() => {
               setCategory("all");
               setSearch("");
@@ -183,24 +187,34 @@ export function Documents({
           </button>
         </div>
         <div className="categories" aria-label="Categorii">
-          {categories.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              className={`category color-${id} ${category === id ? "selected" : ""}`}
-              aria-pressed={category === id}
-              onClick={() => setCategory(id)}
-            >
-              <span>
-                <Icon size={18} strokeWidth={1.7} />
-              </span>
-              {label}
-            </button>
-          ))}
+          {categories
+            .filter(({ id }) => id !== "all")
+            .map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                className={`category color-${id} ${category === id ? "selected" : ""}`}
+                aria-pressed={category === id}
+                onClick={() => setCategory(id)}
+              >
+                <img src={categoryPhotos[id]} alt="" width="768" height="512" />
+                <span className="category-caption">
+                  <Icon size={16} strokeWidth={1.7} aria-hidden="true" />
+                  {label}
+                </span>
+                {category === id && (
+                  <Check
+                    className="category-check"
+                    size={15}
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            ))}
         </div>
         <div className="section-header">
           <div>
             <h2 id="library-title">
-              {loading
+              {loading || error
                 ? "Documente"
                 : `${visible.length} ${visible.length === 1 ? "document" : "documente"}`}
             </h2>
@@ -241,7 +255,7 @@ export function Documents({
               <div className="skeleton" key={i} />
             ))}
           </div>
-        ) : visible.length === 0 ? (
+        ) : error ? null : visible.length === 0 ? (
           <div className="empty">
             <FolderHeart size={40} strokeWidth={1.2} />
             <h3>{docs.length ? "Niciun rezultat" : "Niciun document"}</h3>
@@ -285,10 +299,7 @@ export function Documents({
                 <div className="card-bottom">
                   <h3 title={doc.title}>{doc.title}</h3>
                   {doc.status === "ready" ? (
-                    <p>
-                      {doc.mime === "application/pdf" ? "PDF" : "Imagine"}{" "}
-                      <span>·</span> {size(doc.bytes)}
-                    </p>
+                    <p>{doc.mime === "application/pdf" ? "PDF" : "Imagine"}</p>
                   ) : (
                     <p className={`card-status ${doc.status}`}>
                       {doc.status === "quarantine" ? (
@@ -314,6 +325,17 @@ export function Documents({
         <UploadModal
           endpoint={endpoint}
           onClose={() => setUpload(false)}
+          onAccessChanged={(status) => {
+            setUpload(false);
+            setSelected(null);
+            if (status !== 403) setDocs([]);
+            setNotice(
+              status === 403
+                ? "Nu mai ai permisiunea de a adăuga documente."
+                : "Accesul la familie s-a schimbat.",
+            );
+            onExpired();
+          }}
           onSaved={(doc) => {
             setUpload(false);
             setNotice(
@@ -344,10 +366,12 @@ function UploadModal({
   endpoint,
   onClose,
   onSaved,
+  onAccessChanged,
 }: {
   endpoint: string;
   onClose: () => void;
   onSaved: (doc: Document) => void;
+  onAccessChanged: (status: number) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -364,6 +388,7 @@ function UploadModal({
         chosen.type,
       )
     ) {
+      setFile(null);
       setError("Alege un PDF, JPG, PNG sau WebP de cel mult 10 MB.");
       return;
     }
@@ -388,6 +413,10 @@ function UploadModal({
         }),
       );
     } catch (e) {
+      if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status)) {
+        onAccessChanged(e.status);
+        return;
+      }
       setError(e instanceof Error ? e.message : "Uploadul nu a reușit.");
     } finally {
       setBusy(false);
@@ -420,18 +449,21 @@ function UploadModal({
           <strong>
             {file ? file.name : "Alege un fișier sau trage-l aici"}
           </strong>
-          <span>
-            {file
-              ? `${size(file.size)} · Apasă pentru a înlocui`
-              : "PDF, JPG, PNG, WebP · maximum 10 MB"}
-          </span>
+          {file && <span>Apasă pentru a înlocui</span>}
         </button>
+        <p className="upload-limits">
+          PDF, JPG, PNG, WebP · maximum 10 MB/fișier și 100 MB/familie.
+          Imagini de maximum 16 megapixeli.
+        </p>
         <input
           ref={input}
           hidden
           type="file"
           accept=".pdf,.jpg,.jpeg,.png,.webp"
-          onChange={(e) => choose(e.target.files?.[0])}
+          onChange={(e) => {
+            choose(e.target.files?.[0]);
+            e.target.value = "";
+          }}
         />
         <label className="field">
           Numele documentului
@@ -504,6 +536,8 @@ function Detail({
 }) {
   const [doc, setDoc] = useState<Document | null>(null);
   const [error, setError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const [canRetryLoad, setCanRetryLoad] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [visibility, setVisibility] =
     useState<Document["visibility"]>("private");
@@ -511,6 +545,7 @@ function Detail({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [sharing, setSharing] = useState(false);
+  const [sharingStale, setSharingStale] = useState(false);
   const path = `${endpoint}/documents/${id}`;
   function assign(data: Document) {
     setDoc(data);
@@ -519,33 +554,52 @@ function Detail({
   }
   useEffect(() => {
     let active = true;
+    setDoc(null);
+    setError("");
+    setCanRetryLoad(false);
     api<Document>(path)
       .then((data) => {
         if (active) assign(data);
       })
-      .catch(() => {
-        if (active)
-          setError("Documentul nu mai este disponibil sau nu mai ai acces.");
+      .catch((error) => {
+        if (!active) return;
+        const unavailable =
+          error instanceof ApiError &&
+          [401, 403, 404, 419].includes(error.status);
+        setError(
+          unavailable
+            ? "Documentul nu mai este disponibil sau nu mai ai acces."
+            : "Nu am putut încărca documentul. Verifică conexiunea și reîncearcă.",
+        );
+        setCanRetryLoad(!unavailable);
       });
     return () => {
       active = false;
     };
-  }, [path]);
+  }, [path, loadAttempt]);
   async function openSharing() {
+    if (busy) return;
     setBusy(true);
     setError("");
+    setMessage("");
     try {
-      setMembers(await api<Member[]>(`${endpoint}/members`));
+      const [current, activeMembers] = await Promise.all([
+        api<Document>(path),
+        api<Member[]>(`${endpoint}/members`),
+      ]);
+      assign(current);
+      setMembers(activeMembers);
+      setSharingStale(false);
       setSharing(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Nu am putut încărca membrii.");
+      setError(e instanceof Error ? e.message : "Nu am putut încărca accesul.");
     } finally {
       setBusy(false);
     }
   }
   async function saveSharing(e: FormEvent) {
     e.preventDefault();
-    if (!doc) return;
+    if (!doc || busy || sharingStale) return;
     setBusy(true);
     setError("");
     setMessage("");
@@ -564,7 +618,14 @@ function Detail({
       setSharing(false);
       onChanged();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Nu am putut salva accesul.");
+      if (e instanceof ApiError && e.status === 412) {
+        setSharingStale(true);
+        setError(
+          "Accesul documentului s-a schimbat. Reîncarcă setările înainte de a salva.",
+        );
+      } else {
+        setError(e instanceof Error ? e.message : "Nu am putut salva accesul.");
+      }
     } finally {
       setBusy(false);
     }
@@ -580,11 +641,13 @@ function Detail({
         throw new Error("Fișierul nu a fost încă aprobat pentru descărcare.");
       window.location.assign(`/api/v1${path}/content`);
     } catch (e) {
-      if (e instanceof ApiError && [401, 404].includes(e.status)) {
+      if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status)) {
         setDoc(null);
         onChanged();
+        setError("Documentul nu mai este disponibil sau nu mai ai acces.");
+      } else {
+        setError(e instanceof Error ? e.message : "Descărcarea nu a reușit.");
       }
-      setError(e instanceof Error ? e.message : "Descărcarea nu a reușit.");
     } finally {
       setBusy(false);
     }
@@ -627,8 +690,7 @@ function Detail({
             </span>
           </div>
           <p className="document-meta">
-            {doc.mime === "application/pdf" ? "PDF" : "Imagine"} ·{" "}
-            {size(doc.bytes)}
+            {doc.mime === "application/pdf" ? "PDF" : "Imagine"}
           </p>
           <div className="owner-row">
             <span className="avatar small">
@@ -708,6 +770,7 @@ function Detail({
                 <input
                   type="radio"
                   name="visibility"
+                  disabled={busy || sharingStale}
                   checked={visibility === value}
                   onChange={() => setVisibility(value)}
                 />
@@ -729,7 +792,10 @@ function Detail({
             ))}
           </div>
           {visibility === "selected" && (
-            <fieldset className="member-options">
+            <fieldset
+              className="member-options"
+              disabled={busy || sharingStale}
+            >
               <legend>Alege persoanele</legend>
               {!members.some((m) => m.user_id !== userId) && (
                 <p>Niciun alt membru activ.</p>
@@ -761,13 +827,18 @@ function Detail({
           </p>
           <button
             className="button primary full"
-            disabled={busy || (visibility === "selected" && !grants.length)}
+            disabled={
+              busy ||
+              sharingStale ||
+              (visibility === "selected" && !grants.length)
+            }
           >
-            {busy ? "Se salvează…" : "Salvează"}
+            {busy && !sharingStale ? "Se salvează…" : "Salvează"}
           </button>
           <button
             className="text-button full center"
             type="button"
+            disabled={busy}
             onClick={() => setSharing(false)}
           >
             Înapoi la document
@@ -778,6 +849,23 @@ function Detail({
         <p className="error" role="alert">
           {error}
         </p>
+      )}
+      {!doc && canRetryLoad && (
+        <button
+          className="button secondary full"
+          onClick={() => setLoadAttempt((attempt) => attempt + 1)}
+        >
+          Reîncearcă
+        </button>
+      )}
+      {sharing && sharingStale && (
+        <button
+          className="button secondary full"
+          disabled={busy}
+          onClick={() => void openSharing()}
+        >
+          {busy ? "Se încarcă…" : "Reîncarcă accesul"}
+        </button>
       )}
       {message && (
         <p className="notice" role="status">

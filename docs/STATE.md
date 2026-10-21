@@ -2,25 +2,25 @@
 
 Actualizat: 21 octombrie 2026, Europe/Bucharest.
 
-- **Modul de reluat:** Familie — [fișa modulului](modules/families.md).
-- **Etapă:** M01 din [plan](ROADMAP.md).
-- **Pas:** F1 — inventarul și verificarea fluxurilor existente.
-- **Stare:** planificat pentru următoarea sesiune; implementarea acestui pas nu a început.
-- **Următoarea sesiune:** 22 octombrie 2026, când utilizatorul cere continuarea. Nu există un reminder programat.
-
-## Ce este salvat
-
-Planul modular, fișele și regulile de reluare sunt pregătite. Ultima schimbare funcțională înaintea acestui plan este `e9ef880`: carduri compacte pentru familie și administrarea rolurilor. Versiunea locală are autentificare, membri/invitații și Documente; existența lor nu echivalează cu acceptarea tuturor etapelor de mai jos.
+- **Modul activ:** Calendar — [fișa modulului](modules/calendar.md).
+- **Ordine cerută de utilizator:** C1 — calendar simplu **implementat și verificat**, apoi C3 — remindere in-app pentru evenimentele manuale, apoi dashboardul cu date reale. C3 și dashboardul sunt planificate. A2–A3 și emailul extern rămân amânate pentru testarea locală; C2/D4 se leagă separat.
+- **Rezultat C1:** calendar lunar și agendă pe lună/zi, creare, detaliu, editare, arhivare și restaurare. Evenimente private sau vizibile familiei, modificabile de creator; dată fără oră ori moment în Europe/Bucharest. Versiunile concurente produc conflict și reîncărcare. Migrarea este aplicată în bazele locale, fără resetarea datelor existente. Corectate limitele lunii și zonele tactile/butonul de adăugare pe mobil.
+- **Verificări C1:** 9 teste backend / 80 aserțiuni și 3 teste frontend noi trecute; după extinderea limitelor de lună, doar testul afectat a fost reluat și a trecut cu 12 aserțiuni. Build TypeScript/Vite, Pint și diff check trecute. Browser: creare, schimbarea datei/orei, arhivare/restaurare, conflict între ferestre, luni/zi, schimbarea familiei, desktop 1366 × 900 și mobil 360 × 800 fără overflow. Detalii și limite în [Calendar](modules/calendar.md#verificare-c1--21-octombrie-2026).
+- **Verificări păstrate:** suitele F1–F3, D1–D3 și A1 nu au fost repetate. Sesiunea și contextul familiei sunt reutilizate. Evenimentul fictiv C1 și cele cinci intrări de audit ale lui au fost eliminate după probe; documentele, apartenențele și parolele existente nu au fost schimbate.
+- **Blocaje curente:** niciunul pentru C1. Reminderele și dashboardul nu sunt încă implementate. C1 folosește un singur fus orar; orele inexistente sau repetate la DST sunt respinse cu explicație. ClamAV rămâne configurat, cu actualizarea manuală a semnăturilor.
 
 ## Prima acțiune la reluare
 
-Verifică `git status --short`, apoi citește F1 din `modules/families.md`. Consultă numai `Family.tsx`, controllerul familiei și testele relevante. Pornește aplicația pentru verificarea paginii Familie; folosește instalarea din `ops/SETUP.md` numai dacă mediul lipsește. Notează ce funcționează și eventualele defecte înainte de a alege prima corecție mică.
+Începe C3 cu remindere in-app pentru evenimentele manuale C1: citește doar fișa Calendar, codul C1 și contractele strict necesare pentru livrare durabilă/notificări. Definește destinatarul autorizat, momentul notificării pentru evenimente cu/fără oră, anularea și replanificarea la editare/arhivare. Emailul extern și sursele derivate rămân separate. Verifică numai comportamentul nou și dependențele modificate; nu relua suitele încheiate. După C3 urmează dashboardul, într-un pas separat.
 
-## Verificări și blocaje
+Preferința utilizatorului: rezumate scurte pe module, citire limitată la pas și dependențe concrete, fără audituri generale de securitate la lucrări UI. Regulile sunt în `AGENTS.md`.
 
-- Sesiunea de planificare schimbă numai documentația și instrucțiunile; nu validează din nou comportamentul aplicației.
-- M00 închis: verificate cele 16 fișiere Markdown din docs, legăturile relative, 46 de pași unici, 13 etape și concordanța M01/F1. `git diff --check` a trecut.
-- Rezultatele concrete ale verificărilor F1 se adaugă aici la reluare; nu există încă o nouă acceptare funcțională.
-- Nu este cunoscut un blocaj pentru F1. Lipsa unui furnizor de email sau a unui mediu de publicare nu blochează verificarea locală a familiei.
+Referința de structură este `artifacts/design-reference-layout.jpeg`, cu paleta caldă din `artifacts/design-reference-warm.png`. Dashboardul, calendarul, reminderele și notificările sunt mapate în [Interfață](modules/interface.md); fără mesagerie. Designul se aplică incremental, funcțiile viitoare nu sunt marcate implementate.
 
-După F1, actualizează această stare cu rezultatul observat, următorul pas și orice blocaj. Ordinea ulterioară rămâne în plan; nu începe un alt modul doar fiindcă fișa lui există.
+## Mediu local
+
+- Aplicația rulează la http://127.0.0.1:8000/app/, sesiune demo Ana. PostgreSQL ascultă pe `127.0.0.1:55432`, ClamAV pe `127.0.0.1:3310`.
+- Runtime ignorat de Git: `.tools/php84/php.exe`, `.tools/composer.phar`, `.tools/postgresql/pgsql/`, `.tools/clamav/clamav-1.5.4.win.x64/`. Dependențele și buildul sunt instalate. Bazele `memoria` și `memoria_test` sunt pregătite; PHPUnit folosește exclusiv `memoria_test`.
+- Pornire din rădăcină: `.\ops\start-local.ps1 -PhpPath "$PWD\.tools\php84\php.exe"`. Comanda a fost verificată cu serviciile pornite. Oprire: `.\ops\stop-local.ps1`. Procesele de fundal folosesc ferestre ascunse.
+- Actualizare manuală semnături: `& .\.tools\clamav\clamav-1.5.4.win.x64\freshclam.exe --quiet --config-file=.runtime/freshclam.conf`. Configurațiile, bazele și logurile sunt în `.runtime/`; detalii în [SETUP](../ops/SETUP.md#4-clamav-și-pornire). Nu afișa parolele ori conținutul `.env`.
+- Captura C1: `.runtime/c1-calendar-desktop.jpg`, cu evenimentul fictiv înaintea curățării. Captura A1 și probele anterioare rămân în `.runtime/`; evidența lor este în fișele modulelor.
