@@ -11,6 +11,7 @@ import {
 import {
   api,
   ApiError,
+  initials,
   onSessionInvalidated,
   type Session,
 } from "../shared/api";
@@ -193,11 +194,7 @@ export default function App() {
       setLogoutBusy(false);
     }
   }
-  const initials = session.user.name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("");
+  const userInitials = initials(session.user.name);
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -210,16 +207,10 @@ export default function App() {
         </div>
         <nav aria-label="Navigație principală">
           <button
-            className={page === "calendar" ? "active" : ""}
-            onClick={() => setPage("calendar")}
-          >
-            <CalendarDays size={21} /> Calendar
-          </button>
-          <button
             className={page === "documents" ? "active" : ""}
             onClick={() => setPage("documents")}
           >
-            <FolderHeart size={21} /> Documente <span className="nav-dot" />
+            <FolderHeart size={21} /> Documente
           </button>
           <button
             className={page === "family" ? "active" : ""}
@@ -227,10 +218,16 @@ export default function App() {
           >
             <Users size={21} /> Familia mea
           </button>
+          <button
+            className={page === "calendar" ? "active" : ""}
+            onClick={() => setPage("calendar")}
+          >
+            <CalendarDays size={21} /> Calendar
+          </button>
         </nav>
         <div className="sidebar-bottom">
           <button className="sidebar-profile" onClick={() => setAccount(true)}>
-            <span className="avatar">{initials}</span>
+            <span className="avatar">{userInitials}</span>
             <span>
               <strong>{session.user.name}</strong>
               <small>Contul meu</small>
@@ -247,7 +244,7 @@ export default function App() {
               aria-label="Contul meu"
               onClick={() => setAccount(true)}
             >
-              {initials}
+              {userInitials}
             </button>
           </div>
           <span className="desktop-breadcrumb">
@@ -266,10 +263,7 @@ export default function App() {
               <select
                 aria-label="Familia activă"
                 value={familyId}
-                onChange={(e) => {
-                  setFamilyId(e.target.value);
-                  if (page !== "calendar") setPage("documents");
-                }}
+                onChange={(e) => setFamilyId(e.target.value)}
               >
                 {session.families.map((f) => (
                   <option key={f.id} value={f.id}>
@@ -284,7 +278,7 @@ export default function App() {
               aria-label="Contul meu"
               onClick={() => setAccount(true)}
             >
-              {initials}
+              {userInitials}
             </button>
           </div>
         </header>
@@ -367,7 +361,7 @@ export default function App() {
         </button>
         <button onClick={() => setAccount(true)} aria-label="Contul meu">
           <span className="mobile-initial" aria-hidden="true">
-            {initials}
+            {userInitials}
           </span>
           <span>Cont</span>
         </button>
@@ -375,7 +369,7 @@ export default function App() {
       {account && (
         <Modal title="Contul meu" onClose={() => setAccount(false)}>
           <div className="account-info">
-            <span className="avatar big">{initials}</span>
+            <span className="avatar big">{userInitials}</span>
             <h3>{session.user.name}</h3>
             <p>{session.user.email}</p>
           </div>
@@ -401,20 +395,18 @@ export default function App() {
   );
 }
 
-function Brand({ compact = false }: { compact?: boolean }) {
+function Brand() {
   return (
-    <div className={`brand ${compact ? "compact" : ""}`}>
+    <div className="brand">
       <span className="brand-mark">
         <Heart size={23} strokeWidth={1.8} />
       </span>
-      {!compact && (
-        <span>
-          memoria{" "}
-          <strong>
-            familiei<span className="brand-dot">.</span>
-          </strong>
-        </span>
-      )}
+      <span>
+        memoria{" "}
+        <strong>
+          familiei<span className="brand-dot">.</span>
+        </strong>
+      </span>
     </div>
   );
 }

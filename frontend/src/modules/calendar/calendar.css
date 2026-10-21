@@ -89,11 +89,6 @@
   min-height: 44px;
   font-size: 13px;
 }
-.calendar-timezone {
-  color: var(--muted);
-  font-size: 11px;
-  margin: 8px 0 0;
-}
 .calendar-filters {
   display: flex;
   gap: 6px;
@@ -277,20 +272,11 @@
     gap: 0;
   }
   .calendar-month-heading,
-  .calendar-month-footer,
-  .calendar-timezone {
+  .calendar-month-footer {
     margin-inline: 8px;
   }
   .calendar-agenda {
     padding: 18px 16px;
-  }
-  .calendar-page .page-heading {
-    gap: 10px;
-  }
-  .calendar-page .page-heading > .button {
-    font-size: 12px;
-    padding: 0;
-    min-height: 44px;
   }
   .calendar-event {
     gap: 10px;

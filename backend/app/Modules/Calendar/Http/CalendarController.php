@@ -19,19 +19,23 @@ final class CalendarController
 
     private function visible(Request $request, string $family): Builder
     {
-        return DB::table('calendar_items')->where('family_id', $family)
+        return DB::table('calendar_items')
+            ->join('users as u', 'u.id', '=', 'calendar_items.owner_id')
+            ->where('calendar_items.family_id', $family)
             ->where(function (Builder $query) use ($request) {
-                $query->where('owner_id', $request->user()->id)->orWhere('visibility', 'family');
-            });
+                $query->where('calendar_items.owner_id', $request->user()->id)
+                    ->orWhere('calendar_items.visibility', 'family');
+            })
+            ->select('calendar_items.*', 'u.name as owner_name');
     }
 
     private function payload(Request $request, object $event): array
     {
         $data = (array) $event;
         unset($data['family_id']);
-        $data['time'] = $event->starts_at ? (new DateTimeImmutable($event->starts_at))->setTimezone(new DateTimeZone(self::TIMEZONE))->format('H:i') : null;
-        $data['starts_at'] = $event->starts_at ? (new DateTimeImmutable($event->starts_at))->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z') : null;
-        $data['owner_name'] = DB::table('users')->where('id', $event->owner_id)->value('name');
+        $startsAt = $event->starts_at ? new DateTimeImmutable($event->starts_at) : null;
+        $data['time'] = $startsAt?->setTimezone(new DateTimeZone(self::TIMEZONE))->format('H:i');
+        $data['starts_at'] = $startsAt?->setTimezone(new DateTimeZone('UTC'))->format('Y-m-d\TH:i:s\Z');
         $data['can_edit'] = $event->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited';
 
         return $data;
@@ -39,18 +43,18 @@ final class CalendarController
 
     public function index(Request $request, string $family): JsonResponse
     {
-        $data = $request->validate(['month' => ['required', 'date_format:Y-m', 'regex:/^(19\d{2}|20\d{2}|2100)-(0[1-9]|1[0-2])$/'], 'archived' => 'sometimes|boolean']);
+        $data = $request->validate(['month' => ['required', 'regex:/^(19\d{2}|20\d{2}|2100)-(0[1-9]|1[0-2])$/'], 'archived' => 'sometimes|boolean']);
         $first = DateTimeImmutable::createFromFormat('!Y-m', $data['month']);
         $query = $this->visible($request, $family)->whereBetween('event_date', [$first->format('Y-m-d'), $first->format('Y-m-t')]);
         $request->boolean('archived') ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
 
-        return response()->json($query->orderBy('event_date')->orderByDesc('all_day')->orderBy('starts_at')->orderBy('id')->get()
+        return response()->json($query->orderBy('event_date')->orderByDesc('all_day')->orderBy('starts_at')->orderBy('calendar_items.id')->get()
             ->map(fn (object $event): array => $this->payload($request, $event)));
     }
 
     public function show(Request $request, string $family, string $event): JsonResponse
     {
-        $item = $this->visible($request, $family)->where('id', $event)->firstOrFail();
+        $item = $this->visible($request, $family)->where('calendar_items.id', $event)->firstOrFail();
 
         return response()->json($this->payload($request, $item))->header('ETag', '"'.$item->version.'"');
     }
@@ -109,7 +113,7 @@ final class CalendarController
 
     private function editable(Request $request, string $family, string $event): object
     {
-        $item = $this->visible($request, $family)->where('id', $event)->firstOrFail();
+        $item = $this->visible($request, $family)->where('calendar_items.id', $event)->firstOrFail();
         abort_unless($item->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited', 403, 'Doar autorul poate modifica acest eveniment.');
         abort_unless($request->header('If-Match'), 428, 'Versiunea evenimentului este necesară.');
         abort_unless($request->header('If-Match') === '"'.$item->version.'"', 412, 'Evenimentul s-a schimbat. Reîncarcă-l înainte de a salva.');

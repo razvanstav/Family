@@ -180,7 +180,6 @@ export function CalendarPage({
               Toată luna
             </button>
           </div>
-          <p className="calendar-timezone">Europe/Bucharest</p>
         </section>
         <section className="calendar-agenda" aria-labelledby="agenda-title">
           <div className="calendar-agenda-heading">
@@ -277,6 +276,7 @@ export function CalendarPage({
           key={editor}
           id={editor}
           endpoint={endpoint}
+          initialItem={items.find((item) => item.id === editor) ?? null}
           initialDate={
             day ?? (month === today.slice(0, 7) ? today : `${month}-01`)
           }
@@ -295,6 +295,7 @@ export function CalendarPage({
 function EventEditor({
   id,
   endpoint,
+  initialItem,
   initialDate,
   onClose,
   onSaved,
@@ -302,27 +303,30 @@ function EventEditor({
 }: {
   id: string;
   endpoint: string;
+  initialItem: CalendarItem | null;
   initialDate: string;
   onClose: () => void;
   onSaved: (item: CalendarItem, action: string) => void;
   onUnavailable: () => void;
 }) {
-  const [item, setItem] = useState<CalendarItem | null>(null);
-  const [loading, setLoading] = useState(id !== "new");
+  const [item, setItem] = useState<CalendarItem | null>(initialItem);
+  const [loading, setLoading] = useState(id !== "new" && !initialItem);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [stale, setStale] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [confirmArchive, setConfirmArchive] = useState(false);
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(initialDate);
-  const [allDay, setAllDay] = useState(true);
-  const [time, setTime] = useState("10:00");
-  const [notes, setNotes] = useState("");
-  const [visibility, setVisibility] = useState<"private" | "family">("private");
+  const [title, setTitle] = useState(initialItem?.title ?? "");
+  const [date, setDate] = useState(initialItem?.event_date ?? initialDate);
+  const [allDay, setAllDay] = useState(initialItem?.all_day ?? true);
+  const [time, setTime] = useState(initialItem?.time ?? "10:00");
+  const [notes, setNotes] = useState(initialItem?.notes ?? "");
+  const [visibility, setVisibility] = useState<"private" | "family">(
+    initialItem?.visibility ?? "private",
+  );
   useEffect(() => {
-    if (id === "new") return;
+    if (id === "new" || (initialItem && attempt === 0)) return;
     let active = true;
     setLoading(true);
     setError("");
@@ -475,7 +479,6 @@ function EventEditor({
                       onChange={(e) => setTime(e.target.value)}
                       required
                     />
-                    <small>Europe/Bucharest</small>
                   </label>
                 )}
                 <label className="field">
@@ -522,9 +525,7 @@ function EventEditor({
                 </p>
                 <p>
                   <Clock3 size={18} />
-                  {item.all_day
-                    ? "Toată ziua"
-                    : `${item.time} · Europe/Bucharest`}
+                  {item.all_day ? "Toată ziua" : item.time}
                 </p>
                 <p>
                   {visibilityLabel[item.visibility]} · {item.owner_name}

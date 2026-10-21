@@ -22,6 +22,7 @@ import {
 import {
   api,
   ApiError,
+  initials,
   visibilityLabel,
   type Document,
   type Family,
@@ -112,11 +113,9 @@ export function Documents({
   return (
     <div className="documents-page">
       <section className="page-heading">
-        <div>
-          <h1>Documente</h1>
-        </div>
+        <h1>Documente</h1>
         <button
-          className="button primary desktop-upload"
+          className="button primary"
           aria-label="Adaugă document"
           onClick={() => setUpload(true)}
           disabled={family.role === "limited"}
@@ -212,13 +211,11 @@ export function Documents({
             ))}
         </div>
         <div className="section-header">
-          <div>
-            <h2 id="library-title">
-              {loading || error
-                ? "Documente"
-                : `${visible.length} ${visible.length === 1 ? "document" : "documente"}`}
-            </h2>
-          </div>
+          <h2 id="library-title">
+            {loading || error
+              ? "Documente"
+              : `${visible.length} ${visible.length === 1 ? "document" : "documente"}`}
+          </h2>
           <button
             className="text-button"
             aria-label="Actualizează documentele"
@@ -693,13 +690,7 @@ function Detail({
             {doc.mime === "application/pdf" ? "PDF" : "Imagine"}
           </p>
           <div className="owner-row">
-            <span className="avatar small">
-              {doc.owner_name
-                .split(" ")
-                .map((n) => n[0])
-                .slice(0, 2)
-                .join("")}
-            </span>
+            <span className="avatar small">{initials(doc.owner_name)}</span>
             <div>
               <strong>{doc.owner_name}</strong>
               <p>Proprietar</p>

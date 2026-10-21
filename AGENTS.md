@@ -28,6 +28,19 @@ Referința principală pentru organizarea ecranelor este acum `artifacts/design-
 - Păstrează aceeași direcție în autentificare, Documente, Familia mea, ferestre și paginile viitoare. Pe mobil, adaptează coloanele și navigația fără overflow și păstrează controale tactile de minimum 44 px.
 - Stilurile comune și tokenurile sunt în `frontend/src/styles.css`; stilurile specifice rămân în module. Modifică regulile existente, nu suprapune teme care se contrazic.
 
+## Igienă de cod și prevenirea redundanței
+
+Reguli obligatorii la implementarea sau modificarea oricărui modul:
+
+- **Fără interogări N+1 în liste:** în metodele de listare (`index`), adu câmpurile asociate (de exemplu `users.name as owner_name`) prin `JOIN` în query-ul de bază, nu prin `DB::table(...)->value(...)` apelat în `.map()` / `payload()` pentru fiecare rând. Calificați coloanele ambigue (`tabela.id`) după `JOIN`.
+- **Fără parsări sau validări duble:** nu instanția de mai multe ori același `DateTimeImmutable` în același helper și nu combina reguli de validare redundante când un `regex` sau o regulă acoperă deja formatul.
+- **Fără requesturi HTTP redundante la deschiderea ferestrelor:** dacă endpointul de listă returnează deja payloadul complet al elementului (inclusiv `version`), inițializează fereastra de detaliu/editare direct din elementul deja încărcat în memorie. Fă `GET /{id}` suplimentar doar când detaliul conține date absente din listă (ex. `grants` la documente) sau când utilizatorul cere reîncărcarea după un conflict (`409`/`412`).
+- **Fără identificatori tehnici în interfață:** nu afișa stringuri tehnice precum `Europe/Bucharest` în pagini, formulare sau detalii când aplicația are un singur fus orar fix și utilizatorul nu are nimic de ales.
+- **Reutilizează utilitarele comune din `frontend/src/shared/`:** nu rescrie în fiecare modul funcții deja existente în `shared/api.ts` (precum `initials`, `visibilityLabel`). Când o funcție scurtă ajunge folosită în două module, mut-o în `shared/`.
+- **Verifică `frontend/src/styles.css` înainte de a scrie CSS de modul:** stilurile pentru `.page-heading`, `.page-heading > .button` (inclusiv varianta compactă doar cu iconiță pe mobil sub `700px`), `.section-header`, `.search`, `.field`, `.notice`, `.error` și animația `page-enter` sunt deja definite global. Nu adăuga în CSS-ul modulului reguli mobile care le dublează sau le bat cap în cap.
+- **Zero cod mort:** când elimini o funcție, o insignă ori o informație din card (ex. dimensiunea fișierului, `.nav-dot`, prop-uri ca `compact`, clase ca `.color-all`), șterge în același pas atât JSX-ul, cât și selectorii CSS rămași fără corespondent.
+- **Navigație și context consecvente:** păstrează aceeași ordine a secțiunilor în sidebarul desktop și în bara mobilă. Schimbarea familiei active nu trebuie să arunce utilizatorul pe altă pagină dacă secțiunea curentă există pentru noua familie; remontarea se face prin `key={`${session.user.id}:${family.id}`}`.
+
 ## Lucru modular și reluare
 
 - La „continuăm de unde am rămas”, citește mai întâi `docs/STATE.md`, apoi numai fișa modulului și pasului indicate acolo. `docs/README.md` este indexul; `docs/ROADMAP.md` se citește când alegi sau schimbi etapa, nu la fiecare sarcină.

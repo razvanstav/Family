@@ -107,10 +107,6 @@
   color: #fffefa;
   background: var(--accent);
 }
-.color-all {
-  --category-color: #a66d13;
-  --category-bg: #fcf2e2;
-}
 .color-personal {
   --category-color: #4264c5;
   --category-bg: #edf2fc;
@@ -236,9 +232,6 @@
   color: var(--muted);
   margin-top: 7px;
 }
-.card-bottom > p span {
-  padding: 0 3px;
-}
 .card-status {
   display: flex;
   align-items: center;
@@ -317,14 +310,6 @@
     gap: 6px;
     font-size: 12px;
   }
-  .desktop-upload {
-    padding: 10px 12px;
-    gap: 6px;
-    font-size: 12px;
-  }
-  .desktop-upload svg {
-    width: 17px;
-  }
   .library-tools {
     gap: 8px;
   }
@@ -374,12 +359,6 @@
 @media (max-width: 355px) {
   .document-grid {
     grid-template-columns: 1fr;
-  }
-  .desktop-upload span {
-    display: none;
-  }
-  .desktop-upload {
-    width: 44px;
   }
 }
 .upload-limits {

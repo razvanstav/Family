@@ -13,16 +13,15 @@ import {
   Copy,
   MoreHorizontal,
 } from "lucide-react";
-import { api, ApiError, type Member, type Invitation } from "../../shared/api";
+import {
+  api,
+  ApiError,
+  initials,
+  type Member,
+  type Invitation,
+} from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 
-const initials = (name: string) =>
-  name
-    .trim()
-    .split(/\s+/)
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("");
 const roleLabel = (role: string) =>
   role === "owner"
     ? "Proprietar"

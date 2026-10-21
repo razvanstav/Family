@@ -93,3 +93,10 @@ export const visibilityLabel = {
   family: "Familia mea",
   selected: "Persoane alese",
 };
+export const initials = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("");
