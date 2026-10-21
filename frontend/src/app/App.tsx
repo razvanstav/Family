@@ -207,16 +207,16 @@ export default function App() {
         </div>
         <nav aria-label="Navigație principală">
           <button
-            className={page === "documents" ? "active" : ""}
-            onClick={() => setPage("documents")}
-          >
-            <FolderHeart size={21} /> Documente
-          </button>
-          <button
             className={page === "family" ? "active" : ""}
             onClick={() => setPage("family")}
           >
             <Users size={21} /> Familia mea
+          </button>
+          <button
+            className={page === "documents" ? "active" : ""}
+            onClick={() => setPage("documents")}
+          >
+            <FolderHeart size={21} /> Documente
           </button>
           <button
             className={page === "calendar" ? "active" : ""}
@@ -336,20 +336,20 @@ export default function App() {
       </div>
       <nav className="mobile-nav" aria-label="Navigație mobil">
         <button
-          aria-label="Documente"
-          className={page === "documents" ? "active" : ""}
-          onClick={() => setPage("documents")}
-        >
-          <FolderHeart size={21} />
-          <span>Documente</span>
-        </button>
-        <button
           aria-label="Familia mea"
           className={page === "family" ? "active" : ""}
           onClick={() => setPage("family")}
         >
           <Users size={21} />
           <span>Familie</span>
+        </button>
+        <button
+          aria-label="Documente"
+          className={page === "documents" ? "active" : ""}
+          onClick={() => setPage("documents")}
+        >
+          <FolderHeart size={21} />
+          <span>Documente</span>
         </button>
         <button
           aria-label="Calendar"

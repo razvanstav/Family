@@ -479,6 +479,7 @@ function EventEditor({
                       onChange={(e) => setTime(e.target.value)}
                       required
                     />
+                    <small>Ora României</small>
                   </label>
                 )}
                 <label className="field">

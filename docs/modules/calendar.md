@@ -38,6 +38,13 @@ Taskuri și evenimente manuale, scadențe derivate, responsabili/participanți �
 - Desktop 1366 × 900: calendar și agendă în două coloane. Mobil 360 × 800: calendar deasupra agendei, formular ca foaie, fără overflow; după corecție, zilele au 45 × 44 px și butonul de adăugare are iconiță cu nume accesibil. Captura `.runtime/c1-calendar-desktop.jpg` include evenimentul fictiv, eliminat ulterior împreună cu auditul său (zero înregistrări rămase pentru acel ID).
 - Nu s-au reluat suitele F/D/A. Nu s-au verificat dispozitive fizice, alte fusuri orare ori livrarea notificărilor; C4 rămâne deschis pentru reconciliere/joburi. Ramura de eroare de rețea a calendarului nu a fost provocată separat în browser.
 
+## Curățare C1 — 21 octombrie 2026
+
+- Backend: `owner_name` vine prin `JOIN users` în query-ul de bază (fără interogare per eveniment); `starts_at` este parsat o singură dată; regula redundantă `date_format:Y-m` a fost eliminată, regexul acoperă formatul și intervalul.
+- Frontend: fereastra evenimentului se deschide direct din elementul deja încărcat în listă; `GET /{event}` se face doar la „Reîncarcă evenimentul” după conflict sau când elementul nu este în listă. Conflictele rămân detectate prin `If-Match`.
+- Fusul orar nu mai apare ca identificator tehnic; câmpul `Ora` din formular are o singură mențiune, „Ora României”. Lista și detaliul nu îl mai repetă.
+- Verificat pe acest calculator: `CalendarEventTest.php` 9 teste / 82 aserțiuni, 20 teste frontend, build TypeScript/Vite, Pint și `git diff --check`. Tabela `calendar_items` lipsea local; migrarea și `grant-runtime.sql` au fost aplicate în `memoria` și `memoria_test`, fără resetare de date. Nu a fost făcută verificare vizuală în browser după curățare.
+
 ## Surse și căi
 
 Consultă operațiile `Calendar_`, `CalendarItem_`, contractele de deadline/Notifications și scenariile de date canonice din pachetul v1.2.
