@@ -6,11 +6,15 @@ export type Moment = {
   title: string;
   body: string | null;
   occurred_on: string;
-  visibility: "private" | "family";
+  visibility: "private" | "family" | "selected";
   owner_id: number;
   owner_name: string;
   version: number;
   can_edit: boolean;
+  can_manage: boolean;
+  grants: string[];
+  photo_status: PhotoStatus;
+  archived_at: string | null;
   people: { id: string; name: string }[];
   created_at: string;
   updated_at: string;
@@ -21,3 +25,4 @@ export type MomentList = {
   page: number;
   has_more: boolean;
 };
+import type { PhotoStatus } from "../../shared/PrivatePhoto";

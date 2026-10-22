@@ -381,6 +381,7 @@ export default function App() {
               <Memories
                 key={`${session.user.id}:${family.id}`}
                 family={family}
+                actorId={session.user.id}
                 onExpired={() => void refresh()}
               />
             ) : page === "calendar" ? (

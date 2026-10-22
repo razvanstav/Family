@@ -8,6 +8,7 @@ use App\Modules\Kitchen\Application\KitchenActivityReader;
 use App\Modules\Kitchen\Application\RecipeCatalog;
 use App\Modules\Kitchen\Contracts\Activity;
 use App\Modules\Kitchen\Contracts\Recipes;
+use App\Modules\Memory\Application\MomentAccess;
 use App\Platform\Contracts\Outbox;
 use App\Platform\Contracts\PrivateMedia;
 use App\Platform\Events\DatabaseOutbox;
@@ -41,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(MembershipRevoked::class, function (MembershipRevoked $event): void {
             $this->app->make(CalendarReminders::class)->cancelMembership($event->familyId, $event->membershipId);
             $this->app->make(RecipeCatalog::class)->revokeMembership($event->familyId, $event->membershipId);
+            $this->app->make(MomentAccess::class)->revokeMembership($event->familyId, $event->membershipId);
         });
     }
 }

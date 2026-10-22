@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   BookHeart,
+  Image,
   LockKeyhole,
   Plus,
   RefreshCw,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import { api, ApiError, visibilityLabel, type Family } from "../../shared/api";
 import { dateLabel } from "../../shared/calendarDates";
+import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import { MomentDetail } from "./MomentDetail";
 import { MomentForm } from "./MomentForm";
 import { momentKinds, type Moment, type MomentList } from "./memoryTypes";
@@ -23,9 +25,11 @@ type View =
 
 export function Memories({
   family,
+  actorId,
   onExpired,
 }: {
   family: Family;
+  actorId: number;
   onExpired: () => void;
 }) {
   const base = `/families/${family.id}/moments`;
@@ -34,6 +38,7 @@ export function Memories({
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("");
   const [visibility, setVisibility] = useState("");
+  const [archived, setArchived] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -55,6 +60,7 @@ export function Memories({
     if (search) params.set("q", search);
     if (kind) params.set("kind", kind);
     if (visibility) params.set("visibility", visibility);
+    if (archived) params.set("archived", "1");
     setLoading(true);
     setError("");
     api<MomentList>(`${base}?${params}`, { signal: controller.signal })
@@ -75,7 +81,7 @@ export function Memories({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [base, search, kind, visibility, page, revision]);
+  }, [base, search, kind, visibility, archived, page, revision]);
   useEffect(() => {
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible")
@@ -143,49 +149,57 @@ export function Memories({
           <option value="">Orice acces</option>
           <option value="private">Doar eu</option>
           <option value="family">Familia mea</option>
+          <option value="selected">Persoane alese</option>
         </select>
+        <button
+          className="icon-button"
+          aria-label="Actualizează amintirile"
+          disabled={loading}
+          onClick={() => setRevision((value) => value + 1)}
+        >
+          <RefreshCw size={18} />
+        </button>
       </div>
-      <div className="memory-kind-filter" aria-label="Tip de amintire">
-        {[
-          ["", "Toate"],
-          ["moment", "Momente"],
-          ["note", "Note"],
-        ].map(([value, label]) => (
-          <button
-            key={value}
-            aria-pressed={kind === value}
-            onClick={() => {
-              setKind(value);
+      <div className="memory-filter-row">
+        <div className="memory-kind-filter" aria-label="Tip de amintire">
+          {[
+            ["", "Toate"],
+            ["moment", "Momente"],
+            ["note", "Note"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              aria-pressed={kind === value}
+              onClick={() => {
+                setKind(value);
+                setPage(1);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <label className="memory-archive-filter">
+          <input
+            type="checkbox"
+            checked={archived}
+            onChange={(event) => {
+              setArchived(event.target.checked);
               setPage(1);
             }}
-          >
-            {label}
-          </button>
-        ))}
+          />
+          Arhivate
+        </label>
       </div>
       {notice && (
         <p className="notice" role="status">
           {notice}
         </p>
       )}
-      <section aria-label="Lista amintirilor" aria-busy={loading}>
-        <div className="section-header">
-          <h2>
-            {kind === "note"
-              ? "Note"
-              : kind === "moment"
-                ? "Momente"
-                : "Momente și note"}
-          </h2>
-          <button
-            className="icon-button"
-            aria-label="Actualizează amintirile"
-            disabled={loading}
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            <RefreshCw size={18} />
-          </button>
-        </div>
+      <section
+        aria-label={archived ? "Amintiri arhivate" : "Lista amintirilor"}
+        aria-busy={loading}
+      >
         {loading ? (
           <p role="status">Se încarcă amintirile…</p>
         ) : error ? (
@@ -206,9 +220,11 @@ export function Memories({
             <h3>
               {filtered
                 ? "Nicio amintire găsită"
-                : page > 1
-                  ? "Nicio amintire pe această pagină"
-                  : "Nicio amintire"}
+                : archived
+                  ? "Nicio amintire arhivată"
+                  : page > 1
+                    ? "Nicio amintire pe această pagină"
+                    : "Nicio amintire"}
             </h3>
             {filtered ? (
               <button className="button secondary" onClick={clearFilters}>
@@ -216,6 +232,7 @@ export function Memories({
               </button>
             ) : (
               page === 1 &&
+              !archived &&
               family.role !== "limited" && (
                 <button
                   className="button primary"
@@ -235,6 +252,14 @@ export function Memories({
                 key={moment.id}
                 onClick={() => setView({ mode: "detail", moment })}
               >
+                {moment.photo_status && (
+                  <PrivatePhoto
+                    src={`/api/v1${base}/${moment.id}/photo?v=${moment.version}`}
+                    status={moment.photo_status}
+                    className="moment-photo"
+                    placeholder={<Image size={28} aria-hidden="true" />}
+                  />
+                )}
                 <span className="moment-card-top">
                   <span className="moment-kind">
                     {moment.kind === "moment" ? (
@@ -258,7 +283,7 @@ export function Memories({
                 )}
                 <span className="moment-card-bottom">
                   <span>
-                    {moment.visibility === "private" ? (
+                    {moment.visibility !== "family" ? (
                       <LockKeyhole size={15} />
                     ) : (
                       <Users size={15} />
@@ -301,11 +326,16 @@ export function Memories({
           onClose={() => setView(null)}
           onEdit={(moment) => setView({ mode: "form", moment })}
           onUnavailable={unavailable}
+          onChanged={(moment) => {
+            setView({ mode: "detail", moment });
+            setRevision((value) => value + 1);
+          }}
         />
       )}
       {view?.mode === "form" && (
         <MomentForm
           base={base}
+          actorId={actorId}
           moment={view.moment}
           onClose={() =>
             setView(
@@ -313,7 +343,10 @@ export function Memories({
             )
           }
           onUnavailable={unavailable}
-          onReloaded={(moment) => setView({ mode: "form", moment })}
+          onReloaded={(moment) => {
+            setView({ mode: moment.can_edit ? "form" : "detail", moment });
+            setRevision((value) => value + 1);
+          }}
           onSaved={(moment) => {
             setView({ mode: "detail", moment });
             setNotice("Amintirea a fost salvată.");

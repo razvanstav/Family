@@ -26,6 +26,10 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::post('/moments', [MomentController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/moments/{moment}', [MomentController::class, 'show'])->whereUuid('moment');
         Route::patch('/moments/{moment}', [MomentController::class, 'update'])->whereUuid('moment')->middleware('throttle:20,1');
+        Route::post('/moments/{moment}/archive', [MomentController::class, 'archive'])->whereUuid('moment')->middleware('throttle:20,1');
+        Route::post('/moments/{moment}/restore', [MomentController::class, 'restore'])->whereUuid('moment')->middleware('throttle:20,1');
+        Route::get('/moments/{moment}/photo', [MomentController::class, 'photo'])->whereUuid('moment');
+        Route::post('/moments/{moment}/photo/scan', [MomentController::class, 'retryPhoto'])->whereUuid('moment')->middleware('throttle:10,1');
         Route::get('/home', HomeController::class);
         Route::get('/kitchen-activity', KitchenActivityController::class);
         Route::get('/meals', [MealController::class, 'index']);

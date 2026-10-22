@@ -6,6 +6,7 @@ import { momentKinds, type Moment } from "./memoryTypes";
 
 export function MomentForm({
   base,
+  actorId,
   moment: initialMoment,
   onClose,
   onSaved,
@@ -13,6 +14,7 @@ export function MomentForm({
   onUnavailable,
 }: {
   base: string;
+  actorId: number;
   moment?: Moment;
   onClose: () => void;
   onSaved: (moment: Moment) => void;
@@ -27,6 +29,11 @@ export function MomentForm({
     initialMoment?.people.map((person) => person.id) ?? [],
   );
   const [members, setMembers] = useState<Member[] | null>(null);
+  const [visibility, setVisibility] = useState<Moment["visibility"]>(
+    initialMoment?.visibility ?? "private",
+  );
+  const [grants, setGrants] = useState(initialMoment?.grants ?? []);
+  const [photoAction, setPhotoAction] = useState("keep");
   const [membersError, setMembersError] = useState(false);
   const [membersRevision, setMembersRevision] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -42,6 +49,7 @@ export function MomentForm({
   useEffect(() => {
     const controller = new AbortController();
     setMembersError(false);
+    setMembers(null);
     api<Member[]>(`${base.slice(0, -"/moments".length)}/members`, {
       signal: controller.signal,
     })
@@ -50,6 +58,7 @@ export function MomentForm({
         setMembers(data);
         const active = new Set(data.map((member) => member.id));
         setPeople((current) => current.filter((id) => active.has(id)));
+        setGrants((current) => current.filter((id) => active.has(id)));
       })
       .catch((e: unknown) => {
         if (controller.signal.aborted) return;
@@ -72,12 +81,15 @@ export function MomentForm({
       });
       if (controller.signal.aborted) return;
       if (!current.can_edit) {
-        onUnavailable();
+        onReloaded(current);
         return;
       }
       setMoment(current);
       setKind(current.kind);
       setPeople(current.people.map((person) => person.id));
+      setVisibility(current.visibility);
+      setGrants(current.grants);
+      setPhotoAction("keep");
       setConflict(false);
       setMembersRevision((value) => value + 1);
       onReloaded(current);
@@ -93,15 +105,14 @@ export function MomentForm({
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (busy || conflict || !members) return;
+    if (busy || conflict || !members || membersError) return;
     const form = new FormData(event.currentTarget);
     const body = {
       kind,
       title: String(form.get("title") ?? "").trim(),
       body: String(form.get("body") ?? "").trim() || null,
       occurred_on: String(form.get("occurred_on")),
-      visibility: String(form.get("visibility")),
-      membership_ids: people,
+      visibility,
     };
     if (!body.title || (kind === "note" && !body.body)) {
       setError(
@@ -109,15 +120,33 @@ export function MomentForm({
       );
       return;
     }
+    const photo = form.get("photo");
+    if (photo instanceof File && !photo.name) form.delete("photo");
+    else if (
+      photo instanceof File &&
+      (!photo.size || photo.size > 10 * 1024 * 1024)
+    ) {
+      setError("Alege o fotografie de cel mult 10 MB, cu conținut valid.");
+      return;
+    }
+    Object.entries(body).forEach(([key, value]) => form.set(key, value ?? ""));
+    people.forEach((id) => form.append("membership_ids[]", id));
+    if (visibility === "selected")
+      grants.forEach((id) => form.append("grant_membership_ids[]", id));
+    form.set(
+      "photo_action",
+      moment ? photoAction : form.has("photo") ? "replace" : "keep",
+    );
+    if (moment) form.set("_method", "PATCH");
     const controller = new AbortController();
     pending.current = controller;
     setBusy(true);
     setError("");
     try {
       const saved = await api<Moment>(moment ? `${base}/${moment.id}` : base, {
-        method: moment ? "PATCH" : "POST",
+        method: "POST",
         ...(moment ? { headers: { "If-Match": `"${moment.version}"` } } : {}),
-        body: JSON.stringify(body),
+        body: form,
         signal: controller.signal,
       });
       if (!controller.signal.aborted) onSaved(saved);
@@ -148,7 +177,7 @@ export function MomentForm({
       wide
     >
       <form key={moment?.version ?? 0} onSubmit={(event) => void save(event)}>
-        <fieldset className="moment-fields" disabled={busy}>
+        <fieldset className="moment-fields" disabled={busy || conflict}>
           <div className="moment-form-row">
             <label className="field">
               Tip
@@ -197,21 +226,101 @@ export function MomentForm({
               defaultValue={moment?.body ?? ""}
             />
           </label>
-          <label className="field">
-            Acces
+          {moment && (
+            <label className="field">
+              Fotografie
+              <select
+                value={photoAction}
+                onChange={(event) => setPhotoAction(event.target.value)}
+              >
+                <option value="keep">
+                  {moment.photo_status
+                    ? "Păstrează fotografia"
+                    : "Fără fotografie"}
+                </option>
+                <option value="replace">
+                  {moment.photo_status
+                    ? "Înlocuiește fotografia"
+                    : "Adaugă fotografie"}
+                </option>
+                {moment.photo_status && (
+                  <option value="remove">Elimină fotografia</option>
+                )}
+              </select>
+            </label>
+          )}
+          {(!moment || photoAction === "replace") && (
+            <div className="field">
+              <label htmlFor="moment-photo">
+                {moment ? "Fișier" : "Fotografie (opțional)"}
+              </label>
+              <input
+                id="moment-photo"
+                type="file"
+                name="photo"
+                accept="image/jpeg,image/png,image/webp"
+                required={!!moment}
+                aria-describedby="moment-photo-hint"
+              />
+              <small id="moment-photo-hint">
+                JPG, PNG sau WebP, maximum 10 MB și 16 megapixeli. Fotografia
+                apare după verificare.
+              </small>
+            </div>
+          )}
+          <div className="field">
+            <label htmlFor="moment-access">Acces</label>
             <select
-              name="visibility"
-              defaultValue={moment?.visibility ?? "private"}
+              id="moment-access"
+              value={visibility}
+              onChange={(event) =>
+                setVisibility(event.target.value as Moment["visibility"])
+              }
+              aria-describedby={moment ? "moment-access-hint" : undefined}
             >
               <option value="private">Doar eu</option>
               <option value="family">Familia mea</option>
+              <option value="selected">Persoane alese</option>
             </select>
-          </label>
+            {moment && (
+              <small id="moment-access-hint">
+                Schimbarea accesului se aplică și fotografiei. Copiile deja
+                salvate nu pot fi retrase.
+              </small>
+            )}
+          </div>
+          {visibility === "selected" && (
+            <fieldset className="moment-people">
+              <legend>Persoane cu acces</legend>
+              {members
+                ?.filter((member) => member.user_id !== actorId)
+                .map((member) => (
+                  <label key={member.id}>
+                    <input
+                      type="checkbox"
+                      checked={grants.includes(member.id)}
+                      onChange={(event) =>
+                        setGrants((current) =>
+                          event.target.checked
+                            ? [...current, member.id]
+                            : current.filter((id) => id !== member.id),
+                        )
+                      }
+                    />
+                    <span>{member.name}</span>
+                  </label>
+                ))}
+              {members &&
+                !members.some((member) => member.user_id !== actorId) && (
+                  <p>Niciun alt membru activ.</p>
+                )}
+            </fieldset>
+          )}
           <fieldset
             className="moment-people"
             aria-describedby="moment-people-hint"
           >
-            <legend>Persoane</legend>
+            <legend>Persoane menționate</legend>
             <p id="moment-people-hint">
               Menționarea unei persoane nu îi acordă acces la amintire.
             </p>
@@ -276,7 +385,13 @@ export function MomentForm({
           </button>
           <button
             className="button primary"
-            disabled={busy || conflict || !members}
+            disabled={
+              busy ||
+              conflict ||
+              !members ||
+              membersError ||
+              (visibility === "selected" && !grants.length)
+            }
           >
             {busy ? "Se salvează…" : "Salvează"}
           </button>
