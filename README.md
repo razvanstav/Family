@@ -12,6 +12,8 @@ Toată interfața folosește `Helvetica, "Helvetica Neue", Arial, sans-serif`, c
 
 Capturi din aplicația verificată: [mobil](artifacts/mobile-documents.png) · [desktop](artifacts/documents-desktop.png).
 
+**Amintiri AM1:** momente și note cu dată, acces privat/familie, persoane menționate, căutare, filtre și editare cu protecție la conflicte sunt implementate în surse. Buildul frontend a trecut; backendul și migrația nouă nu au fost executate în checkoutul macOS. La instalare aplică `2026_10_22_170000_create_memory_moments.php` cu rolul administrativ și reaplică granturile runtime, conform [SETUP](ops/SETUP.md). Fotografii și timeline urmează separat; [starea modulului](docs/modules/memory.md) precizează limitele. Nu s-au rulat teste, la cererea utilizatorului.
+
 Familia mea: [mobil](artifacts/family-mobile.png) · [desktop](artifacts/family-desktop.png) · [adaugă membru](artifacts/family-invite-mobile.png) · [gestionează membrul](artifacts/family-manage-mobile.png).
 
 Autentificare: [mobil](artifacts/login-mobile.png).

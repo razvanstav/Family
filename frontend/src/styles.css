@@ -47,6 +47,10 @@
 .lucide-image {
   color: #ad703c;
 }
+.lucide-book-heart,
+.lucide-sticky-note {
+  color: #976137;
+}
 .button.primary svg {
   color: inherit;
 }
@@ -1030,10 +1034,11 @@ main {
     right: 0;
     bottom: 0;
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 5px;
+    grid-template-columns: repeat(7, minmax(44px, 1fr));
+    gap: 2px;
+    overflow-x: auto;
     border-top: 1px solid var(--line);
-    padding: 8px 12px max(8px, env(safe-area-inset-bottom));
+    padding: 8px 8px max(8px, env(safe-area-inset-bottom));
     background: #fffefaf5;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -1053,6 +1058,12 @@ main {
   .mobile-nav button.active {
     color: #31553e;
     background: #e9eee4;
+  }
+  .mobile-nav button > span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .mobile-initial {
     display: flex;

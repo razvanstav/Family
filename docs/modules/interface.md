@@ -46,7 +46,7 @@ Decizie de design salvată, nu funcționalitate deja implementată. Numerotare d
 
 ## Acasa H1
 
-Stare: **implementat și verificat local**, 21 octombrie 2026. Utilizatorul a confirmat Acasă prima în meniu și ca pagină după autentificare. După K1, ordinea confirmată este identică pe desktop și mobil: Acasă → Familia mea → Documente → Bucătărie → Calendar; Cont rămâne accesibil separat și în bara mobilă. Datele provin din baza aplicației, inclusiv datele demo existente; H1 nu a adăugat exemple permanente pentru a umple dashboardul.
+Stare: **implementat și verificat local**, 21 octombrie 2026. Utilizatorul a confirmat Acasă prima în meniu și ca pagină după autentificare. După K1, ordinea confirmată era Acasă → Familia mea → Documente → Bucătărie → Calendar. La dezvoltarea AM1 din 22 octombrie, Amintiri este adăugat după Bucătărie, înainte de Calendar, identic pe desktop și mobil; această extindere are build reușit, fără verificare vizuală nouă. Cont rămâne accesibil separat și în bara mobilă. Datele provin din baza aplicației, inclusiv datele demo existente; H1 nu a adăugat exemple permanente pentru a umple dashboardul.
 
 ### Contract și surse
 

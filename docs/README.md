@@ -9,7 +9,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | Familie | Membri, invitații, roluri și revocare implementate local; prima etapă de reluat | [Familie](modules/families.md) |
 | Documente | Upload, listă, detaliu, acces și descărcare implementate local | [Documente](modules/documents.md) |
 | Bucătărie | Planificat; fără implementare de produs | [Bucătărie](modules/kitchen.md) |
-| Amintiri | Planificat; fără implementare de produs | [Amintiri](modules/memory.md) |
+| Amintiri | AM1 în surse: momente și note, acces, persoane, căutare și editare; build UI reușit, runtime neverificat | [Amintiri](modules/memory.md) |
 | Calendar | Planificat; fără implementare de produs | [Calendar](modules/calendar.md) |
 | Animale | Planificat; fără implementare de produs | [Animale](modules/pets.md) |
 | Vehicule | Planificat; fără implementare de produs | [Vehicule](modules/vehicles.md) |
@@ -22,7 +22,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | Platformă | Izolare PostgreSQL, media locală, antivirus și audit; restul se construiește la nevoie | [Platformă](modules/platform.md) |
 | Interfață | Stiluri, shell, dialog și API comune; se verifică în fiecare modul | [Interfață](modules/interface.md) |
 | Căutare și drepturi asupra datelor | Căutare locală în Documente; căutarea globală, exportul și ștergerea sunt planificate | [Căutare și date](modules/data.md) |
-| Operare | Pornire și teste locale; CI, staging, restaurare și lansare sunt planificate | [Operare](modules/operations.md) |
+| Operare | Pornire locală și configurații O2a pentru predare Linux; instalarea staging, CI și restaurarea rămân deschise | [Operare](modules/operations.md) |
 | Aplicații mobile | Planificate după stabilizarea web; fără PWA offline sau aplicații native actuale | [Mobil](modules/mobile.md) |
 
 ## Surse

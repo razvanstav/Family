@@ -7,6 +7,7 @@ import {
   House,
   LogOut,
   CalendarDays,
+  BookHeart,
   Users,
   UtensilsCrossed,
 } from "lucide-react";
@@ -28,12 +29,14 @@ import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
 import { Home } from "../modules/home/Home";
 import { Kitchen } from "../modules/kitchen/Kitchen";
+import { Memories } from "../modules/memory/Memories";
 
 const pageLabels = {
   home: "Acasă",
   family: "Familia mea",
   documents: "Documente",
   kitchen: "Bucătărie",
+  memory: "Amintiri",
   calendar: "Calendar",
 };
 
@@ -253,6 +256,12 @@ export default function App() {
             <UtensilsCrossed size={21} /> Bucătărie
           </button>
           <button
+            className={page === "memory" ? "active" : ""}
+            onClick={() => setPage("memory")}
+          >
+            <BookHeart size={21} /> Amintiri
+          </button>
+          <button
             className={page === "calendar" ? "active" : ""}
             onClick={() => setPage("calendar")}
           >
@@ -368,6 +377,12 @@ export default function App() {
                 userId={session.user.id}
                 onExpired={() => void refresh()}
               />
+            ) : page === "memory" ? (
+              <Memories
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                onExpired={() => void refresh()}
+              />
             ) : page === "calendar" ? (
               <CalendarPage
                 key={`${session.user.id}:${family.id}`}
@@ -437,6 +452,14 @@ export default function App() {
         >
           <UtensilsCrossed size={21} />
           <span>Bucătărie</span>
+        </button>
+        <button
+          aria-label="Amintiri"
+          className={page === "memory" ? "active" : ""}
+          onClick={() => setPage("memory")}
+        >
+          <BookHeart size={21} />
+          <span>Amintiri</span>
         </button>
         <button
           aria-label="Calendar"
