@@ -2,6 +2,8 @@
 
 Stare: **D1–D3 verificate la 21 octombrie 2026; M02 închis local.** D4 extinde modulul în M04, după contractele necesare din Platformă.
 
+**22 octombrie 2026 — D4a implementat, acceptare parțială:** expirarea independentă, opțională, a documentului. Utilizatorul a schimbat prioritatea către redesenarea paginilor după noua referință în timpul verificării. Pasul nu închide întregul D4.
+
 ## Ce există
 
 Listă, căutare locală, categorii, filtru de acces, detaliu, upload PDF/JPEG/PNG/WebP, carantină/retry și descărcare. Documentul nou este privat. Proprietarul lui poate selecta acces privat, familie sau membri aleși; modificarea folosește `If-Match`.
@@ -63,6 +65,15 @@ Listă, căutare locală, categorii, filtru de acces, detaliu, upload PDF/JPEG/P
 - Build TypeScript/Vite trecut. Formular la 360 × 800: limite lizibile, fără overflow orizontal, buton „Salvează” de 44 px. Capturi ignorate de Git: `.runtime/d3-scan-ready.jpg`, `.runtime/d3-upload-mobile.jpg`. Backendul nu a necesitat modificări. F1–F3 și D1–D2 nu au fost repetate.
 
 ## Regula pentru scadențe
+
+### D4a — Expirarea independentă, 22 octombrie 2026
+
+- `documents.expires_on` este o dată calendaristică opțională între 1900 și 2100, cu validare API și constrângere PostgreSQL. Migrarea `2026_10_22_171438_add_expiration_to_documents.php` păstrează documentele existente cu `null`; aplicată local pe `memoria`, fără reset/seed. Nu este necesar un nou grant de tabel.
+- Uploadul acceptă opțional `expires_on`; detaliul afișează data prin utilitarul calendaristic comun. Proprietarul cu rol nelimitat o poate modifica/șterge prin PATCH `/api/v1/families/{family}/documents/{document}`, cu `If-Match`. Alte metadate și accesul nu se modifică pe această rută. Aceeași valoare nu crește versiunea; schimbarea reală crește versiunea și înregistrează numai acțiunea/ID-ul în audit.
+- Câmp comun pentru upload/editor, limite native, ștergere explicită, stări de salvare și conflict cu reîncărcare. Editorul folosește detaliul deja citit; nu face GET suplimentar la deschidere. Data apare în detaliu, fără modificarea cardurilor.
+- Verificat: build TypeScript/Vite, Prettier, Pint, lint PHP, rută PATCH; în browser desktop, document existent fără dată → 30 decembrie 2026 → fără dată. Sursa demo a fost readusă la data nespecificată.
+- Neexercitate: upload cu dată, validări runtime invalide, conflict concurent, rol limitat și revocare pe noua rută, layout mobil al editorului. Nu s-au scris sau rulat suite automate. Nu se declară acceptarea completă.
+- Calendarul, reminderele derivate și contractele de asociere rămân următorii pași funcționali D4/C2. Nu există acum proiecție sau alerte automate pentru această dată.
 
 Expirarea proprie a unui document poate avea o scadență independentă. Dacă documentul dovedește o obligație auto sau un act de îngrijire, data acelei obligații rămâne la sursă. Calendarul nu generează tacit două remindere pentru aceeași obligație.
 

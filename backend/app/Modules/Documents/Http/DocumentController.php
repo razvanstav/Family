@@ -5,6 +5,7 @@ namespace App\Modules\Documents\Http;
 use App\Modules\Documents\Application\DocumentAccess;
 use App\Platform\Audit\Audit;
 use App\Platform\Contracts\PrivateMedia;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -22,7 +23,7 @@ final class DocumentController
             })
             ->join('users as u', 'u.id', '=', 'd.owner_id')->orderByDesc('d.created_at')
             ->get(['d.id', 'd.title', 'd.category', 'd.visibility', 'd.owner_id', 'd.version', 'd.created_at',
-                'a.mime', 'a.bytes', 'a.status', 'u.name as owner_name']);
+                'd.expires_on', 'a.mime', 'a.bytes', 'a.status', 'u.name as owner_name']);
     }
 
     private function find(Request $request, string $family, string $id): object
@@ -51,18 +52,57 @@ final class DocumentController
             'title' => 'required|string|max:160',
             'category' => ['required', Rule::in(['personal', 'home', 'health', 'memories'])],
             'file' => 'required|file|max:10240',
+            'expires_on' => $this->expirationRules(),
             'family_id' => 'prohibited', 'owner_id' => 'prohibited', 'visibility' => 'prohibited',
-        ]);
+        ], $this->expirationMessages());
         $asset = $this->media->receive($family, $request->user()->id, $request->file('file'));
         $id = (string) Str::uuid();
         DB::table('documents')->insert([
             'id' => $id, 'family_id' => $family, 'owner_id' => $request->user()->id, 'asset_id' => $asset['id'],
             'title' => $validated['title'], 'category' => $validated['category'], 'visibility' => 'private',
+            'expires_on' => $validated['expires_on'] ?? null,
             'version' => 1, 'created_at' => now(), 'updated_at' => now(),
         ]);
         Audit::record($family, $request->user()->id, 'document.created', $id);
 
         return $this->show($request, $family, $id)->setStatusCode(201);
+    }
+
+    public function update(Request $request, string $family, string $document): JsonResponse
+    {
+        $doc = $this->find($request, $family, $document);
+        abort_unless($doc->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited', 403, 'Doar proprietarul poate modifica expirarea documentului.');
+        abort_unless($request->header('If-Match'), 428, 'Versiunea documentului este necesară.');
+        abort_unless($request->header('If-Match') === '"'.$doc->version.'"', 412, 'Documentul s-a schimbat. Reîncarcă-l înainte de a salva.');
+        $data = $request->validate([
+            'expires_on' => ['present', ...$this->expirationRules()],
+            'title' => 'prohibited', 'category' => 'prohibited', 'file' => 'prohibited',
+            'family_id' => 'prohibited', 'owner_id' => 'prohibited', 'visibility' => 'prohibited',
+        ], $this->expirationMessages());
+        if ($doc->expires_on !== $data['expires_on']) {
+            DB::table('documents')->where('family_id', $family)->where('id', $document)->update([
+                'expires_on' => $data['expires_on'], 'version' => $doc->version + 1, 'updated_at' => now(),
+            ]);
+            Audit::record($family, $request->user()->id, 'document.expiration_changed', $document);
+        }
+
+        return $this->show($request, $family, $document);
+    }
+
+    /** @return list<string> */
+    private function expirationRules(): array
+    {
+        return ['nullable', 'date_format:Y-m-d', 'after_or_equal:1900-01-01', 'before_or_equal:2100-12-31'];
+    }
+
+    /** @return array<string, string> */
+    private function expirationMessages(): array
+    {
+        return [
+            'expires_on.date_format' => 'Alege o dată de expirare validă.',
+            'expires_on.after_or_equal' => 'Data expirării trebuie să fie între 1900 și 2100.',
+            'expires_on.before_or_equal' => 'Data expirării trebuie să fie între 1900 și 2100.',
+        ];
     }
 
     public function sharing(Request $request, string $family, string $document)

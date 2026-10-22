@@ -30,6 +30,7 @@ export type Document = {
   owner_name: string;
   version: number;
   created_at: string;
+  expires_on: string | null;
   mime: string;
   bytes: number;
   status: "ready" | "quarantine" | "rejected";

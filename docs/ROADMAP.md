@@ -4,7 +4,7 @@ Pornim de la aplicația locală existentă și livrăm un singur pas verificabil
 
 ## Ordinea etapelor
 
-**Prioritate actualizată în sesiunea din 22 octombrie 2026:** utilizatorul a cerut continuarea modulelor pentru un MVP cu funcții, fără teste, urmată de commit/push. [Amintiri AM1](modules/memory.md#am1--momente-și-note) este implementat în surse, cu build UI reușit și backend/migrație neexecutate aici; urmează AM2. Pregătirea [O2a](modules/operations.md#o2a--22-octombrie-2026) rămâne salvată separat; instalarea pe server nu are prioritate față de funcțiile de produs.
+**Prioritate actualizată în sesiunea din 22 octombrie 2026:** utilizatorul cere următorul pas pentru un MVP demonstrabil. [Amintiri AM1–AM3](modules/memory.md) sunt implementate, cu fluxurile demo verificate local; acceptarea integrală păstrează scenariile neexercitate. Continuăm cu [Documente D4a](modules/documents.md): expirarea independentă, opțională, prima dependență pentru C2. Fără suite automate, cu verificare manuală, build și commit local. Publicarea GitHub așteaptă acordul explicit pentru push. Pregătirea [O2a](modules/operations.md#o2a--22-octombrie-2026) rămâne salvată separat; instalarea pe server nu are prioritate față de funcțiile de produs.
 
 **Prioritate actualizată la 21 octombrie 2026, la cererea utilizatorului:** după A1, livrăm Calendar C1 pentru testarea locală, apoi C3 pentru remindere in-app ale evenimentelor manuale și dashboardul cu date reale. Aceste felii preced restul M03–M06; folosesc numai dependențele necesare. A2–A3 și emailul extern rămân deschise pentru etapa de utilizare din afara mediului demo. C2/D4 și integrarea surselor se fac separat; livrarea C1 nu închide integral M07.
 

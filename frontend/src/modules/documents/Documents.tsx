@@ -14,6 +14,8 @@ import {
   X,
   Clock3,
   RefreshCw,
+  CalendarDays,
+  Pencil,
 } from "lucide-react";
 import {
   api,
@@ -27,6 +29,8 @@ import {
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { filterDocuments } from "./documentFilters";
+import { ExpirationField } from "./ExpirationField";
+import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import {
   categories,
   categoryName,
@@ -277,6 +281,7 @@ export function Documents({
           id={selected}
           endpoint={endpoint}
           userId={userId}
+          canEdit={family.role !== "limited"}
           onClose={() => setSelected(null)}
           onChanged={() => void load()}
         />
@@ -299,6 +304,7 @@ function UploadModal({
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("personal");
+  const [expiresOn, setExpiresOn] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const input = useRef<HTMLInputElement>(null);
@@ -328,6 +334,7 @@ function UploadModal({
     data.set("file", file);
     data.set("title", title);
     data.set("category", category);
+    data.set("expires_on", expiresOn);
     try {
       onSaved(
         await api<Document>(`${endpoint}/documents`, {
@@ -414,6 +421,11 @@ function UploadModal({
               ))}
           </select>
         </label>
+        <ExpirationField
+          value={expiresOn}
+          onChange={setExpiresOn}
+          disabled={busy}
+        />
         <div className="privacy-hint">
           <LockKeyhole size={20} />
           <p>Acces inițial: doar eu.</p>
@@ -448,12 +460,14 @@ function Detail({
   id,
   endpoint,
   userId,
+  canEdit,
   onClose,
   onChanged,
 }: {
   id: string;
   endpoint: string;
   userId: number;
+  canEdit: boolean;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -469,6 +483,9 @@ function Detail({
   const [message, setMessage] = useState("");
   const [sharing, setSharing] = useState(false);
   const [sharingStale, setSharingStale] = useState(false);
+  const [editingExpiration, setEditingExpiration] = useState(false);
+  const [expirationStale, setExpirationStale] = useState(false);
+  const [expiresOn, setExpiresOn] = useState("");
   const path = `${endpoint}/documents/${id}`;
   function assign(data: Document) {
     setDoc(data);
@@ -516,6 +533,66 @@ function Detail({
       setSharing(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Nu am putut încărca accesul.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  function openExpiration() {
+    if (!doc || busy) return;
+    setExpiresOn(doc.expires_on ?? "");
+    setExpirationStale(false);
+    setError("");
+    setMessage("");
+    setEditingExpiration(true);
+  }
+  async function reloadExpiration() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const current = await api<Document>(path);
+      assign(current);
+      setExpiresOn(current.expires_on ?? "");
+      setExpirationStale(false);
+    } catch (e) {
+      handleExpirationError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+  function handleExpirationError(e: unknown) {
+    if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status)) {
+      setDoc(null);
+      setEditingExpiration(false);
+      onChanged();
+      setError(
+        "Documentul nu mai este disponibil sau nu mai ai permisiunea de a-l modifica.",
+      );
+    } else if (e instanceof ApiError && e.status === 412) {
+      setExpirationStale(true);
+      setError("Documentul s-a schimbat. Reîncarcă-l înainte de a salva.");
+    } else {
+      setError(e instanceof Error ? e.message : "Nu am putut salva expirarea.");
+    }
+  }
+  async function saveExpiration(e: FormEvent) {
+    e.preventDefault();
+    if (!doc || busy || expirationStale) return;
+    setBusy(true);
+    setError("");
+    try {
+      assign(
+        await api<Document>(path, {
+          method: "PATCH",
+          headers: { "If-Match": `"${doc.version}"` },
+          body: JSON.stringify({ expires_on: expiresOn || null }),
+        }),
+      );
+      setEditingExpiration(false);
+      setMessage("Data expirării a fost salvată.");
+      onChanged();
+    } catch (e) {
+      handleExpirationError(e);
     } finally {
       setBusy(false);
     }
@@ -597,12 +674,20 @@ function Detail({
   }
   return (
     <Modal
-      title={sharing ? "Acces" : (doc?.title ?? "Document")}
-      onClose={onClose}
+      title={
+        sharing
+          ? "Acces"
+          : editingExpiration
+            ? "Expirare"
+            : (doc?.title ?? "Document")
+      }
+      onClose={() => {
+        if (!busy) onClose();
+      }}
       wide
     >
       {!doc && !error && <p className="loading-text">Se încarcă…</p>}
-      {doc && !sharing && (
+      {doc && !sharing && !editingExpiration && (
         <>
           <div className="detail-art">
             <span className="category-label">{categoryName(doc.category)}</span>
@@ -628,6 +713,41 @@ function Detail({
                 year: "numeric",
               })}
             </span>
+          </div>
+          <div className="document-expiration">
+            <CalendarDays size={21} aria-hidden="true" />
+            <dl>
+              <dt>
+                {doc.expires_on
+                  ? doc.expires_on < bucharestToday()
+                    ? "Expirat la"
+                    : "Expiră la"
+                  : "Expirare"}
+              </dt>
+              <dd>
+                {doc.expires_on ? (
+                  <time dateTime={doc.expires_on}>
+                    {dateLabel(doc.expires_on, {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </time>
+                ) : (
+                  "Nespecificată"
+                )}
+              </dd>
+            </dl>
+            {doc.owner_id === userId && canEdit && (
+              <button
+                className="icon-button"
+                aria-label="Modifică data expirării"
+                disabled={busy}
+                onClick={openExpiration}
+              >
+                <Pencil size={18} aria-hidden="true" />
+              </button>
+            )}
           </div>
           {doc.status !== "ready" && (
             <div className="status-box">
@@ -674,6 +794,34 @@ function Detail({
             </button>
           )}
         </>
+      )}
+      {doc && editingExpiration && (
+        <form onSubmit={saveExpiration}>
+          <p className="modal-lead">{doc.title}</p>
+          <ExpirationField
+            value={expiresOn}
+            onChange={setExpiresOn}
+            disabled={busy || expirationStale}
+            autoFocus
+          />
+          <button
+            className="button primary full"
+            disabled={busy || expirationStale}
+          >
+            {busy ? "Se salvează…" : "Salvează"}
+          </button>
+          <button
+            className="text-button full center"
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setEditingExpiration(false);
+              setError("");
+            }}
+          >
+            Înapoi la document
+          </button>
+        </form>
       )}
       {doc && sharing && (
         <form onSubmit={saveSharing}>
@@ -782,6 +930,15 @@ function Detail({
           onClick={() => void openSharing()}
         >
           {busy ? "Se încarcă…" : "Reîncarcă accesul"}
+        </button>
+      )}
+      {editingExpiration && expirationStale && (
+        <button
+          className="button secondary full"
+          disabled={busy}
+          onClick={() => void reloadExpiration()}
+        >
+          {busy ? "Se încarcă…" : "Reîncarcă documentul"}
         </button>
       )}
       {message && (

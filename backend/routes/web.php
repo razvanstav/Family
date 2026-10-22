@@ -70,6 +70,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::get('/documents', [DocumentController::class, 'index']);
         Route::post('/documents', [DocumentController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/documents/{document}', [DocumentController::class, 'show']);
+        Route::patch('/documents/{document}', [DocumentController::class, 'update'])->whereUuid('document');
         Route::put('/documents/{document}/sharing', [DocumentController::class, 'sharing']);
         Route::get('/documents/{document}/content', [DocumentController::class, 'download']);
         Route::post('/documents/{document}/scan', [DocumentController::class, 'retry'])->middleware('throttle:10,1');

@@ -92,6 +92,35 @@
   color: var(--muted);
   margin: 16px 0;
 }
+.document-expiration {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.document-expiration > svg {
+  color: var(--icon-documents);
+  flex-shrink: 0;
+}
+.document-expiration dl {
+  margin: 0;
+  flex: 1;
+}
+.document-expiration dt {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+.document-expiration dd {
+  margin: 0;
+  font-size: 14px;
+}
+.document-clear-expiration {
+  align-self: flex-start;
+  min-height: 44px;
+}
 @media (max-width: 700px) {
   .library-tools {
     gap: 8px;
