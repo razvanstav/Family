@@ -4,6 +4,7 @@ namespace App\Modules\Kitchen\Application;
 
 use App\Modules\Kitchen\Contracts\Recipes;
 use App\Platform\Audit\Audit;
+use App\Platform\Contracts\Outbox;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 
 final class MealCatalog
 {
-    public function __construct(private Recipes $recipes) {}
+    public function __construct(private Recipes $recipes, private Outbox $outbox) {}
 
     private function visible(string $familyId, int $actorId, string $membershipId): Builder
     {
@@ -115,6 +116,7 @@ final class MealCatalog
                 'version' => 1, 'created_at' => now(), 'updated_at' => now(),
             ]);
             Audit::record($familyId, $actorId, 'meal.created', $id);
+            $this->outbox->append($familyId, 'kitchen.meal.changed', 'kitchen.meal', $id, 1);
 
             return $this->details($familyId, $actorId, $membershipId, $id);
         });
@@ -143,6 +145,8 @@ final class MealCatalog
                 DB::table('kitchen_meal_votes')->insert($values + ['family_id' => $familyId, 'meal_id' => $mealId, 'membership_id' => $membershipId, 'created_at' => now()]);
             }
             Audit::record($familyId, $actorId, $withdraw ? 'meal.vote_withdrawn' : 'meal.vote_saved', $mealId);
+            $revision = DB::selectOne('UPDATE kitchen_meals SET activity_revision = activity_revision + 1 WHERE family_id = ? AND id = ? RETURNING activity_revision', [$familyId, $mealId])->activity_revision;
+            $this->outbox->append($familyId, 'kitchen.meal.changed', 'kitchen.meal', $mealId, $revision);
 
             return $this->details($familyId, $actorId, $membershipId, $mealId);
         });
@@ -166,5 +170,13 @@ final class MealCatalog
         abort_unless($row->allowed_recipe, 404);
 
         return $this->recipes->findVersion($familyId, $actorId, $row->allowed_recipe, $row->recipe_version_id);
+    }
+
+    public function activityCards(string $familyId, int $actorId, string $membershipId, array $ids): array
+    {
+        return $this->visible($familyId, $actorId, $membershipId)->whereIn('m.id', $ids)
+            ->select(['m.id', 'm.dish_title as title', 'm.visibility', 'm.activity_revision as source_version', 'u.name as owner_name',
+                DB::raw('CASE WHEN r.id IS NOT NULL THEN a.status ELSE NULL END AS photo_status'), DB::raw('r.id IS NOT NULL AS recipe_available')])
+            ->get()->mapWithKeys(fn (object $row) => [$row->id => ['kind' => 'kitchen.meal'] + (array) $row])->all();
     }
 }

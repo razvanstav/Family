@@ -4,6 +4,7 @@ use App\Modules\Calendar\Http\CalendarController;
 use App\Modules\Calendar\Http\CalendarNotificationController;
 use App\Modules\Documents\Http\DocumentController;
 use App\Modules\Home\Http\HomeController;
+use App\Modules\Kitchen\Http\KitchenActivityController;
 use App\Modules\Kitchen\Http\MealController;
 use App\Modules\Kitchen\Http\RecipeController;
 use App\Platform\Families\FamilyController;
@@ -21,6 +22,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
         Route::get('/home', HomeController::class);
+        Route::get('/kitchen-activity', KitchenActivityController::class);
         Route::get('/meals', [MealController::class, 'index']);
         Route::post('/meals', [MealController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/meals/{meal}', [MealController::class, 'show'])->whereUuid('meal');

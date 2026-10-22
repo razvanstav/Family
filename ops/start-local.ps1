@@ -28,4 +28,7 @@ if (-not (Get-CimInstance Win32_Process -Filter "Name='php.exe'" | Where-Object 
     Start-Process $PhpPath -ArgumentList "-d extension=pdo_pgsql `"$root/backend/artisan`" calendar:deliver-reminders --watch --no-interaction" -WorkingDirectory "$root/backend" -WindowStyle Hidden -RedirectStandardOutput "$root/.runtime/reminders.out.log" -RedirectStandardError "$root/.runtime/reminders.err.log" | Out-Null
 }
 Write-Output 'Previzualizare mobil: http://127.0.0.1:8000/preview/mobile'
+if (-not (Get-CimInstance Win32_Process -Filter "Name='php.exe'" | Where-Object { $_.CommandLine -like "*$root/backend/artisan*outbox:deliver*--watch*" })) {
+    Start-Process $PhpPath -ArgumentList "-d extension=pdo_pgsql `"$root/backend/artisan`" outbox:deliver --watch --no-interaction" -WorkingDirectory "$root/backend" -WindowStyle Hidden -RedirectStandardOutput "$root/.runtime/outbox.out.log" -RedirectStandardError "$root/.runtime/outbox.err.log" | Out-Null
+}
 Write-Output 'ClamAV poate avea nevoie de câteva secunde pentru încărcarea semnăturilor.'

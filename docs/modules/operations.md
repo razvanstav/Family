@@ -2,6 +2,8 @@
 
 Stare: mediul local și scripturile de pornire/test există. CI de bază se introduce în M04; stagingul și acceptarea pentru beta se închid în M11.
 
+Decizie de găzduire la 22 octombrie 2026: utilizatorul predă instalarea pe serverul Linux dedicat propriu unei alte persoane. Cerințele și limitele sunt în [nota pentru instalator](../../ops/SETUP.md#predare-pentru-serverul-linux). O2 rămâne planificat și neverificat pe server; nu există încă o configurație Linux gata de aplicat.
+
 ## Fișiere și comenzi existente
 
 - Instalare: [ops/SETUP.md](../../ops/SETUP.md). Consultă-l la instalare ori la o problemă de mediu, nu la fiecare reluare.

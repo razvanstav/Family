@@ -2,6 +2,18 @@
 
 Aceste instrucțiuni sunt pentru dezvoltare locală. Folderul `.tools` de pe calculatorul inițial nu este inclus în Git. Scriptul `start-local.ps1` gestionează instalarea portabilă de pe acel calculator; pentru un clone nou poți folosi servicii PostgreSQL și ClamAV instalate normal.
 
+## Predare pentru serverul Linux
+
+Decizie la 22 octombrie 2026: instalare pe serverul Linux dedicat al utilizatorului, de către o altă persoană. **Planificat; deployul Linux nu este implementat sau verificat.** Instrucțiunile locale de mai jos nu constituie un deploy public gata de aplicat. Acceptarea mediului de test este în [O2 — staging](../docs/modules/operations.md).
+
+- Confirmă distribuția/versiunea Linux, RAM-ul disponibil și site-urile existente. Pentru aplicație, PostgreSQL și ClamAV împreună se recomandă minimum 8 GB RAM pentru testare; consumul trebuie verificat pe server.
+- Dependențele și extensiile sunt în secțiunea 1. Păstrează PostgreSQL și politicile RLS; rulează migrațiile cu rolul de administrare, aplică `ops/grant-runtime.sql`, apoi rulează aplicația și workerii cu `memoria_app`, fără BYPASSRLS sau proprietatea tabelelor.
+- Construiește frontendul: rezultatul este `backend/public/app`, cu URL `/app/`. Configurează Nginx/PHP-FPM cu rădăcina web `backend/public` și API-ul pe aceeași origine. Nu publica rădăcina repository-ului.
+- Creează configurație, chei, bază și stocare private separate: `APP_ENV=staging`, `APP_DEBUG=false`, `MEMORIA_DEMO=false`, URL HTTPS și cookie de sesiune sigur. Nu rula seederele demo din instrucțiunile locale și nu copia `.env` sau datele calculatorului inițial. Provisionarea conturilor de test trebuie stabilită separat.
+- Păstrează fișierele private persistente, accesibile numai prin autorizarea aplicației. Configurează ClamAV local conform secțiunii 4 și actualizarea supravegheată a definițiilor.
+- Supraveghează prin systemd/Supervisor comenzile `php artisan calendar:deliver-reminders --watch` și `php artisan outbox:deliver --watch`, din `backend`, cu repornire după reboot și după actualizarea codului. Scripturile PowerShell locale nu instalează servicii Linux.
+- Verifică pe server autentificarea, izolarea familiilor, uploadul/scanarea/downloadul privat, granturile după migrații și execuția workerilor. Configurează și probează backupul DB + fișiere înainte de utilizarea datelor reale. Nu deduce acceptarea Linux din testele locale consemnate.
+
 ## 1. Surse și dependențe
 
 ```sh
@@ -123,7 +135,17 @@ Actualizarea manuală a semnăturilor și pornirea pe acest Windows, din rădăc
 
 Scriptul caută PHP în PATH, apoi în `~/php84/php.exe`; poți indica altă instalare prin `-PhpPath`. Pornește și workerul `calendar:deliver-reminders --watch`, care verifică reminderele in-app la fiecare 15 secunde. Logurile lui sunt `.runtime/reminders.out.log` și `.runtime/reminders.err.log`; pentru o singură verificare rulează `php -d extension=pdo_pgsql backend/artisan calendar:deliver-reminders`. În afara acestui mediu local, comanda trebuie ținută pornită de managerul de procese al serverului.
 
-FreshClam rulează la cerere, fără actualizare programată configurată aici. Logurile sunt `.runtime/freshclam.log`, `.runtime/clamd.log` și `.runtime/clamd.err.log`. După pornire, clamd încarcă bazele în memorie înainte să poată scana. `ops/stop-local.ps1` oprește procesele acestui checkout, inclusiv workerul pentru remindere.
+După migrațiile K4b/P3 și aplicarea `ops/grant-runtime.sql`, același script pornește ascuns și `outbox:deliver --watch`, la 15 s. Loguri: `.runtime/outbox.out.log` / `.runtime/outbox.err.log`; fără mesaje repetate când nu există lucru. Pentru o singură trecere, din rădăcina proiectului:
+
+```sh
+php -d extension=pdo_pgsql backend/artisan outbox:deliver --family=11111111-1111-4111-8111-111111111111
+php -d extension=pdo_pgsql backend/artisan kitchen:rebuild-activity --family=11111111-1111-4111-8111-111111111111
+php -d extension=pdo_pgsql backend/artisan outbox:deliver --family=11111111-1111-4111-8111-111111111111 --replay=kitchen.activity.v1
+```
+
+Înlocuiește UUID-ul demo cu familia dorită. Rebuildul reconstruiește indexul din sursele actuale, inclusiv cele existente înainte de outbox, fără schimbarea surselor. Replay reprogramează handlerul pentru evenimentele păstrate; repetă livrarea până la epuizarea loturilor (implicit 100/familie, maximum 1000 prin `--limit`). Efectele handlerului și confirmarea sunt DB-atomice; emailul/alte servicii externe nu intră în acest contract. După modificarea codului handlerilor, oprește și repornește workerul outbox; în afara mediului local folosește un manager de procese. Nu porni două instanțe de teste pe aceeași bază de test și nu direcționa workerii de test către `memoria`.
+
+FreshClam rulează la cerere, fără actualizare programată configurată aici. Logurile sunt `.runtime/freshclam.log`, `.runtime/clamd.log` și `.runtime/clamd.err.log`. După pornire, clamd încarcă bazele în memorie înainte să poată scana. `ops/stop-local.ps1` oprește procesele acestui checkout, inclusiv workerii pentru remindere și outbox.
 
 Din rădăcina proiectului, cu extensiile PHP deja activate:
 

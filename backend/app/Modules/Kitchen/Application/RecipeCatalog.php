@@ -4,6 +4,7 @@ namespace App\Modules\Kitchen\Application;
 
 use App\Modules\Kitchen\Contracts\Recipes;
 use App\Platform\Audit\Audit;
+use App\Platform\Contracts\Outbox;
 use App\Platform\Contracts\PrivateMedia;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -13,7 +14,7 @@ use Illuminate\Support\Str;
 
 final class RecipeCatalog implements Recipes
 {
-    public function __construct(private PrivateMedia $media) {}
+    public function __construct(private PrivateMedia $media, private Outbox $outbox) {}
 
     private function visible(string $familyId, int $actorId, bool $currentOnly = true): Builder
     {
@@ -124,6 +125,7 @@ final class RecipeCatalog implements Recipes
             $this->insertVersion($familyId, $recipeId, $version, $data, $assetId);
             DB::table('recipes')->where('family_id', $familyId)->where('id', $recipeId)->update(['version' => $version, 'revision' => $recipe['revision'] + 1, 'updated_at' => now()]);
             Audit::record($familyId, $actorId, 'recipe.version_created', $recipeId);
+            $this->outbox->append($familyId, 'kitchen.recipe.changed', 'kitchen.recipe', $recipeId, $recipe['revision'] + 1);
 
             return $this->find($familyId, $actorId, $recipeId);
         });
@@ -140,6 +142,7 @@ final class RecipeCatalog implements Recipes
             ]);
             $this->insertVersion($familyId, $id, 1, $data, $asset['id'] ?? null);
             Audit::record($familyId, $actorId, 'recipe.created', $id);
+            $this->outbox->append($familyId, 'kitchen.recipe.changed', 'kitchen.recipe', $id, 1);
 
             return $this->find($familyId, $actorId, $id);
         });
@@ -172,6 +175,7 @@ final class RecipeCatalog implements Recipes
             ]);
             DB::table('families')->where('id', $familyId)->increment('authz_revision');
             Audit::record($familyId, $actorId, 'recipe.access_changed', $recipeId);
+            $this->outbox->append($familyId, 'kitchen.recipe.changed', 'kitchen.recipe', $recipeId, $recipe['revision'] + 1);
 
             return $this->find($familyId, $actorId, $recipeId);
         });
@@ -189,6 +193,7 @@ final class RecipeCatalog implements Recipes
             DB::table('recipe_grants')->where('family_id', $familyId)->where('recipe_id', $recipeId)->delete();
             DB::table('families')->where('id', $familyId)->increment('authz_revision');
             Audit::record($familyId, $actorId, $restore ? 'recipe.restored' : 'recipe.archived', $recipeId);
+            $this->outbox->append($familyId, 'kitchen.recipe.changed', 'kitchen.recipe', $recipeId, $recipe['revision'] + 1);
 
             return $this->find($familyId, $actorId, $recipeId);
         });
@@ -197,5 +202,12 @@ final class RecipeCatalog implements Recipes
     public function revokeMembership(string $familyId, string $membershipId): void
     {
         DB::table('recipe_grants')->where('family_id', $familyId)->where('membership_id', $membershipId)->delete();
+    }
+
+    public function activityCards(string $familyId, int $actorId, array $ids): array
+    {
+        return $this->visible($familyId, $actorId)->whereNull('r.archived_at')->whereIn('r.id', $ids)
+            ->select(['r.id', 'v.title', 'r.visibility', 'r.revision as source_version', 'u.name as owner_name', 'a.status as photo_status'])
+            ->get()->mapWithKeys(fn (object $row) => [$row->id => ['kind' => 'kitchen.recipe'] + (array) $row])->all();
     }
 }
