@@ -2,13 +2,15 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Archive,
   CalendarDays,
-  ChevronRight,
   Clock3,
   LockKeyhole,
   Plus,
   RefreshCw,
   RotateCcw,
+  Search,
+  SlidersHorizontal,
   Users,
+  X,
 } from "lucide-react";
 import {
   api,
@@ -23,6 +25,12 @@ import type { CalendarItem } from "./calendarTypes";
 import { CalendarMonth } from "../../shared/CalendarMonth";
 import "./calendar.css";
 import { ReminderFields } from "./ReminderFields";
+import {
+  CalendarEvents,
+  CalendarWeek,
+  weekDays,
+  type CalendarView,
+} from "./CalendarViews";
 
 export function CalendarPage({
   family,
@@ -47,6 +55,12 @@ export function CalendarPage({
     requestedEvent?.monthOnly ? null : (requestedEvent?.date ?? null),
   );
   const [archived, setArchived] = useState(false);
+  const [view, setView] = useState<CalendarView>("month");
+  const [access, setAccess] = useState("");
+  const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<CalendarItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -57,6 +71,21 @@ export function CalendarPage({
   );
   const sequence = useRef(0);
   const endpoint = `/families/${family.id}/calendar-items`;
+  const selectedDay =
+    day ?? (month === today.slice(0, 7) ? today : `${month}-01`);
+  const week = weekDays(selectedDay);
+  const months = [
+    ...new Set([
+      month,
+      ...(view === "month"
+        ? []
+        : week
+            .filter((date) => date >= "1900-01-01" && date <= "2100-12-31")
+            .map((date) => date.slice(0, 7))),
+    ]),
+  ]
+    .sort()
+    .join(",");
   useEffect(() => {
     if (!requestedEvent) return;
     setMonth(requestedEvent.date.slice(0, 7));
@@ -67,14 +96,33 @@ export function CalendarPage({
   }, [requestedEvent]);
   useEffect(() => {
     const request = ++sequence.current;
+    const controller = new AbortController();
     setLoading(true);
     setError("");
     setItems([]);
-    api<CalendarItem[]>(
-      `${endpoint}?month=${month}&archived=${archived ? 1 : 0}`,
+    Promise.all(
+      months
+        .split(",")
+        .map((period) =>
+          api<CalendarItem[]>(
+            `${endpoint}?month=${period}&archived=${archived ? 1 : 0}`,
+            { signal: controller.signal },
+          ),
+        ),
     )
       .then((data) => {
-        if (request === sequence.current) setItems(data);
+        if (request === sequence.current)
+          setItems(
+            data
+              .flat()
+              .sort(
+                (a, b) =>
+                  a.event_date.localeCompare(b.event_date) ||
+                  Number(b.all_day) - Number(a.all_day) ||
+                  (a.time ?? "").localeCompare(b.time ?? "") ||
+                  a.id.localeCompare(b.id),
+              ),
+          );
       })
       .catch((e) => {
         if (request !== sequence.current) return;
@@ -90,15 +138,44 @@ export function CalendarPage({
         if (request === sequence.current) setLoading(false);
       });
     return () => {
+      controller.abort();
       sequence.current++;
     };
-  }, [endpoint, month, archived, revision]);
+  }, [endpoint, months, archived, revision]);
   function selectMonth(value: string) {
     setMonth(value);
     setDay(null);
     setNotice("");
   }
-  const visible = day ? items.filter((item) => item.event_date === day) : items;
+  function selectDay(value: string) {
+    setDay(value);
+    setMonth(value.slice(0, 7));
+    setNotice("");
+  }
+  const matching = items.filter(
+    (item) =>
+      (!access || item.visibility === access) &&
+      (!query.trim() ||
+        `${item.title} ${item.notes ?? ""}`
+          .toLocaleLowerCase("ro")
+          .includes(query.trim().toLocaleLowerCase("ro"))),
+  );
+  const visible = matching.filter((item) =>
+    view === "week"
+      ? week.includes(item.event_date)
+      : view === "agenda" || day
+        ? item.event_date === selectedDay
+        : item.event_date.startsWith(month),
+  );
+  const markers: Record<string, ("family" | "private")[]> = {};
+  for (const item of matching)
+    (markers[item.event_date] ??= []).push(item.visibility);
+  const agendaTitle =
+    view === "week"
+      ? "Evenimentele săptămânii"
+      : view === "agenda" || day
+        ? dateLabel(selectedDay)
+        : `Evenimente în ${dateLabel(`${month}-01`, { month: "long" })}`;
   function saved(item: CalendarItem, action: string) {
     setEditor(null);
     onChanged();
@@ -117,41 +194,164 @@ export function CalendarPage({
   return (
     <div className="calendar-page">
       <section className="page-heading">
-        <h1>Calendar</h1>
-        <button
-          className="button primary"
-          aria-label="Adaugă eveniment"
-          disabled={family.role === "limited"}
-          onClick={() => setEditor("new")}
-        >
-          <Plus size={18} /> <span>Adaugă eveniment</span>
-        </button>
+        <h1 className="calendar-title">
+          <CalendarDays size={25} aria-hidden="true" />
+          Calendar
+        </h1>
+        <div className="page-heading-actions">
+          <button
+            className="icon-button"
+            aria-label="Caută evenimente"
+            aria-expanded={searchOpen || Boolean(query)}
+            onClick={() => {
+              setSearchOpen(true);
+              searchInput.current?.focus();
+            }}
+          >
+            <Search size={21} aria-hidden="true" />
+          </button>
+          <button
+            className="button primary"
+            aria-label="Adaugă eveniment"
+            disabled={family.role === "limited"}
+            onClick={() => setEditor("new")}
+          >
+            <Plus size={18} /> <span>Adaugă eveniment</span>
+          </button>
+        </div>
       </section>
+      {(searchOpen || query) && (
+        <label className="search calendar-search">
+          <Search size={18} aria-hidden="true" />
+          <input
+            ref={searchInput}
+            autoFocus
+            type="search"
+            value={query}
+            maxLength={160}
+            placeholder="Caută în perioada afișată"
+            aria-label="Caută evenimente în perioada afișată"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <button
+            aria-label="Șterge și închide căutarea"
+            onClick={() => {
+              setQuery("");
+              setSearchOpen(false);
+            }}
+          >
+            <X size={16} aria-hidden="true" />
+          </button>
+        </label>
+      )}
+      <nav className="calendar-view-tabs" aria-label="Vizualizare Calendar">
+        {(
+          [
+            ["month", "Lună"],
+            ["week", "Săptămână"],
+            ["agenda", "Agendă"],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            aria-pressed={view === value}
+            onClick={() => setView(value)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
       {notice && (
         <p className="notice" role="status">
           {notice}
         </p>
       )}
       <div className="calendar-layout">
-        <CalendarMonth
-          month={month}
-          day={day}
-          today={today}
-          markedDates={loading ? [] : items.map((item) => item.event_date)}
-          onMonth={selectMonth}
-          onDay={setDay}
-          onToday={() => {
-            setMonth(today.slice(0, 7));
-            setDay(today);
-          }}
-          onAllMonth={() => setDay(null)}
-        />
+        <div className="calendar-selector">
+          {view === "month" ? (
+            <CalendarMonth
+              planner
+              month={month}
+              day={day}
+              today={today}
+              markedDates={loading ? [] : Object.keys(markers)}
+              markers={loading ? {} : markers}
+              onMonth={selectMonth}
+              onDay={selectDay}
+              onToday={() => {
+                setMonth(today.slice(0, 7));
+                setDay(today);
+              }}
+              onAllMonth={() => setDay(null)}
+            />
+          ) : (
+            <CalendarWeek
+              day={selectedDay}
+              today={today}
+              dates={week}
+              markedDates={new Set(Object.keys(markers))}
+              onDay={selectDay}
+            />
+          )}
+          <div className="calendar-filter-row">
+            <div
+              className="calendar-access-filters"
+              aria-label="Acces evenimente"
+            >
+              <button aria-pressed={!access} onClick={() => setAccess("")}>
+                Toate
+              </button>
+              <button
+                aria-pressed={access === "family"}
+                onClick={() => setAccess("family")}
+              >
+                <Users size={14} aria-hidden="true" />
+                Familie
+              </button>
+              <button
+                aria-pressed={access === "private"}
+                onClick={() => setAccess("private")}
+              >
+                <LockKeyhole size={14} aria-hidden="true" />
+                Doar eu
+              </button>
+            </div>
+            <button
+              className={`icon-button calendar-filter-toggle${archived ? " active" : ""}`}
+              aria-label="Opțiuni calendar"
+              aria-expanded={filtersOpen}
+              aria-controls="calendar-options"
+              onClick={() => setFiltersOpen((value) => !value)}
+            >
+              <SlidersHorizontal size={18} aria-hidden="true" />
+            </button>
+          </div>
+          {filtersOpen && (
+            <div className="calendar-options" id="calendar-options">
+              <div className="calendar-filters" aria-label="Stare evenimente">
+                <button
+                  aria-pressed={!archived}
+                  onClick={() => setArchived(false)}
+                >
+                  Active
+                </button>
+                <button
+                  aria-pressed={archived}
+                  onClick={() => setArchived(true)}
+                >
+                  Arhivate
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         <section className="calendar-agenda" aria-labelledby="agenda-title">
           <div className="calendar-agenda-heading">
             <h2 id="agenda-title">
-              {day
-                ? dateLabel(day, { day: "numeric", month: "long" })
-                : "Evenimentele lunii"}
+              {agendaTitle}
+              {archived && (
+                <span className="calendar-archived-label">Arhivate</span>
+              )}
             </h2>
             <button
               className="icon-button"
@@ -160,14 +360,6 @@ export function CalendarPage({
               disabled={loading}
             >
               <RefreshCw size={18} />
-            </button>
-          </div>
-          <div className="calendar-filters">
-            <button aria-pressed={!archived} onClick={() => setArchived(false)}>
-              Active
-            </button>
-            <button aria-pressed={archived} onClick={() => setArchived(true)}>
-              Arhivate
             </button>
           </div>
           {loading ? (
@@ -190,49 +382,58 @@ export function CalendarPage({
             <div className="calendar-empty">
               <CalendarDays size={30} />
               <p>
-                {archived
-                  ? "Niciun eveniment arhivat."
-                  : day
-                    ? "Niciun eveniment în această zi."
-                    : "Niciun eveniment în această lună."}
+                {query.trim() || access
+                  ? "Niciun eveniment pentru filtrele alese."
+                  : archived
+                    ? "Niciun eveniment arhivat."
+                    : view === "week"
+                      ? "Niciun eveniment în această săptămână."
+                      : day || view === "agenda"
+                        ? "Niciun eveniment în această zi."
+                        : "Niciun eveniment în această lună."}
               </p>
+              {!archived &&
+                family.role !== "limited" &&
+                !query.trim() &&
+                !access && (
+                  <button
+                    className="button secondary"
+                    onClick={() => setEditor("new")}
+                  >
+                    <Plus size={17} aria-hidden="true" />
+                    Adaugă eveniment
+                  </button>
+                )}
+            </div>
+          ) : view === "week" ? (
+            <div className="calendar-week-agenda">
+              {week
+                .filter((date) =>
+                  visible.some((item) => item.event_date === date),
+                )
+                .map((date) => (
+                  <section key={date} aria-label={dateLabel(date)}>
+                    <h3>
+                      {dateLabel(date, {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      })}
+                    </h3>
+                    <CalendarEvents
+                      items={visible.filter((item) => item.event_date === date)}
+                      timeline
+                      onOpen={setEditor}
+                    />
+                  </section>
+                ))}
             </div>
           ) : (
-            <div className="calendar-events">
-              {visible.map((item) => (
-                <button
-                  key={item.id}
-                  className="calendar-event"
-                  onClick={() => setEditor(item.id)}
-                  aria-label={`${item.title} · ${dateLabel(item.event_date)} · ${item.all_day ? "Toată ziua" : item.time} · ${visibilityLabel[item.visibility]}`}
-                >
-                  <span className="calendar-date">
-                    <strong>{Number(item.event_date.slice(-2))}</strong>
-                    <span>
-                      {dateLabel(item.event_date, { month: "short" })}
-                    </span>
-                  </span>
-                  <span className="calendar-event-info">
-                    <strong>{item.title}</strong>
-                    <span>
-                      <Clock3 size={14} />
-                      {item.all_day ? "Toată ziua" : item.time}
-                    </span>
-                  </span>
-                  <span
-                    className="calendar-access"
-                    aria-label={visibilityLabel[item.visibility]}
-                  >
-                    {item.visibility === "private" ? (
-                      <LockKeyhole size={17} />
-                    ) : (
-                      <Users size={17} />
-                    )}
-                  </span>
-                  <ChevronRight size={16} />
-                </button>
-              ))}
-            </div>
+            <CalendarEvents
+              items={visible}
+              timeline={view === "agenda" || Boolean(day)}
+              onOpen={setEditor}
+            />
           )}
         </section>
       </div>

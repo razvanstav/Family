@@ -1,6 +1,6 @@
 # Interfață comună
 
-Stare: H2 Acasă, KH1 Bucătărie, FD1 și MH1 Amintiri sunt livrate local. MH1 așteaptă revizuirea împreună cu utilizatorul. Navigația rămâne cu cinci secțiuni, Documente în Familia mea. Planificatorul rămâne schiță.
+Stare: H2 Acasă, KH1 Bucătărie, FD1, MH1 Amintiri și CH1 Calendar sunt implementate local. CH1 așteaptă feedback după verificarea mobilă limitată descrisă în fișa Calendar. Navigația rămâne cu cinci secțiuni, Documente în Familia mea. Planificatorul rămâne schiță.
 
 ## Fișiere relevante
 
@@ -10,20 +10,21 @@ Stare: H2 Acasă, KH1 Bucătărie, FD1 și MH1 Amintiri sunt livrate local. MH1 
 - Client API: `frontend/src/shared/api.ts`; se aliniază rutelor efectiv implementate.
 - Referință principală: [MVP de familie — 22 octombrie](../../artifacts/design-reference-family-mvp.png), copia imaginii furnizate de utilizator. [Mock-upul anterior](../../artifacts/design-reference-layout.jpeg) rămâne referință secundară de structură. Paletă și atmosferă: `artifacts/design-reference-warm.png`.
 - Bucătărie are și [referința specifică aleasă](../../artifacts/kitchen-reference.png): rețete în interiorul Bucătăriei, fotografii, carduri și etichete compacte; funcțiile se adaugă numai când sunt reale. K3a adaugă secțiunea „Mese”, zile, vot binar și comentariu personal, la cererea utilizatorului. Implementare și probe: [Bucătărie](kitchen.md).
+- Calendar are [referința Calendar/Agendă](../../artifacts/design-reference-calendar.png), aleasă la 22 octombrie: grilă lunară, selector de săptămână și ore pe axă verticală, adaptate la evenimentele manuale existente.
 
 ## Referință pe pagini — 22 octombrie 2026
 
 Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helvetica, paleta caldă și regulile de text direct; preluăm compoziția și ritmul din imagine. Nu introducem sloganul, statistici, ratinguri, favorite, planificare/cumpărături ori căutare globală fără funcționalitate reală. Navigația existentă și pagina implicită rămân cele stabilite.
 
-**Ritm explicit:** finalizăm și arătăm un singur layout, așteptăm feedback, apoi alegem pasul următor. Pasul curent MH1 este Amintiri, ales explicit după FD1. Fără alte pagini și fără teste în exces.
+**Ritm explicit:** finalizăm și arătăm un singur layout, așteptăm feedback, apoi alegem pasul următor. Pasul curent CH1 este Calendar, ales explicit după MH1. Fără alte pagini și fără teste în exces.
 
 | Pagină | Adaptare | Stare |
 | --- | --- | --- |
 | Acasă — H2 | Acces rapid la module reale; amintire cu fotografie și dată; note compacte; documente/categorii existente; evenimente și remindere reale; calendar în coloana laterală desktop. | Implementat, probe locale mai jos; feedback pozitiv primit. |
 | Bucătărie — KH1 | Rețete cu fotografii în rând derulabil pe mobil, căutare în antet, listă completă cu filtre și rânduri compacte pentru mesele zilei; versiuni și voturi existente. | Implementat, build/probe vizuale locale trecute. Vezi [fișa Bucătărie](kitchen.md#kh1--layout-bucătărie-22-octombrie-2026). |
-| Amintiri — MH1, pas curent | Fotografii pe lățimea cardului, note compacte, căutare în antet și panou pentru acces/arhivă; momente/note și cronologia rămân funcționale. | Implementat, build și verificare mobilă scurtă trecute; așteaptă feedback. Vezi [Amintiri](memory.md#mh1--layout-mobil-amintiri-22-octombrie-2026). |
+| Amintiri — MH1 | Fotografii pe lățimea cardului, note compacte, căutare în antet și panou pentru acces/arhivă; momente/note și cronologia rămân funcționale. | Implementat, build și verificare mobilă scurtă trecute. Vezi [Amintiri](memory.md#mh1--layout-mobil-amintiri-22-octombrie-2026). |
 | Familia mea / Documente — FD1 | Membri/Documente în Familie, dosar comun și pe persoană; numele membrului deschide documentele autorizate, administrarea rămâne separată. Meniul principal are cinci secțiuni. | Implementat și verificat local; vezi [Familie](families.md#fd1--documente-în-familie-22-octombrie-2026). |
-| Calendar | Aceeași densitate, borduri și iconuri, cu păstrarea politicilor și controalelor existente. | Pagină ulterioară, neîncepută în FD1. |
+| Calendar — CH1, pas curent | Lună/Săptămână/Agendă, zile cu puncte după acces, carduri compacte și agendă cu ore; numai date reale. | Implementat; build, randare punctuală și verificare mobilă pe calendar gol trecute. Așteaptă feedback; vezi [Calendar](calendar.md#ch1--calendar-mobil-22-octombrie-2026). |
 | Animale / Mașini | Structura profilului, următoarelor activități și istoricului din imagine se folosește când modulele AN/V există. | Module de produs planificate; fără pagini sau numere fictive. |
 
 ### H2 — Contractul Acasă

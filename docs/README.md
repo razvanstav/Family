@@ -10,7 +10,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | Documente | În Familia mea → Documente; dosare pe persoană și comune, cu upload/acces/descărcare existente | [Documente](modules/documents.md) |
 | Bucătărie | Rețete, versiuni, mese, vot și acces implementate; KH1 mobil pregătit pentru feedback | [Bucătărie](modules/kitchen.md) |
 | Amintiri | MH1 mobil pregătit pentru feedback; AM1–AM3 implementate, acceptarea completă a fluxurilor rămâne deschisă | [Amintiri](modules/memory.md) |
-| Calendar | Planificat; fără implementare de produs | [Calendar](modules/calendar.md) |
+| Calendar | C1/C3 in-app existente; CH1 mobil implementat, cu Lună/Săptămână/Agendă; așteaptă feedback | [Calendar](modules/calendar.md) |
 | Animale | Planificat; fără implementare de produs | [Animale](modules/pets.md) |
 | Vehicule | Planificat; fără implementare de produs | [Vehicule](modules/vehicles.md) |
 
@@ -20,7 +20,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | --- | --- | --- |
 | Autentificare | Sesiune, CSRF, login/logout și cont din invitație; recuperarea parolei și emailul rămân de construit | [Autentificare](modules/identity.md) |
 | Platformă | Izolare PostgreSQL, media locală, antivirus și audit; restul se construiește la nevoie | [Platformă](modules/platform.md) |
-| Interfață | H2 Acasă, KH1 Bucătărie, FD1 și MH1 Amintiri; cinci secțiuni principale, Documente în Familia mea | [Interfață](modules/interface.md) |
+| Interfață | H2 Acasă, KH1 Bucătărie, FD1, MH1 Amintiri și CH1 Calendar; cinci secțiuni principale, Documente în Familia mea | [Interfață](modules/interface.md) |
 | Căutare și drepturi asupra datelor | Căutare locală în Documente; căutarea globală, exportul și ștergerea sunt planificate | [Căutare și date](modules/data.md) |
 | Operare | Pornire locală și configurații O2a pentru predare Linux; instalarea staging, CI și restaurarea rămân deschise | [Operare](modules/operations.md) |
 | Aplicații mobile | Planificate după stabilizarea web; fără PWA offline sau aplicații native actuale | [Mobil](modules/mobile.md) |

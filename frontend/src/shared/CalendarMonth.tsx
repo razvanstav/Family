@@ -7,6 +7,8 @@ export function CalendarMonth({
   day,
   today,
   markedDates,
+  markers,
+  planner = false,
   onMonth,
   onDay,
   onToday,
@@ -16,13 +18,18 @@ export function CalendarMonth({
   day: string | null;
   today: string;
   markedDates: string[];
+  markers?: Record<string, ("family" | "private")[]>;
+  planner?: boolean;
   onMonth: (month: string) => void;
   onDay: (day: string) => void;
   onToday: () => void;
   onAllMonth: () => void;
 }) {
   return (
-    <section className="calendar-month" aria-label="Calendar lunar">
+    <section
+      className={`calendar-month${planner ? " calendar-month--planner" : ""}`}
+      aria-label="Calendar lunar"
+    >
       <div className="calendar-month-heading">
         <h2>{dateLabel(`${month}-01`, { month: "long", year: "numeric" })}</h2>
         <div>
@@ -45,7 +52,10 @@ export function CalendarMonth({
         </div>
       </div>
       <div className="calendar-weekdays" aria-hidden="true">
-        {["L", "M", "M", "J", "V", "S", "D"].map((label, i) => (
+        {(planner
+          ? ["Lu", "Ma", "Mi", "Jo", "Vi", "Sâ", "Du"]
+          : ["L", "M", "M", "J", "V", "S", "D"]
+        ).map((label, i) => (
           <span key={i}>{label}</span>
         ))}
       </div>
@@ -55,14 +65,25 @@ export function CalendarMonth({
             <button
               key={date}
               className={`${day === date ? "selected " : ""}${date === today ? "today" : ""}`}
-              aria-label={dateLabel(date)}
+              aria-label={`${dateLabel(date)}${markers?.[date]?.length ? `, ${markers[date].length} ${markers[date].length === 1 ? "eveniment" : "evenimente"}` : ""}`}
               aria-pressed={day === date}
               aria-current={date === today ? "date" : undefined}
               onClick={() => onDay(date)}
             >
               <span>{Number(date.slice(-2))}</span>
-              {markedDates.includes(date) && (
-                <span className="calendar-dot" aria-label="Are evenimente" />
+              {markers?.[date] ? (
+                <span className="calendar-markers" aria-hidden="true">
+                  {markers[date].slice(0, 3).map((tone, index) => (
+                    <i
+                      key={index}
+                      className={`calendar-marker calendar-marker--${tone}`}
+                    />
+                  ))}
+                </span>
+              ) : (
+                markedDates.includes(date) && (
+                  <span className="calendar-dot" aria-label="Are evenimente" />
+                )
               )}
             </button>
           ) : (

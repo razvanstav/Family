@@ -2,6 +2,18 @@
 
 Stare: C1 implementat și verificat local la 21 octombrie 2026. C3 in-app pentru evenimente manuale este implementat; verificările sunt mai jos. C2, emailul din C3 și reconcilierea extinsă C4 rămân planificate. Ordinea cerută este C1 → C3 in-app → dashboard; sursele derivate și emailul vin separat. Etapa M07 completă cere în continuare contractele de scadență, outbox generic și transportul de email.
 
+## CH1 — Calendar mobil, 22 octombrie 2026
+
+**Implementat, cu verificare locală limitată**, cerut după MH1, numai pagina Calendar; așteaptă feedback. Referință specifică: [Calendar și Agendă](../../artifacts/design-reference-calendar.png), furnizată de utilizator. Păstrăm Helvetica, suprafețele calde și neutre; culorile indică accesul real familie/privat, fără categorii, locații sau participanți fictivi.
+
+- Lună rămâne vizualizarea implicită; grila are antet centrat, selecție circulară și maximum trei puncte per zi pentru evenimentele filtrate. Săptămână arată evenimentele grupate pe zile, Agendă arată ziua selectată cu ore și axă verticală. Ambele au selector de șapte zile și navigare între săptămâni, inclusiv peste lună/an.
+- Căutare locală în titlu/notițe, în perioada încărcată; filtre Toate/Familie/Doar eu. Active/Arhivate sunt în opțiuni; actualizarea, stările goale/eroare și editorul existent rămân accesibile. Nu se schimbă permisiunile, schema sau notificările.
+- Reutilizare CalendarMonth cu variantă vizuală opțională; Acasă păstrează varianta existentă. API-ul lunar și payloadul complet rămân contractul: una sau două luni încărcate în paralel pentru săptămâna care trece peste lună, fără GET suplimentar de detaliu. Datele fără oră sunt calculate în UTC, în intervalul existent 1900–2100.
+- Fișiere: Calendar.tsx coordonează perioada/filtrele și editorul existent; CalendarViews.tsx conține selectorul săptămânii și rândurile reutilizate în cele trei vizualizări; calendar.css deține stilurile modulului. CalendarMonth.tsx/calendarMonth.css au numai extensia opțională pentru grila de planificare.
+- Verificat: TypeScript/Vite build, Prettier și `git diff --check`. Browser la 390 px: Lună/Săptămână/Agendă, selecția zilei, trecerea 26 octombrie–1 noiembrie, deschiderea opțiunilor, Active/Arhivate, focusul căutării și formularul inițializat la 29 octombrie. Fără overflow observat. Capturi ignorate: `.runtime/ch1-calendar-mobile.png` și `.runtime/ch1-agenda-mobile.png`.
+- Verificare punctuală în Node: randarea componentelor pentru două evenimente demonstrative în memorie (familie cu oră, privat fără oră), în listă și agendă; săptămână peste an și zi după tranziția DST. Fără fișiere de teste noi sau suite automate; fără scrieri de evenimente în aplicație.
+- Limite: luna actuală a familiei Popescu este goală; cardurile populate și punctele colorate nu au fost verificate vizual în browser. Nu s-au reluat salvarea/arhivarea, permisiunile, conflictele, notificările, erorile forțate sau dispozitivele fizice. Nu reprezintă acceptarea C2/C4 sau implementarea modulelor Animale/Mașini. Nu începe alt layout înainte de feedback.
+
 ## Scop
 
 Taskuri și evenimente manuale, scadențe derivate, responsabili/participanți și remindere in-app/email. Calendar deține planificarea și ocurențele reminderelor; modulul sursă deține data unei obligații derivate.
