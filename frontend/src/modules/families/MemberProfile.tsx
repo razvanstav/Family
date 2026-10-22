@@ -263,7 +263,7 @@ export function MemberProfile({
             </button>
           )}
           <SectionTabs<Tab>
-            className="member-profile-tabs"
+            className="member-profile-tabs section-tabs--scroll"
             label="Secțiuni profil"
             value={tab}
             options={[

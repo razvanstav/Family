@@ -9,6 +9,7 @@ use App\Modules\Kitchen\Http\MealController;
 use App\Modules\Kitchen\Http\RecipeController;
 use App\Modules\Memory\Http\MomentController;
 use App\Modules\Memory\Http\TimelineController;
+use App\Modules\Vehicles\Http\VehicleController;
 use App\Platform\Families\FamilyController;
 use App\Platform\Families\InvitationController;
 use App\Platform\Families\MemberProfileController;
@@ -24,6 +25,24 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/invitations/{family}/inspect', [InvitationController::class, 'inspect'])->whereUuid('family')->middleware('throttle:30,1');
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
+        Route::get('/vehicles', [VehicleController::class, 'index']);
+        Route::post('/vehicles', [VehicleController::class, 'store'])->middleware('throttle:20,1');
+        Route::prefix('/vehicles/{vehicle}')->whereUuid('vehicle')->group(function () {
+            Route::get('/', [VehicleController::class, 'show']);
+            Route::patch('/', [VehicleController::class, 'update']);
+            Route::post('/archive', [VehicleController::class, 'archive']);
+            Route::get('/photo', [VehicleController::class, 'photo']);
+            Route::post('/photo', [VehicleController::class, 'uploadPhoto'])->middleware('throttle:20,1');
+            Route::post('/photo/scan', [VehicleController::class, 'retryPhoto'])->middleware('throttle:10,1');
+            Route::get('/entries', [VehicleController::class, 'entries']);
+            Route::post('/entries', [VehicleController::class, 'storeEntry'])->middleware('throttle:20,1');
+            Route::get('/entries/{entry}', [VehicleController::class, 'showEntry'])->whereUuid('entry');
+            Route::patch('/entries/{entry}', [VehicleController::class, 'updateEntry'])->whereUuid('entry');
+            Route::post('/entries/{entry}/archive', [VehicleController::class, 'archiveEntry'])->whereUuid('entry');
+            Route::get('/documents', [VehicleController::class, 'documents']);
+            Route::post('/documents', [VehicleController::class, 'linkDocument']);
+            Route::delete('/documents/{document}', [VehicleController::class, 'unlinkDocument'])->whereUuid('document');
+        });
         Route::get('/timeline', TimelineController::class);
         Route::get('/moments', [MomentController::class, 'index']);
         Route::post('/moments', [MomentController::class, 'store'])->middleware('throttle:20,1');

@@ -1,6 +1,13 @@
 # Interfață comună
 
-Stare: **UT1 — cadru stabil la schimbarea filelor**, implementat la 23 octombrie 2026; build și verificări statice trecute, fără suite sau probe vizuale. FD2/FP1 și layouturile existente se păstrează. Navigația principală nu se schimbă; planificatorul rămâne schiță.
+Stare: **UT2 — subcategorii profil** și [Auto V1a](vehicles.md#v1a--ecranul-auto-23-octombrie-2026), implementate la 23 octombrie 2026 la cererea utilizatorului. UT1 și layouturile existente se păstrează; planificatorul rămâne schiță.
+
+## UT2 — Subcategorii profil, 23 octombrie 2026
+
+- Cele cinci file ale profilului nu mai sunt împărțite într-o grilă 3+2 pe mobil. Bara comună primește varianta `section-tabs--scroll`: un singur rând, etichete întregi și derulare orizontală când lățimea nu ajunge, fără overflow al paginii. Selectarea și numele accesibile se păstrează.
+- Cauza suplimentară observată în browser: regula globală `flex: 1` suprascria stilul de modul cu aceeași specificitate și comprima etichetele până la suprapunere. Varianta este definită în CSS-ul comun, cu specificitate explicită; vechea grilă și regulile mobile au fost eliminate.
+- Corecție punctuală a profilului existent; Auto este singurul layout nou al acestei cereri. Navigația este acum Acasă → Familia mea → Bucătărie → Amintiri → Calendar → Auto, identică desktop/mobil, cu Cont separat.
+- Build/Prettier și `git diff --check` trecute. Profilul Anei verificat în browser la 390 px: etichete fără suprapunere, controale de 44 px, selectarea Documente aduce fila în zona vizibilă, apoi revenire pe Prezentare. Bara selectată se aduce în zona vizibilă și la schimbarea programatică a valorii, prin SectionTabs, fără derularea întregii pagini. Captură locală ignorată: `.runtime/member-tabs-mobile.jpg`. Acceptarea vizuală rămâne pentru feedback. Istoricul UT1 de mai jos consemnează verificările de la momentul său și este înlocuit de UT2 pentru distribuția filelor profilului.
 
 ## UT1 — Cadru stabil la schimbarea filelor, 23 octombrie 2026
 
@@ -41,7 +48,8 @@ Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helve
 | Amintiri — MH1                      | Fotografii pe lățimea cardului, note compacte, căutare în antet și panou pentru acces/arhivă; momente/note și cronologia rămân funcționale.                                     | Implementat, build și verificare mobilă scurtă trecute. Vezi [Amintiri](memory.md#mh1--layout-mobil-amintiri-22-octombrie-2026).                                                                |
 | Familia mea — FD2, pas curent / FP1 | Dosarul comun conține doar documentele partajate familiei; Documente este filă în profilul persoanei. Data/părinții sunt separate de datele private și de rolul familiei.       | FD2: build/Pint și 1 test API punctual trecute, fără probe vizuale; vezi [Familie FD2](families.md#fd2--dosarul-comun-și-documentele-din-profil-23-octombrie-2026). Probele FP1 rămân istorice. |
 | Calendar — CH1                      | Lună/Săptămână/Agendă, zile cu puncte după acces, carduri compacte și agendă cu ore; date din API-ul existent.                                                                  | Implementat; build și verificare mobilă inclusiv cu șase evenimente demo trecute; vezi [Calendar](calendar.md#ch1--calendar-mobil-22-octombrie-2026).                                           |
-| Animale / Mașini                    | Structura profilului, următoarelor activități și istoricului din imagine se folosește când modulele AN/V există.                                                                | Module de produs planificate; fără pagini sau numere fictive.                                                                                                                                   |
+| Auto — V1a                          | Profil, patru file, scadențe și istoric/costuri după referința Mașini. | Implementat; probe și limite în [Vehicule](vehicles.md#v1a--ecranul-auto-23-octombrie-2026). |
+| Animale                             | Structura profilului din referință se folosește când modulul AN există. | Modul planificat. |
 
 ### H2 — Contractul Acasă
 

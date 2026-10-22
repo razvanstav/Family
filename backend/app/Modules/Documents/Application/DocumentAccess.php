@@ -9,6 +9,14 @@ use Illuminate\Support\Str;
 
 final class DocumentAccess
 {
+    /** Authorized metadata for associations; access is evaluated on every read. */
+    public function references(string $family, int $actor, string $membership): Builder
+    {
+        return $this->visible($family, $actor, $membership)->join('media_assets as a', function ($join) {
+            $join->on('a.id', '=', 'd.asset_id')->on('a.family_id', '=', 'd.family_id');
+        })->select('d.id', 'd.title', 'd.visibility', 'a.mime', 'a.status');
+    }
+
     /** @return Collection<int, object> Authorized metadata only; detail and bytes remain canonical operations. */
     public function recent(string $family, int $actor, string $membership): Collection
     {

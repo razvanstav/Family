@@ -9,6 +9,7 @@ import {
   BookHeart,
   Users,
   UtensilsCrossed,
+  CarFront,
 } from "lucide-react";
 import {
   api,
@@ -31,6 +32,7 @@ import { CalendarNotifications } from "../modules/calendar/CalendarNotifications
 import { Home } from "../modules/home/Home";
 import { Kitchen } from "../modules/kitchen/Kitchen";
 import { Memories } from "../modules/memory/Memories";
+import { Vehicles } from "../modules/vehicles/Vehicles";
 
 const pageLabels = {
   home: "Acasă",
@@ -38,6 +40,7 @@ const pageLabels = {
   kitchen: "Bucătărie",
   memory: "Amintiri",
   calendar: "Calendar",
+  vehicles: "Auto",
 };
 
 export default function App() {
@@ -278,6 +281,12 @@ export default function App() {
           >
             <CalendarDays size={21} /> Calendar
           </button>
+          <button
+            className={page === "vehicles" ? "active" : ""}
+            onClick={() => setPage("vehicles")}
+          >
+            <CarFront size={21} /> Auto
+          </button>
         </nav>
         <div className="sidebar-bottom">
           <button className="sidebar-profile" onClick={() => setAccount(true)}>
@@ -423,6 +432,12 @@ export default function App() {
                 onMomentOpened={() => setMemoryTarget(null)}
                 onExpired={() => void refresh()}
               />
+            ) : page === "vehicles" ? (
+              <Vehicles
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                onExpired={() => void refresh()}
+              />
             ) : page === "calendar" ? (
               <CalendarPage
                 key={`${session.user.id}:${family.id}`}
@@ -502,6 +517,14 @@ export default function App() {
         >
           <CalendarDays size={21} />
           <span>Calendar</span>
+        </button>
+        <button
+          aria-label="Auto"
+          className={page === "vehicles" ? "active" : ""}
+          onClick={() => setPage("vehicles")}
+        >
+          <CarFront size={21} />
+          <span>Auto</span>
         </button>
         <button onClick={() => setAccount(true)} aria-label="Contul meu">
           <span className="mobile-initial" aria-hidden="true">

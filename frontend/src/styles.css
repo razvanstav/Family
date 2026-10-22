@@ -25,6 +25,7 @@
 }
 .lucide-users,
 .lucide-user-round-plus,
+.lucide-car-front,
 .role-adult {
   color: var(--icon-family);
 }
@@ -502,6 +503,19 @@ main {
   border-color: var(--accent);
   color: white;
   box-shadow: var(--shadow);
+}
+.section-tabs.section-tabs--scroll {
+  max-width: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+  scroll-padding-inline: 4px;
+}
+.section-tabs.section-tabs--scroll button {
+  flex: 1 0 auto;
+  white-space: nowrap;
+}
+.section-tabs.section-tabs--scroll::-webkit-scrollbar {
+  display: none;
 }
 .search {
   display: flex;
@@ -1076,7 +1090,7 @@ main {
     right: 0;
     bottom: 0;
     display: grid;
-    grid-template-columns: repeat(6, minmax(44px, 1fr));
+    grid-template-columns: repeat(7, minmax(44px, 1fr));
     gap: 2px;
     overflow-x: auto;
     border-top: 1px solid var(--line);

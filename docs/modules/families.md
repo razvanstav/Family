@@ -2,6 +2,8 @@
 
 Stare: **F4a/FD3 — copii fără cont și dosare pe categorii**, implementat la 23 octombrie 2026. Build și verificări API țintite trecute; fără probe vizuale. F4a închide numai adăugarea copilului sub 14 ani fără email; legarea ulterioară la cont și restul F4 rămân separate.
 
+Corecție ulterioară cerută la 23 octombrie: [UT2 — subcategorii profil](interface.md#ut2--subcategorii-profil-23-octombrie-2026) înlocuiește distribuția 3+2 a filelor mobile cu un rând derulabil, fără etichete suprapuse. Verificată în browser; fără schimbarea contractelor F4a/FD3 sau redesenarea altor ecrane Familie.
+
 ## F4a și FD3 — Copii fără cont și dosare pe categorii, 23 octombrie 2026
 
 **Implementat; verificat prin build/API, acceptarea vizuală rămâne pentru feedback.** Prioritatea a fost schimbată explicit după KH2. Reguli confirmate: Casă pentru adulți, inclusiv cei cu acces limitat; Familie → Documente are numai Casă/Amintiri, iar profil → Documente numai Personale/Sănătate. Utilizatorul a cerut explicit partajarea documentelor Casă/Amintiri existente după noua regulă.
