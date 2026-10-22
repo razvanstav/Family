@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { api, ApiError, type Member } from "../../shared/api";
+import { api, ApiError, shareableMembers, type Member } from "../../shared/api";
 import { bucharestToday } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
 import { momentKinds, type Moment } from "./memoryTypes";
@@ -292,28 +292,25 @@ export function MomentForm({
           {visibility === "selected" && (
             <fieldset className="moment-people">
               <legend>Persoane cu acces</legend>
-              {members
-                ?.filter((member) => member.user_id !== actorId)
-                .map((member) => (
-                  <label key={member.id}>
-                    <input
-                      type="checkbox"
-                      checked={grants.includes(member.id)}
-                      onChange={(event) =>
-                        setGrants((current) =>
-                          event.target.checked
-                            ? [...current, member.id]
-                            : current.filter((id) => id !== member.id),
-                        )
-                      }
-                    />
-                    <span>{member.name}</span>
-                  </label>
-                ))}
-              {members &&
-                !members.some((member) => member.user_id !== actorId) && (
-                  <p>Niciun alt membru activ.</p>
-                )}
+              {shareableMembers(members ?? [], actorId).map((member) => (
+                <label key={member.id}>
+                  <input
+                    type="checkbox"
+                    checked={grants.includes(member.id)}
+                    onChange={(event) =>
+                      setGrants((current) =>
+                        event.target.checked
+                          ? [...current, member.id]
+                          : current.filter((id) => id !== member.id),
+                      )
+                    }
+                  />
+                  <span>{member.name}</span>
+                </label>
+              ))}
+              {members && !shareableMembers(members, actorId).length && (
+                <p>Niciun alt membru activ.</p>
+              )}
             </fieldset>
           )}
           <fieldset

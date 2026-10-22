@@ -30,7 +30,7 @@ final class CalendarReminders
     public function configure(string $family, object $event, ?int $offset, array $recipients): void
     {
         if ($offset !== null) {
-            $allowed = DB::table('family_memberships')->where('family_id', $family)->whereNull('revoked_at')->whereIn('id', $recipients);
+            $allowed = DB::table('family_memberships')->where('family_id', $family)->whereNull('revoked_at')->whereNotNull('user_id')->whereIn('id', $recipients);
             if ($event->visibility === 'private') {
                 $allowed->where('user_id', $event->owner_id);
             }

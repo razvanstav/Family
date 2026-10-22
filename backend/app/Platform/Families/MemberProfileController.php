@@ -44,7 +44,11 @@ final class MemberProfileController
         $data = $request->validate([
             'birth_date' => 'present|nullable|date_format:Y-m-d|after_or_equal:1900-01-01|before_or_equal:'.now('Europe/Bucharest')->toDateString(),
             'parent_ids' => 'present|array|max:2', 'parent_ids.*' => 'required|uuid|distinct',
+            'name' => $subject->user_id === null ? 'sometimes|required|string|max:100' : 'prohibited',
         ]);
+        if ($subject->user_id === null && $data['birth_date'] === null) {
+            throw ValidationException::withMessages(['birth_date' => 'Data nașterii este necesară pentru profilul copilului.']);
+        }
         $age = $this->access->age($data['birth_date']);
         $parents = $data['parent_ids'];
         if ($age !== null && $age < 18) {
@@ -54,11 +58,9 @@ final class MemberProfileController
         } elseif ($parents !== []) {
             throw ValidationException::withMessages(['parent_ids' => 'Părinții desemnați se configurează numai pentru minori.']);
         }
-        $adultMembers = DB::table('family_memberships as m')->leftJoin('member_profiles as p', function ($join) {
-            $join->on('p.family_id', '=', 'm.family_id')->on('p.membership_id', '=', 'm.id');
-        })->where('m.family_id', $family)->whereIn('m.id', $parents)->where('m.id', '!=', $member)->whereNull('m.revoked_at')->whereIn('m.role', ['owner', 'adult'])->get(['m.id', 'p.birth_date']);
-        if ($adultMembers->count() !== count($parents) || $adultMembers->contains(fn ($parent) => $parent->birth_date !== null && $this->access->age($parent->birth_date) < 18)) {
-            throw ValidationException::withMessages(['parent_ids' => 'Alege părinți adulți, activi, din această familie.']);
+        $this->access->validateParents($family, $member, $parents);
+        if (isset($data['name'])) {
+            DB::table('family_memberships')->where('family_id', $family)->where('id', $member)->update(['child_name' => $data['name']]);
         }
         $this->saveProfile($family, $member, (int) $subject->version, ['birth_date' => $data['birth_date']]);
         DB::table('member_profile_parents')->where('family_id', $family)->where('membership_id', $member)->delete();

@@ -26,6 +26,8 @@ import {
 import { Modal } from "../../shared/Modal";
 import { MemberProfile } from "./MemberProfile";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
+import { SectionTabs } from "../../shared/SectionTabs";
+import { ChildForm } from "./ChildForm";
 
 const roleLabel = (role: string) =>
   role === "owner"
@@ -109,6 +111,9 @@ export function FamilyPage({
   const [message, setMessage] = useState("");
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [inviting, setInviting] = useState(false);
+  const [inviteMode, setInviteMode] = useState<"invitation" | "child">(
+    "invitation",
+  );
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"adult" | "limited">("adult");
   const [inviteError, setInviteError] = useState("");
@@ -149,8 +154,10 @@ export function FamilyPage({
   }, [familyId]);
   useEffect(() => {
     if (!requestedDocument || loading || error) return;
-    const member = members.find(
-      (item) => item.user_id === (requestedDocument.ownerId ?? userId),
+    const member = members.find((item) =>
+      requestedDocument.memberId
+        ? item.id === requestedDocument.memberId
+        : item.user_id === (requestedDocument.ownerId ?? userId),
     );
     if (member) {
       setProfileMember(member);
@@ -169,7 +176,11 @@ export function FamilyPage({
       await api(`/families/${familyId}/members/${target.id}`, {
         method: "DELETE",
       });
-      setMessage(`Acces revocat pentru ${target.name}.`);
+      setMessage(
+        target.user_id === null
+          ? `${target.name}: profil eliminat din familie.`
+          : `Acces revocat pentru ${target.name}.`,
+      );
       setTarget(null);
       await load();
     } catch (e) {
@@ -241,6 +252,7 @@ export function FamilyPage({
             aria-label="Adaugă membru"
             onClick={() => {
               setEmail("");
+              setInviteMode("invitation");
               setRole("adult");
               setInviteError("");
               setInviteLink("");
@@ -517,50 +529,89 @@ export function FamilyPage({
               </span>
             </>
           ) : (
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (busy) return;
-                setBusy(true);
-                setInviteError("");
-                try {
-                  const result = await api<{ token: string }>(
-                    `/families/${familyId}/invitations`,
-                    { method: "POST", body: JSON.stringify({ email, role }) },
-                  );
-                  setInviteLink(
-                    `${new URL("/app/", document.baseURI).origin}/app/#invite=${familyId}.${result.token}`,
-                  );
-                  await load();
-                } catch (e) {
-                  setInviteError(
-                    e instanceof Error
-                      ? e.message
-                      : "Invitația nu a putut fi creată.",
-                  );
-                } finally {
-                  setBusy(false);
-                }
-              }}
-            >
-              <label className="field">
-                Adresa de email
-                <input
-                  type="email"
-                  disabled={busy}
-                  autoComplete="email"
-                  required
-                  maxLength={254}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+            <>
+              <SectionTabs
+                label="Tip de membru"
+                value={inviteMode}
+                options={[
+                  { value: "invitation", label: "Invită membru" },
+                  { value: "child", label: "Copil sub 14 ani" },
+                ]}
+                onChange={(value) => {
+                  if (!busy) {
+                    setInviteMode(value);
+                    setInviteError("");
+                  }
+                }}
+              />
+              {inviteMode === "child" ? (
+                <ChildForm
+                  familyId={familyId}
+                  members={members}
+                  actorId={userId}
+                  busy={busy}
+                  onBusy={setBusy}
+                  onExpired={onExpired}
+                  onCreated={(child) => {
+                    setMembers((current) =>
+                      [...current, child].sort((a, b) =>
+                        a.name.localeCompare(b.name, "ro"),
+                      ),
+                    );
+                    setInviting(false);
+                    setProfileMember(child);
+                  }}
                 />
-              </label>
-              <RolePicker value={role} onChange={setRole} disabled={busy} />
-              <button className="button primary full" disabled={busy}>
-                <UserRoundPlus size={18} />
-                {busy ? "Se creează…" : "Creează invitația"}
-              </button>
-            </form>
+              ) : (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (busy) return;
+                    setBusy(true);
+                    setInviteError("");
+                    try {
+                      const result = await api<{ token: string }>(
+                        `/families/${familyId}/invitations`,
+                        {
+                          method: "POST",
+                          body: JSON.stringify({ email, role }),
+                        },
+                      );
+                      setInviteLink(
+                        `${new URL("/app/", document.baseURI).origin}/app/#invite=${familyId}.${result.token}`,
+                      );
+                      await load();
+                    } catch (e) {
+                      setInviteError(
+                        e instanceof Error
+                          ? e.message
+                          : "Invitația nu a putut fi creată.",
+                      );
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  <label className="field">
+                    Adresa de email
+                    <input
+                      type="email"
+                      disabled={busy}
+                      autoComplete="email"
+                      required
+                      maxLength={254}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </label>
+                  <RolePicker value={role} onChange={setRole} disabled={busy} />
+                  <button className="button primary full" disabled={busy}>
+                    <UserRoundPlus size={18} />
+                    {busy ? "Se creează…" : "Creează invitația"}
+                  </button>
+                </form>
+              )}
+            </>
           )}
           {inviteError && (
             <p className="error" role="alert">
@@ -592,39 +643,51 @@ export function FamilyPage({
             </span>
             <strong>{managing.name}</strong>
           </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void saveRole();
-            }}
-          >
-            <RolePicker
-              value={memberRole}
-              onChange={setMemberRole}
-              disabled={busy || roleStale}
-            />
-            {roleError && (
-              <p className="error" role="alert">
-                {roleError}
-              </p>
-            )}
-            {roleStale ? (
-              <button
-                type="button"
-                className="button secondary full"
-                onClick={() => setManaging(null)}
-              >
-                Înapoi la membri
-              </button>
-            ) : (
-              <button
-                className="button primary full"
-                disabled={busy || memberRole === managing.role}
-              >
-                {busy ? "Se salvează…" : "Salvează rolul"}
-              </button>
-            )}
-          </form>
+          {managing.user_id === null ? (
+            <button
+              className="button primary full"
+              onClick={() => {
+                setProfileMember(managing);
+                setManaging(null);
+              }}
+            >
+              Deschide profilul
+            </button>
+          ) : (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void saveRole();
+              }}
+            >
+              <RolePicker
+                value={memberRole}
+                onChange={setMemberRole}
+                disabled={busy || roleStale}
+              />
+              {roleError && (
+                <p className="error" role="alert">
+                  {roleError}
+                </p>
+              )}
+              {roleStale ? (
+                <button
+                  type="button"
+                  className="button secondary full"
+                  onClick={() => setManaging(null)}
+                >
+                  Înapoi la membri
+                </button>
+              ) : (
+                <button
+                  className="button primary full"
+                  disabled={busy || memberRole === managing.role}
+                >
+                  {busy ? "Se salvează…" : "Salvează rolul"}
+                </button>
+              )}
+            </form>
+          )}
           <button
             className="button member-revoke-action full"
             disabled={busy || roleStale}
@@ -635,13 +698,17 @@ export function FamilyPage({
             }}
           >
             <UserRoundMinus size={18} />
-            Revocă accesul
+            {managing.user_id === null
+              ? "Elimină din familie"
+              : "Revocă accesul"}
           </button>
         </Modal>
       )}
       {target && (
         <Modal
-          title="Revocă accesul"
+          title={
+            target.user_id === null ? "Elimină din familie" : "Revocă accesul"
+          }
           onClose={() => {
             if (!busy) setTarget(null);
           }}
@@ -653,12 +720,14 @@ export function FamilyPage({
             <strong>{target.name}</strong>
           </div>
           <p className="revoke-consequence">
-            Nu va mai putea accesa această familie sau documentele ei, inclusiv
-            prin linkuri salvate.
+            {target.user_id === null
+              ? "Profilul copilului nu va mai fi disponibil în această familie. Însemnările nu sunt șterse."
+              : "Nu va mai putea accesa această familie sau documentele ei, inclusiv prin linkuri salvate."}
           </p>
           <p className="fine-print">
-            Copiile deja descărcate nu pot fi retrase. Reactivarea nu este
-            disponibilă din aplicație.
+            {target.user_id !== null &&
+              "Copiile deja descărcate nu pot fi retrase. "}
+            Reactivarea nu este disponibilă din aplicație.
           </p>
           {revokeError && (
             <p className="error" role="alert">
@@ -670,7 +739,11 @@ export function FamilyPage({
             disabled={busy}
             onClick={() => void revoke()}
           >
-            {busy ? "Se revocă…" : "Revocă accesul"}
+            {busy
+              ? "Se elimină…"
+              : target.user_id === null
+                ? "Elimină din familie"
+                : "Revocă accesul"}
           </button>
           <button
             className="button secondary full"

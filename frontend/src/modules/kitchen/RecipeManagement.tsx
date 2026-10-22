@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { api, ApiError, visibilityLabel, type Member } from "../../shared/api";
+import {
+  api,
+  ApiError,
+  visibilityLabel,
+  shareableMembers,
+  type Member,
+} from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import type { Recipe } from "./recipeTypes";
 
@@ -148,9 +154,9 @@ export function RecipeManagement({
                 }
                 aria-describedby="recipe-sharing-hint"
               >
-                {Object.entries(visibilityLabel).map(([value, label]) => (
+                {(["private", "family", "selected"] as const).map((value) => (
                   <option key={value} value={value}>
-                    {label}
+                    {visibilityLabel[value]}
                   </option>
                 ))}
               </select>
@@ -169,28 +175,26 @@ export function RecipeManagement({
                 disabled={busy || conflict || !membersReady || wrongState}
               >
                 <legend>Persoane</legend>
-                {members
-                  .filter((member) => member.user_id !== recipe.owner_id)
-                  .map((member) => (
-                    <label key={member.id}>
-                      <input
-                        type="checkbox"
-                        checked={grants.includes(member.id)}
-                        onChange={(e) =>
-                          setGrants(
-                            e.target.checked
-                              ? [...grants, member.id]
-                              : grants.filter((id) => id !== member.id),
-                          )
-                        }
-                      />
-                      <span>{member.name}</span>
-                    </label>
-                  ))}
+                {shareableMembers(members, recipe.owner_id).map((member) => (
+                  <label key={member.id}>
+                    <input
+                      type="checkbox"
+                      checked={grants.includes(member.id)}
+                      onChange={(e) =>
+                        setGrants(
+                          e.target.checked
+                            ? [...grants, member.id]
+                            : grants.filter((id) => id !== member.id),
+                        )
+                      }
+                    />
+                    <span>{member.name}</span>
+                  </label>
+                ))}
                 {membersReady &&
-                  !members.some(
-                    (member) => member.user_id !== recipe.owner_id,
-                  ) && <p>Niciun alt membru activ.</p>}
+                  !shareableMembers(members, recipe.owner_id).length && (
+                    <p>Niciun alt membru activ.</p>
+                  )}
               </fieldset>
             )}
             <p className="notice">

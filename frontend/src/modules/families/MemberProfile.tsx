@@ -280,7 +280,8 @@ export function MemberProfile({
               key={`${userId}:${family.id}:${member.id}`}
               family={family}
               userId={userId}
-              ownerId={member.user_id}
+              member={member}
+              canCreate={profile.can_write}
               requestedAction={requestedDocument}
               onActionOpened={onDocumentOpened}
               onExpired={onExpired}

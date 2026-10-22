@@ -63,6 +63,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::post('/calendar-items/{event}/archive', [CalendarController::class, 'archive'])->whereUuid('event');
         Route::post('/calendar-items/{event}/restore', [CalendarController::class, 'restore'])->whereUuid('event');
         Route::get('/members', [FamilyController::class, 'members']);
+        Route::post('/members/children', [FamilyController::class, 'storeChild'])->middleware('throttle:10,1');
         Route::prefix('/members/{member}/profile')->whereUuid('member')->group(function () {
             Route::get('/', [MemberProfileController::class, 'show']);
             Route::patch('/', [MemberProfileController::class, 'configure'])->middleware('throttle:20,1');

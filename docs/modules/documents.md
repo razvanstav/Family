@@ -6,9 +6,9 @@ Stare: **D1–D3 verificate la 21 octombrie 2026; M02 închis local.** D4 extind
 
 ## Ce există
 
-Listă, căutare locală, categorii, filtru de acces, detaliu, upload PDF/JPEG/PNG/WebP, carantină/retry și descărcare. Documentul nou este privat. Proprietarul lui poate selecta acces privat, familie sau membri aleși; modificarea folosește `If-Match`.
+Listă, căutare locală, categorii, filtru de acces, detaliu, upload PDF/JPEG/PNG/WebP, carantină/retry și descărcare. Personale/Sănătate pornesc private; proprietarul poate selecta privat/familie/adulți/membri aleși, cu `If-Match`. Casă/Amintiri au accesul comun stabilit de categorie.
 
-**FD2 — 23 octombrie 2026:** Familia mea → Documente afișează exclusiv documentele partajate întregii familii (`visibility=family`). Dosarul personal este fila Documente din profilul fiecărui membru, filtrată după `owner_id` numai în lista autorizată de API; include și partajările selective accesibile. Selectorul FD1 și vizualizarea unificată sunt eliminate. Încărcarea din dosarul comun/Acasă deschide profilul propriu și rămâne privată până la partajare explicită. Proprietatea, accesul și bytes nu sunt mutate; nu se încarcă în numele altei persoane. Contractul și verificările sunt în [Familie FD2](families.md#fd2--dosarul-comun-și-documentele-din-profil-23-octombrie-2026).
+**FD3 — 23 octombrie 2026:** Familia mea → Documente are numai Casă/Amintiri; profilul membrului numai Personale/Sănătate, filtrate după `subject_membership_id` în lista autorizată. Categoria Casă se partajează automat grupului dinamic `adults`, inclusiv adulților cu acces limitat și cu excluderea minorilor înregistrați; Amintiri se partajează familiei. Utilizatorul a autorizat explicit aplicarea regulii și documentelor comune existente: migrație cu audit/versiuni, fără schimbarea proprietarilor sau bytes. Personale/Sănătate existente păstrează accesul și sunt asociate profilului proprietarului. Părinții desemnați pot încărca în profilul copilului fără cont, păstrând proprietatea fișierului; privatele rămân ale autorului. Nu există selector comun/personal/toate. Contractele și probele sunt în [Familie F4a/FD3](families.md#f4a-și-fd3--copii-fără-cont-și-dosare-pe-categorii-23-octombrie-2026).
 
 ## Fișiere relevante
 

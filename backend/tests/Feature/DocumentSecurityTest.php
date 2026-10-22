@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Platform\Contracts\PrivateMedia;
 use App\Platform\Media\ClamAvScanner;
 use App\Platform\Media\Scanner;
 use Database\Seeders\DemoSeeder;
@@ -63,6 +64,54 @@ final class DocumentSecurityTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_home_documents_follow_current_adult_membership_including_limited_adults(): void
+    {
+        $this->actingAs($this->ana);
+        $id = $this->postJson($this->path(), ['title' => 'Act casă', 'category' => 'home', 'file' => UploadedFile::fake()->createWithContent('casa.pdf', DemoSeeder::samplePdf())])
+            ->assertCreated()->assertJsonPath('visibility', 'adults')->assertJsonPath('subject_membership_id', null)->json('id');
+        $member = (string) Str::uuid();
+        DB::connection('admin')->table('family_memberships')->insert(['id' => $member, 'family_id' => $this->family, 'user_id' => $this->elena->id, 'role' => 'limited']);
+        DB::connection('admin')->table('member_profiles')->insert(['membership_id' => $member, 'family_id' => $this->family, 'birth_date' => '1980-01-01']);
+        $this->actingAs($this->elena)->getJson($this->path('/'.$id))->assertOk();
+        $this->getJson($this->path('/'.$id.'/content'))->assertOk();
+        $this->getJson($this->path())->assertJsonFragment(['id' => $id]);
+        DB::connection('admin')->table('member_profiles')->where('membership_id', $member)->update(['birth_date' => now('Europe/Bucharest')->subYearsNoOverflow(18)->addDay()->toDateString()]);
+        $this->getJson($this->path('/'.$id))->assertNotFound();
+        $this->getJson($this->path('/'.$id.'/content'))->assertNotFound();
+        $this->getJson($this->path())->assertJsonMissing(['id' => $id]);
+        $this->getJson('/api/v1/families/'.$this->family.'/home?month='.now('Europe/Bucharest')->format('Y-m'))->assertOk()->assertJsonMissing(['id' => $id]);
+        DB::connection('admin')->table('member_profiles')->where('membership_id', $member)->update(['birth_date' => now('Europe/Bucharest')->subYearsNoOverflow(18)->toDateString()]);
+        $this->getJson($this->path('/'.$id))->assertOk();
+        DB::connection('admin')->table('family_memberships')->where('id', $member)->update(['revoked_at' => now()]);
+        $this->getJson($this->path('/'.$id))->assertNotFound();
+    }
+
+    public function test_family_categories_set_access_and_cannot_be_made_private(): void
+    {
+        $this->actingAs($this->ana);
+        foreach (['home' => 'adults', 'memories' => 'family'] as $category => $access) {
+            $id = $this->postJson($this->path(), ['title' => 'Document comun '.$category, 'category' => $category, 'file' => UploadedFile::fake()->createWithContent('test.pdf', DemoSeeder::samplePdf())])
+                ->assertCreated()->assertJsonPath('visibility', $access)->assertJsonPath('subject_membership_id', null)->json('id');
+            $this->withHeader('If-Match', '"1"')->putJson($this->path('/'.$id.'/sharing'), ['visibility' => 'private', 'membership_ids' => []])->assertUnprocessable();
+            $this->withHeader('If-Match', '"1"')->putJson($this->path('/'.$id.'/sharing'), ['visibility' => $access, 'membership_ids' => []])->assertOk();
+        }
+    }
+
+    public function test_personal_documents_can_belong_to_an_accountless_child_without_transferring_ownership(): void
+    {
+        $this->actingAs($this->ana);
+        $own = DB::table('family_memberships')->where('family_id', $this->family)->where('user_id', $this->ana->id)->value('id');
+        $child = $this->postJson('/api/v1/families/'.$this->family.'/members/children', ['name' => 'Sofia', 'birth_date' => now('Europe/Bucharest')->subYears(8)->toDateString(), 'parent_ids' => [$own]])->assertCreated()->json('id');
+        $payload = ['title' => 'Document copil', 'category' => 'health', 'subject_membership_id' => $child, 'file' => UploadedFile::fake()->createWithContent('test.pdf', DemoSeeder::samplePdf())];
+        $id = $this->postJson($this->path(), $payload)->assertCreated()->assertJsonPath('visibility', 'private')->assertJsonPath('subject_membership_id', $child)->assertJsonPath('owner_id', $this->ana->id)->json('id');
+        $this->actingAs($this->mihai)->postJson($this->path(), $payload)->assertForbidden();
+        $this->getJson($this->path('/'.$id))->assertNotFound();
+        $foreign = DB::connection('admin')->table('family_memberships')->where('family_id', DemoSeeder::IONESCU)->value('id');
+        $this->actingAs($this->ana)->postJson($this->path(), array_replace($payload, ['subject_membership_id' => $foreign]))->assertNotFound();
+        $this->withHeader('If-Match', '"1"')->putJson($this->path('/'.$id.'/sharing'), ['visibility' => 'family', 'membership_ids' => []])->assertOk();
+        $this->actingAs($this->mihai)->getJson($this->path('/'.$id))->assertOk()->assertJsonPath('subject_membership_id', $child);
+    }
+
     private function path(string $suffix = '', ?string $family = null): string
     {
         return '/api/v1/families/'.($family ?? $this->family).'/documents'.$suffix;
@@ -108,7 +157,8 @@ final class DocumentSecurityTest extends TestCase
 
     public function test_explicit_grant_and_revocation_apply_to_metadata_and_each_download(): void
     {
-        $doc = $this->doc('Jurnal de călătorie');
+        $this->actingAs($this->ana);
+        $doc = (object) $this->upload()->assertCreated()->json();
         $member = DB::table('family_memberships')->where('family_id', $this->family)->where('user_id', $this->mihai->id)->value('id');
         $this->actingAs($this->ana)->withHeader('If-Match', '"1"')->putJson($this->path('/'.$doc->id.'/sharing'), [
             'visibility' => 'selected', 'membership_ids' => [$member],
@@ -125,7 +175,8 @@ final class DocumentSecurityTest extends TestCase
 
     public function test_stale_versions_and_foreign_grants_cannot_change_access(): void
     {
-        $doc = $this->doc('Jurnal de călătorie');
+        $this->actingAs($this->ana);
+        $doc = (object) $this->upload()->assertCreated()->json();
         $member = DB::table('family_memberships')->where('family_id', DemoSeeder::IONESCU)->where('user_id', $this->elena->id)->value('id');
         $this->actingAs($this->ana)->putJson($this->path('/'.$doc->id.'/sharing'), [
             'visibility' => 'family', 'membership_ids' => [],
@@ -136,7 +187,7 @@ final class DocumentSecurityTest extends TestCase
         $this->withHeader('If-Match', '"1"')->putJson($this->path('/'.$doc->id.'/sharing'), [
             'visibility' => 'selected', 'membership_ids' => [$member],
         ])->assertUnprocessable();
-        $this->assertSame('private', $this->doc('Jurnal de călătorie')->visibility);
+        $this->assertSame('private', $this->doc('Fișier de test')->visibility);
     }
 
     public function test_revoked_membership_blocks_existing_session_and_direct_file_links(): void
@@ -300,7 +351,7 @@ final class DocumentSecurityTest extends TestCase
         try {
             DB::transaction(function () use (&$assetId) {
                 DB::select("SELECT set_config('app.family_id', ?, true)", [$this->family]);
-                $asset = $this->app->make(\App\Platform\Contracts\PrivateMedia::class)->receive(
+                $asset = $this->app->make(PrivateMedia::class)->receive(
                     $this->family, $this->ana->id,
                     UploadedFile::fake()->createWithContent('rollback.pdf', DemoSeeder::samplePdf())
                 );

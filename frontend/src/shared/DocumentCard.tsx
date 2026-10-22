@@ -95,14 +95,29 @@ export function DocumentCard({
 export function DocumentCategories({
   selected,
   onSelect,
+  categoryIds,
 }: {
   selected?: string;
   onSelect: (id: string) => void;
+  categoryIds?: readonly string[];
 }) {
   return (
-    <div className="categories" aria-label="Categorii">
+    <div
+      className="categories"
+      aria-label="Categorii"
+      style={
+        categoryIds
+          ? {
+              gridTemplateColumns: `repeat(${categoryIds.length}, minmax(0, 1fr))`,
+            }
+          : undefined
+      }
+    >
       {categories
-        .filter(({ id }) => id !== "all")
+        .filter(
+          ({ id }) =>
+            id !== "all" && (!categoryIds || categoryIds.includes(id)),
+        )
         .map(({ id, label, icon: Icon }) => (
           <button
             key={id}

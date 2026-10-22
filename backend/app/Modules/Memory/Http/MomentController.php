@@ -24,9 +24,9 @@ final class MomentController
         $people = DB::table('memory_moment_people as p')
             ->join('family_memberships as member', function ($join) {
                 $join->on('member.family_id', '=', 'p.family_id')->on('member.id', '=', 'p.membership_id');
-            })->join('users as person', 'person.id', '=', 'member.user_id')
+            })->leftJoin('users as person', 'person.id', '=', 'member.user_id')
             ->where('p.family_id', $family)->whereNull('member.revoked_at')
-            ->selectRaw("p.moment_id, json_agg(json_build_object('id', member.id, 'name', person.name) ORDER BY person.name, member.id) as people_json")
+            ->selectRaw("p.moment_id, json_agg(json_build_object('id', member.id, 'name', coalesce(person.name, member.child_name)) ORDER BY coalesce(person.name, member.child_name), member.id) as people_json")
             ->groupBy('p.moment_id');
 
         $grants = DB::table('memory_moment_grants as g')->join('family_memberships as recipient', function ($join) {

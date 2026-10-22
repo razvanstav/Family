@@ -18,6 +18,7 @@ import {
   type Session,
   type DocumentRequest,
   type CalendarRequest,
+  personalDocumentCategories,
 } from "../shared/api";
 import { Documents } from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
@@ -381,7 +382,11 @@ export default function App() {
                 onDocuments={(request) => {
                   setDocumentTarget(request);
                   setFamilySection(
-                    request.ownerId !== undefined || request.upload
+                    request.memberId ||
+                      request.ownerId !== undefined ||
+                      request.upload ||
+                      (request.category &&
+                        personalDocumentCategories.includes(request.category))
                       ? "members"
                       : "documents",
                   );
@@ -400,10 +405,6 @@ export default function App() {
                 navigation={familyNavigation}
                 requestedAction={documentTarget}
                 onActionOpened={() => setDocumentTarget(null)}
-                onUpload={() => {
-                  setDocumentTarget({ upload: true });
-                  setFamilySection("members");
-                }}
                 onExpired={() => void refresh()}
               />
             ) : page === "kitchen" ? (

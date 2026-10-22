@@ -3,6 +3,7 @@ import { LockKeyhole, Users, Archive, RotateCcw, Pencil } from "lucide-react";
 import { api, ApiError, visibilityLabel, type Member } from "../../shared/api";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
+import { ParentPicker } from "./ParentPicker";
 import {
   kinds,
   message,
@@ -27,6 +28,7 @@ export function ProfileSettings({
   onReload: () => void;
 }) {
   const [birth, setBirth] = useState(profile.birth_date ?? "");
+  const [name, setName] = useState(profile.name);
   const [parents, setParents] = useState(
     profile.parents.map((parent) => parent.id),
   );
@@ -47,6 +49,7 @@ export function ProfileSettings({
           method: "PATCH",
           headers: { "If-Match": `"${profile.version}"` },
           body: JSON.stringify({
+            ...(profile.user_id === null ? { name } : {}),
             birth_date: birth || null,
             parent_ids: minor ? parents : [],
           }),
@@ -73,44 +76,44 @@ export function ProfileSettings({
             Data nașterii
             <input
               type="date"
+              required={profile.user_id === null}
               min="1900-01-01"
               max={today}
               value={birth}
               onChange={(e) => setBirth(e.target.value)}
             />
           </label>
+          {profile.user_id === null && (
+            <label className="field">
+              Numele copilului
+              <input
+                required
+                maxLength={100}
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+              />
+            </label>
+          )}
           {minor && (
-            <fieldset className="profile-parent-picker">
-              <legend>Părinți desemnați</legend>
-              {members
-                .filter(
-                  (member) =>
-                    member.id !== profile.id &&
-                    member.role !== "limited" &&
-                    (member.age == null || member.age >= 18),
-                )
-                .map((member) => (
-                  <label className="profile-checkbox" key={member.id}>
-                    <input
-                      type="checkbox"
-                      checked={parents.includes(member.id)}
-                      onChange={(e) =>
-                        setParents((values) =>
-                          e.target.checked
-                            ? [...values, member.id]
-                            : values.filter((id) => id !== member.id),
-                        )
-                      }
-                    />
-                    {member.name}
-                  </label>
-                ))}
+            <ParentPicker
+              members={members}
+              childId={profile.id}
+              selected={parents}
+              onChange={setParents}
+            >
               <p className="fine-print">
-                Sub 14 ani: numai părinții desemnați adaugă date. De la 14 ani:
-                și copilul. Însemnările private ale copilului rămân doar ale
-                lui. Administrarea de către părinți se încheie la 18 ani.
+                {profile.user_id === null ? (
+                  "Profil fără cont. Datele sunt adăugate de părinții desemnați până la 18 ani."
+                ) : (
+                  <>
+                    Sub 14 ani: numai părinții desemnați adaugă date. De la 14
+                    ani: și copilul. Însemnările private ale copilului rămân
+                    doar ale lui. Administrarea de către părinți se încheie la
+                    18 ani.
+                  </>
+                )}
               </p>
-            </fieldset>
+            </ParentPicker>
           )}
           <button
             className="button primary full"

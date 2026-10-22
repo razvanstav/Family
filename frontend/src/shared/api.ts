@@ -11,7 +11,7 @@ export type Session = {
 };
 export type Member = {
   id: string;
-  user_id: number;
+  user_id: number | null;
   name: string;
   role: "owner" | "adult" | "limited";
   age?: number | null;
@@ -28,8 +28,9 @@ export type Document = {
   id: string;
   title: string;
   category: string;
-  visibility: "private" | "family" | "selected";
+  visibility: "private" | "family" | "selected" | "adults";
   owner_id: number;
+  subject_membership_id: string | null;
   owner_name: string;
   version: number;
   created_at: string;
@@ -42,14 +43,27 @@ export type Document = {
 };
 export type DocumentSummary = Pick<
   Document,
-  "id" | "title" | "category" | "visibility" | "mime" | "status" | "owner_id"
+  | "id"
+  | "title"
+  | "category"
+  | "visibility"
+  | "mime"
+  | "status"
+  | "owner_id"
+  | "subject_membership_id"
 >;
 export type DocumentRequest = {
   id?: string;
   category?: string;
   upload?: boolean;
   ownerId?: number;
+  memberId?: string;
 };
+export const familyDocumentCategories: readonly string[] = ["home", "memories"];
+export const personalDocumentCategories: readonly string[] = [
+  "personal",
+  "health",
+];
 export type CalendarRequest = {
   id?: string;
   date: string;
@@ -111,7 +125,13 @@ export const visibilityLabel = {
   private: "Doar eu",
   family: "Familia mea",
   selected: "Persoane alese",
+  adults: "Adulții familiei",
 };
+export function shareableMembers(members: Member[], actorId?: number) {
+  return members.filter(
+    (member) => member.user_id !== null && member.user_id !== actorId,
+  );
+}
 export const initials = (name: string) =>
   name
     .trim()

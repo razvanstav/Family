@@ -22,7 +22,7 @@ export const kinds = {
 export type Kind = keyof typeof kinds;
 export type Profile = {
   id: string;
-  user_id: number;
+  user_id: number | null;
   name: string;
   role: string;
   birth_date: string | null;

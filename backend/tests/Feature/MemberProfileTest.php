@@ -65,6 +65,43 @@ final class MemberProfileTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_accountless_child_has_no_email_or_user_and_only_designated_parents_write(): void
+    {
+        $users = User::count();
+        $invitations = DB::connection('admin')->table('family_invitations')->count();
+        $data = ['name' => 'Sofia', 'birth_date' => '2015-05-10', 'parent_ids' => [$this->ownMember]];
+        $response = $this->actingAs($this->ana)->postJson('/api/v1/families/'.DemoSeeder::POPESCU.'/members/children', $data)
+            ->assertCreated()->assertJsonPath('user_id', null)->assertJsonPath('name', 'Sofia')->assertJsonPath('age', 11);
+        $id = $response->json('id');
+        $this->assertSame($users, User::count());
+        $this->assertSame($invitations, DB::connection('admin')->table('family_invitations')->count());
+        $this->getJson('/api/v1/families/'.DemoSeeder::POPESCU.'/members')->assertJsonFragment(['id' => $id, 'user_id' => null, 'name' => 'Sofia']);
+        $this->getJson($this->path($id))->assertOk()->assertJsonPath('can_write', true)->assertJsonPath('parents.0.id', $this->ownMember);
+        $this->postJson($this->path($id).'/entries', $this->content())->assertCreated();
+        $this->withHeader('If-Match', '"1"')->patchJson($this->path($id), ['name' => 'Sofia Popescu', 'birth_date' => '2015-05-10', 'parent_ids' => [$this->ownMember]])->assertOk()->assertJsonPath('name', 'Sofia Popescu');
+        $this->patchJson('/api/v1/families/'.DemoSeeder::POPESCU.'/members/'.$id.'/role', ['role' => 'adult', 'expected_role' => 'limited'])->assertUnprocessable();
+        $this->actingAs($this->parent)->getJson($this->path($id))->assertOk()->assertJsonPath('can_write', false);
+        $this->getJson($this->path($id).'/entries')->assertJsonCount(0, 'items');
+        $this->postJson($this->path($id).'/entries', $this->content())->assertForbidden();
+        $this->actingAs($this->parent)->postJson('/api/v1/families/'.DemoSeeder::POPESCU.'/members/children', $data)->assertForbidden();
+        $this->actingAs($this->ana)->getJson($this->path($id, DemoSeeder::IONESCU))->assertNotFound();
+    }
+
+    public function test_accountless_child_creation_checks_fourteenth_birthday_and_parent_memberships(): void
+    {
+        $url = '/api/v1/families/'.DemoSeeder::POPESCU.'/members/children';
+        $this->actingAs($this->ana);
+        $data = ['name' => 'Copil', 'birth_date' => '2012-10-23', 'parent_ids' => [$this->ownMember]];
+        $this->postJson($url, array_replace($data, ['birth_date' => '2012-10-22']))->assertUnprocessable();
+        $this->postJson($url, array_replace($data, ['parent_ids' => []]))->assertUnprocessable();
+        $this->postJson($url, array_replace($data, ['parent_ids' => [$this->member]]))->assertUnprocessable();
+        $foreign = DB::connection('admin')->table('family_memberships')->where('family_id', DemoSeeder::IONESCU)->value('id');
+        $this->postJson($url, array_replace($data, ['parent_ids' => [$foreign]]))->assertUnprocessable();
+        $this->postJson($url, $data + ['email' => 'child@example.test'])->assertUnprocessable();
+        $this->assertSame(0, DB::connection('admin')->table('family_memberships')->whereNull('user_id')->count());
+        $this->postJson($url, $data)->assertCreated()->assertJsonPath('age', 13);
+    }
+
     private function path(?string $member = null, string $family = DemoSeeder::POPESCU): string
     {
         return '/api/v1/families/'.$family.'/members/'.($member ?? $this->member).'/profile';

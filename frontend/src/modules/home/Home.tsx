@@ -21,6 +21,7 @@ import {
   type CalendarRequest,
   type DocumentRequest,
   type DocumentSummary,
+  personalDocumentCategories,
   type Family,
 } from "../../shared/api";
 import { DocumentCard, DocumentCategories } from "../../shared/DocumentCard";
@@ -320,10 +321,15 @@ export function Home({
                       onOpen={(id) =>
                         onDocuments({
                           id,
-                          ownerId:
-                            document.visibility === "family"
-                              ? undefined
-                              : document.owner_id,
+                          ...(personalDocumentCategories.includes(
+                            document.category,
+                          )
+                            ? {
+                                memberId:
+                                  document.subject_membership_id ?? undefined,
+                                ownerId: document.owner_id,
+                              }
+                            : {}),
                         })
                       }
                     />

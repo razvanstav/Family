@@ -5,6 +5,7 @@ namespace App\Modules\Documents\Http;
 use App\Modules\Documents\Application\DocumentAccess;
 use App\Platform\Audit\Audit;
 use App\Platform\Contracts\PrivateMedia;
+use App\Platform\Families\MemberProfileAccess;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +23,7 @@ final class DocumentController
                 $join->on('a.id', '=', 'd.asset_id')->on('a.family_id', '=', 'd.family_id');
             })
             ->join('users as u', 'u.id', '=', 'd.owner_id')->orderByDesc('d.created_at')
-            ->get(['d.id', 'd.title', 'd.category', 'd.visibility', 'd.owner_id', 'd.version', 'd.created_at',
+            ->get(['d.id', 'd.title', 'd.category', 'd.visibility', 'd.owner_id', 'd.subject_membership_id', 'd.version', 'd.created_at',
                 'd.expires_on', 'a.mime', 'a.bytes', 'a.status', 'u.name as owner_name']);
     }
 
@@ -45,21 +46,35 @@ final class DocumentController
         return response()->json($data)->header('ETag', '"'.$doc->version.'"');
     }
 
-    public function store(Request $request, string $family)
+    public function store(Request $request, string $family, MemberProfileAccess $profiles)
     {
         abort_if($request->attributes->get('membership')->role === 'limited', 403);
         $validated = $request->validate([
             'title' => 'required|string|max:160',
             'category' => ['required', Rule::in(['personal', 'home', 'health', 'memories'])],
+            'subject_membership_id' => 'sometimes|nullable|uuid',
             'file' => 'required|file|max:10240',
             'expires_on' => $this->expirationRules(),
             'family_id' => 'prohibited', 'owner_id' => 'prohibited', 'visibility' => 'prohibited',
         ], $this->expirationMessages());
+        if ($validated['category'] === 'home') {
+            abort_unless($this->access->adultMembers($family)->where('m.id', $request->attributes->get('membership')->id)->exists(), 403, 'Documentele Casă sunt adăugate de adulții familiei.');
+        }
+        $subject = null;
+        if (in_array($validated['category'], ['personal', 'health'], true)) {
+            $subject = $validated['subject_membership_id'] ?? $request->attributes->get('membership')->id;
+            abort_unless($profiles->canWrite($request, $family, $profiles->subject($family, $subject)), 403, 'Numai persoana sau părinții desemnați pot adăuga documente în acest profil.');
+        } else {
+            abort_if(! empty($validated['subject_membership_id']), 422, 'Casă și Amintiri sunt în dosarul familiei.');
+        }
         $asset = $this->media->receive($family, $request->user()->id, $request->file('file'));
         $id = (string) Str::uuid();
         DB::table('documents')->insert([
             'id' => $id, 'family_id' => $family, 'owner_id' => $request->user()->id, 'asset_id' => $asset['id'],
-            'title' => $validated['title'], 'category' => $validated['category'], 'visibility' => 'private',
+            'title' => $validated['title'], 'category' => $validated['category'], 'subject_membership_id' => $subject,
+            'visibility' => match ($validated['category']) {
+                'home' => 'adults', 'memories' => 'family', default => 'private'
+            },
             'expires_on' => $validated['expires_on'] ?? null,
             'version' => 1, 'created_at' => now(), 'updated_at' => now(),
         ]);
@@ -78,6 +93,7 @@ final class DocumentController
             'expires_on' => ['present', ...$this->expirationRules()],
             'title' => 'prohibited', 'category' => 'prohibited', 'file' => 'prohibited',
             'family_id' => 'prohibited', 'owner_id' => 'prohibited', 'visibility' => 'prohibited',
+            'subject_membership_id' => 'prohibited',
         ], $this->expirationMessages());
         if ($doc->expires_on !== $data['expires_on']) {
             DB::table('documents')->where('family_id', $family)->where('id', $document)->update([
@@ -112,11 +128,18 @@ final class DocumentController
         abort_unless($request->header('If-Match'), 428, 'Versiunea documentului este necesară.');
         abort_unless($request->header('If-Match') === '"'.$doc->version.'"', 412, 'Documentul s-a schimbat. Reîncarcă pagina.');
         $data = $request->validate([
-            'visibility' => ['required', Rule::in(['private', 'family', 'selected'])],
+            'visibility' => ['required', Rule::in(['private', 'family', 'selected', 'adults'])],
             'membership_ids' => 'present|array|max:30',
             'membership_ids.*' => 'required|uuid|distinct',
         ]);
         $ids = $data['membership_ids'];
+        $categoryAccess = match ($doc->category) {
+            'home' => 'adults', 'memories' => 'family', default => null
+        };
+        abort_if($categoryAccess !== null && $data['visibility'] !== $categoryAccess, 422, 'Accesul pentru Casă și Amintiri este stabilit de categoria documentului.');
+        if ($data['visibility'] === 'adults') {
+            abort_unless($this->access->adultMembers($family)->where('m.id', $request->attributes->get('membership')->id)->exists(), 403, 'Accesul pentru adulți este stabilit de un adult al familiei.');
+        }
         abort_if($data['visibility'] === 'selected' && count($ids) === 0, 422, 'Alege cel puțin o persoană.');
         abort_if($data['visibility'] !== 'selected' && count($ids) > 0, 422, 'Destinatarii sunt valabili doar pentru acces selectat.');
         $validCount = DB::table('family_memberships')->where('family_id', $family)->whereNull('revoked_at')

@@ -58,7 +58,13 @@ final class DemoSeeder extends Seeder
                 ]);
                 DB::table('documents')->insert([
                     'id' => (string) Str::uuid(), 'family_id' => $family, 'owner_id' => $owner, 'asset_id' => $asset,
-                    'title' => $title, 'category' => $category, 'visibility' => $visibility, 'version' => 1,
+                    'title' => $title, 'category' => $category,
+                    'visibility' => match ($category) {
+                        'home' => 'adults', 'memories' => 'family', default => $visibility
+                    },
+                    'subject_membership_id' => in_array($category, ['personal', 'health'], true)
+                        ? DB::table('family_memberships')->where('family_id', $family)->where('user_id', $owner)->value('id') : null,
+                    'version' => 1,
                     'created_at' => now(), 'updated_at' => now(),
                 ]);
             }

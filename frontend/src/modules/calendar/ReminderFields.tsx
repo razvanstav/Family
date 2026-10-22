@@ -1,5 +1,5 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { api, ApiError, type Member } from "../../shared/api";
+import { api, ApiError, shareableMembers, type Member } from "../../shared/api";
 
 export function ReminderFields({
   familyId,
@@ -30,7 +30,7 @@ export function ReminderFields({
     api<Member[]>(`/families/${familyId}/members`)
       .then((data) => {
         if (!active) return;
-        setMembers(data);
+        setMembers(shareableMembers(data));
       })
       .catch((e) => {
         if (active)

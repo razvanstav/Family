@@ -83,7 +83,7 @@ final class HomeOverviewTest extends TestCase
         DB::connection('admin')->table('documents')->where('id', $private->id)->update(['visibility' => 'selected', 'created_at' => now()->addDay()]);
         DB::connection('admin')->table('document_grants')->insert(['family_id' => DemoSeeder::POPESCU, 'document_id' => $private->id, 'membership_id' => $this->anaMember]);
         $response = $this->getJson($this->home())->assertOk()->assertJsonPath('documents.0.id', $private->id)->assertJsonPath('documents.0.visibility', 'selected');
-        $this->assertEqualsCanonicalizing(['id', 'title', 'category', 'visibility', 'owner_id', 'mime', 'status'], array_keys($response->json('documents.0')));
+        $this->assertEqualsCanonicalizing(['id', 'title', 'category', 'visibility', 'owner_id', 'subject_membership_id', 'mime', 'status'], array_keys($response->json('documents.0')));
         $response->assertJsonPath('documents.0.owner_id', $this->mihai->id);
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $this->assertSame('nosniff', $response->headers->get('X-Content-Type-Options'));

@@ -28,6 +28,9 @@ import {
   ApiError,
   initials,
   visibilityLabel,
+  shareableMembers,
+  familyDocumentCategories,
+  personalDocumentCategories,
   type Document,
   type Family,
   type Member,
@@ -48,31 +51,38 @@ import {
 export function Documents({
   family,
   userId,
-  ownerId,
+  member,
+  canCreate = member === undefined,
   navigation,
   requestedAction,
   onActionOpened,
-  onUpload,
   onExpired,
 }: {
   family: Family;
   userId: number;
-  ownerId?: number;
+  member?: Member;
+  canCreate?: boolean;
   navigation?: ReactNode;
   requestedAction: DocumentRequest | null;
   onActionOpened: () => void;
-  onUpload?: () => void;
   onExpired: () => void;
 }) {
+  const categoryIds = member
+    ? personalDocumentCategories
+    : familyDocumentCategories;
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState(requestedAction?.category ?? "all");
+  const [category, setCategory] = useState(
+    requestedAction?.category && categoryIds.includes(requestedAction.category)
+      ? requestedAction.category
+      : "all",
+  );
   const [privacy, setPrivacy] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
   const [upload, setUpload] = useState(
-    Boolean(requestedAction?.upload && family.role !== "limited"),
+    Boolean(requestedAction?.upload && canCreate && family.role !== "limited"),
   );
   const [selected, setSelected] = useState<string | null>(
     requestedAction?.id ?? null,
@@ -82,9 +92,15 @@ export function Documents({
   const sequence = useRef(0);
   useEffect(() => {
     if (!requestedAction) return;
-    setCategory(requestedAction.category ?? "all");
+    setCategory(
+      requestedAction.category && categoryIds.includes(requestedAction.category)
+        ? requestedAction.category
+        : "all",
+    );
     setSelected(requestedAction.id ?? null);
-    setUpload(Boolean(requestedAction.upload && family.role !== "limited"));
+    setUpload(
+      Boolean(requestedAction.upload && canCreate && family.role !== "limited"),
+    );
     onActionOpened();
   }, [requestedAction]);
   async function load() {
@@ -115,31 +131,25 @@ export function Documents({
     };
   }, [family.id]);
   useEffect(() => {
-    if (family.role === "limited") setUpload(false);
-  }, [family.role]);
-  const collectionDocs = docs.filter((doc) =>
-    ownerId === undefined
-      ? doc.visibility === "family"
-      : doc.owner_id === ownerId,
+    if (family.role === "limited" || !canCreate) setUpload(false);
+  }, [family.role, canCreate]);
+  const collectionDocs = docs.filter(
+    (doc) =>
+      categoryIds.includes(doc.category) &&
+      (!member || doc.subject_membership_id === member.id),
   );
   const visible = filterDocuments(collectionDocs, search, category, privacy);
-  const canAddToCollection = ownerId === undefined || ownerId === userId;
-  const Heading = ownerId === undefined ? "h1" : "h2";
-  function startUpload() {
-    if (onUpload) onUpload();
-    else setUpload(true);
-  }
+  const canAddToCollection = canCreate;
+  const Heading = member ? "h2" : "h1";
   return (
     <div className="documents-page">
-      <section
-        className={ownerId === undefined ? "page-heading" : "section-header"}
-      >
-        <Heading>{ownerId === undefined ? "Familia mea" : "Documente"}</Heading>
+      <section className={member ? "section-header" : "page-heading"}>
+        <Heading>{member ? "Documente" : "Familia mea"}</Heading>
         {canAddToCollection && (
           <button
             className="button primary"
             aria-label="Adaugă document"
-            onClick={startUpload}
+            onClick={() => setUpload(true)}
             disabled={family.role === "limited"}
           >
             <Plus size={21} /> <span>Adaugă document</span>
@@ -164,7 +174,7 @@ export function Documents({
             </button>
           )}
         </div>
-        {ownerId !== undefined && (
+        {member && (
           <button
             className={`filter-button ${privacy !== "all" ? "active" : ""}`}
             aria-label="Filtrează după acces"
@@ -177,7 +187,7 @@ export function Documents({
           </button>
         )}
       </div>
-      {ownerId !== undefined && filterOpen && (
+      {member && filterOpen && (
         <div className="filter-panel">
           <label htmlFor="privacy">Cine poate vedea</label>
           <select
@@ -211,7 +221,11 @@ export function Documents({
             Vezi toate
           </button>
         </div>
-        <DocumentCategories selected={category} onSelect={setCategory} />
+        <DocumentCategories
+          selected={category}
+          onSelect={setCategory}
+          categoryIds={categoryIds}
+        />
         <div className="section-header">
           <h2 id="library-title">
             {loading || error
@@ -267,7 +281,7 @@ export function Documents({
                 onClick={() =>
                   collectionDocs.length
                     ? (setSearch(""), setCategory("all"), setPrivacy("all"))
-                    : startUpload()
+                    : setUpload(true)
                 }
               >
                 {collectionDocs.length
@@ -287,6 +301,9 @@ export function Documents({
       {upload && (
         <UploadModal
           endpoint={endpoint}
+          categoryIds={categoryIds}
+          initialCategory={category}
+          subjectId={member?.id}
           onClose={() => setUpload(false)}
           onAccessChanged={(status) => {
             setUpload(false);
@@ -303,7 +320,7 @@ export function Documents({
             setUpload(false);
             setNotice(
               doc.status === "ready"
-                ? "Document salvat. Acces: doar eu."
+                ? `Document salvat. Acces: ${visibilityLabel[doc.visibility]}.`
                 : doc.status === "quarantine"
                   ? "Document salvat în carantină. Descărcarea rămâne blocată până la verificare."
                   : "Fișier respins la verificare. Conținutul a fost eliminat.",
@@ -328,18 +345,26 @@ export function Documents({
 
 function UploadModal({
   endpoint,
+  categoryIds,
+  initialCategory,
+  subjectId,
   onClose,
   onSaved,
   onAccessChanged,
 }: {
   endpoint: string;
+  categoryIds: readonly string[];
+  initialCategory: string;
+  subjectId?: string;
   onClose: () => void;
   onSaved: (doc: Document) => void;
   onAccessChanged: (status: number) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("personal");
+  const [category, setCategory] = useState(
+    categoryIds.includes(initialCategory) ? initialCategory : categoryIds[0],
+  );
   const [expiresOn, setExpiresOn] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -370,6 +395,7 @@ function UploadModal({
     data.set("file", file);
     data.set("title", title);
     data.set("category", category);
+    if (subjectId) data.set("subject_membership_id", subjectId);
     data.set("expires_on", expiresOn);
     try {
       onSaved(
@@ -449,7 +475,7 @@ function UploadModal({
             disabled={busy}
           >
             {categories
-              .filter((c) => c.id !== "all")
+              .filter((c) => categoryIds.includes(c.id))
               .map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.label}
@@ -463,8 +489,18 @@ function UploadModal({
           disabled={busy}
         />
         <div className="privacy-hint">
-          <LockKeyhole size={20} />
-          <p>Acces inițial: doar eu.</p>
+          {familyDocumentCategories.includes(category) ? (
+            <Users size={20} />
+          ) : (
+            <LockKeyhole size={20} />
+          )}
+          <p>
+            {category === "home"
+              ? "Acces automat: adulții familiei, inclusiv cei cu acces limitat."
+              : category === "memories"
+                ? "Acces automat: toți membrii familiei."
+                : "Acces inițial: doar eu."}
+          </p>
         </div>
         {error && (
           <p className="error" role="alert">
@@ -810,15 +846,16 @@ function Detail({
             >
               <ArrowDownToLine size={18} /> Descarcă
             </button>
-            {doc.owner_id === userId && (
-              <button
-                className="button secondary"
-                disabled={busy}
-                onClick={() => void openSharing()}
-              >
-                <Users size={18} /> Gestionează accesul
-              </button>
-            )}
+            {doc.owner_id === userId &&
+              !familyDocumentCategories.includes(doc.category) && (
+                <button
+                  className="button secondary"
+                  disabled={busy}
+                  onClick={() => void openSharing()}
+                >
+                  <Users size={18} /> Gestionează accesul
+                </button>
+              )}
           </div>
           {doc.owner_id === userId && doc.status === "quarantine" && (
             <button
@@ -863,34 +900,42 @@ function Detail({
         <form onSubmit={saveSharing}>
           <p className="modal-lead">{doc.title}</p>
           <div className="access-options">
-            {(["private", "family", "selected"] as const).map((value) => (
-              <label
-                key={value}
-                className={`access-option ${visibility === value ? "chosen" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="visibility"
-                  disabled={busy || sharingStale}
-                  checked={visibility === value}
-                  onChange={() => setVisibility(value)}
-                />
-                <span>
-                  {value === "private" ? (
-                    <LockKeyhole size={21} />
-                  ) : (
-                    <Users size={21} />
-                  )}
-                </span>
-                <div>
-                  <strong>{visibilityLabel[value]}</strong>
-                  {value === "private" && doc.visibility !== "private" && (
-                    <p>Retrage accesul celorlalți.</p>
-                  )}
-                  {value === "family" && <p>Toți membrii activi.</p>}
-                </div>
-              </label>
-            ))}
+            {(["private", "family", "adults", "selected"] as const).map(
+              (value) => (
+                <label
+                  key={value}
+                  className={`access-option ${visibility === value ? "chosen" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="visibility"
+                    disabled={busy || sharingStale}
+                    checked={visibility === value}
+                    onChange={() => setVisibility(value)}
+                  />
+                  <span>
+                    {value === "private" ? (
+                      <LockKeyhole size={21} />
+                    ) : (
+                      <Users size={21} />
+                    )}
+                  </span>
+                  <div>
+                    <strong>{visibilityLabel[value]}</strong>
+                    {value === "private" && doc.visibility !== "private" && (
+                      <p>Retrage accesul celorlalți.</p>
+                    )}
+                    {value === "family" && <p>Toți membrii activi.</p>}
+                    {value === "adults" && (
+                      <p>
+                        Adulții activi, inclusiv cei cu acces limitat. Membrii
+                        înregistrați ca minori sunt excluși.
+                      </p>
+                    )}
+                  </div>
+                </label>
+              ),
+            )}
           </div>
           {visibility === "selected" && (
             <fieldset
@@ -898,28 +943,26 @@ function Detail({
               disabled={busy || sharingStale}
             >
               <legend>Alege persoanele</legend>
-              {!members.some((m) => m.user_id !== userId) && (
+              {!shareableMembers(members, userId).length && (
                 <p>Niciun alt membru activ.</p>
               )}
-              {members
-                .filter((m) => m.user_id !== userId)
-                .map((m) => (
-                  <label key={m.id}>
-                    <input
-                      type="checkbox"
-                      checked={grants.includes(m.id)}
-                      onChange={(e) =>
-                        setGrants(
-                          e.target.checked
-                            ? [...grants, m.id]
-                            : grants.filter((id) => id !== m.id),
-                        )
-                      }
-                    />
-                    <span className="avatar small">{m.name[0]}</span>
-                    {m.name}
-                  </label>
-                ))}
+              {shareableMembers(members, userId).map((m) => (
+                <label key={m.id}>
+                  <input
+                    type="checkbox"
+                    checked={grants.includes(m.id)}
+                    onChange={(e) =>
+                      setGrants(
+                        e.target.checked
+                          ? [...grants, m.id]
+                          : grants.filter((id) => id !== m.id),
+                      )
+                    }
+                  />
+                  <span className="avatar small">{m.name[0]}</span>
+                  {m.name}
+                </label>
+              ))}
             </fieldset>
           )}
           <p className="fine-print">
