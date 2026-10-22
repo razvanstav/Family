@@ -20,6 +20,7 @@ import {
   type DocumentRequest,
 } from "../../shared/api";
 import { Documents } from "../documents/Documents";
+import { SectionTabs } from "../../shared/SectionTabs";
 import { dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import {
@@ -261,34 +262,19 @@ export function MemberProfile({
               Reverifică fotografia
             </button>
           )}
-          <nav className="member-profile-tabs" aria-label="Secțiuni profil">
-            <button
-              aria-pressed={tab === "overview"}
-              onClick={() => selectTab("overview")}
-            >
-              Prezentare
-            </button>
-            {(
-              Object.entries(categories) as [
-                Category,
-                (typeof categories)[Category],
-              ][]
-            ).map(([key, value]) => (
-              <button
-                key={key}
-                aria-pressed={tab === key}
-                onClick={() => selectTab(key)}
-              >
-                {value.label}
-              </button>
-            ))}
-            <button
-              aria-pressed={tab === "documents"}
-              onClick={() => selectTab("documents")}
-            >
-              Documente
-            </button>
-          </nav>
+          <SectionTabs<Tab>
+            className="member-profile-tabs"
+            label="Secțiuni profil"
+            value={tab}
+            options={[
+              { value: "overview", label: "Prezentare" },
+              ...(
+                Object.entries(categories) as [Category, { label: string }][]
+              ).map(([value, category]) => ({ value, label: category.label })),
+              { value: "documents", label: "Documente" },
+            ]}
+            onChange={selectTab}
+          />
           {tab === "documents" ? (
             <Documents
               key={`${userId}:${family.id}:${member.id}`}

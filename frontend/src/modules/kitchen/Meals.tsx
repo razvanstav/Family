@@ -49,6 +49,7 @@ function moveDay(date: string, delta: number): string {
 }
 
 export function Meals({
+  active,
   family,
   requestedRecipe,
   onRecipeConsumed,
@@ -56,6 +57,7 @@ export function Meals({
   onRecipe,
   onExpired,
 }: {
+  active: boolean;
   family: Family;
   requestedRecipe: Recipe | null;
   onRecipeConsumed: () => void;
@@ -73,15 +75,20 @@ export function Meals({
   const [revision, setRevision] = useState(0);
   const [selected, setSelected] = useState<Meal | MealDetailData | null>(null);
   const [notice, setNotice] = useState("");
+  const loadedPosition = useRef("");
   useEffect(() => {
+    if (!active) return;
     const controller = new AbortController();
     setLoading(true);
     setError("");
-    api<MealList>(`${base}?date=${date}&page=${page}`, {
+    const position = `${base}?date=${date}&page=${page}`;
+    if (loadedPosition.current !== position) setItems([]);
+    api<MealList>(position, {
       signal: controller.signal,
     })
       .then((data) => {
         if (controller.signal.aborted) return;
+        loadedPosition.current = position;
         setItems(data.items);
         setHasMore(data.has_more);
         setSelected((current) =>
@@ -102,14 +109,15 @@ export function Meals({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [base, date, page, revision]);
+  }, [active, base, date, page, revision]);
   useEffect(() => {
+    if (!active) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible")
         setRevision((value) => value + 1);
     }, 60000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [active]);
   function chooseDate(value: string) {
     if (value >= "1900-01-01" && value <= "2100-12-31") {
       setDate(value);
@@ -182,7 +190,7 @@ export function Meals({
             <RefreshCw size={18} />
           </button>
         </div>
-        {loading ? (
+        {loading && !items.length ? (
           <p className="loading-text" role="status">
             Se încarcă mesele…
           </p>

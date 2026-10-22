@@ -23,6 +23,7 @@ import { Documents } from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
 import { AcceptInvitation } from "../modules/families/AcceptInvitation";
 import { Modal } from "../shared/Modal";
+import { SectionTabs } from "../shared/SectionTabs";
 import { observeSessionLifecycle } from "./sessionLifecycle";
 import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
@@ -225,20 +226,15 @@ export default function App() {
   }
   const userInitials = initials(session.user.name);
   const familyNavigation = (
-    <nav className="family-sections" aria-label="Secțiuni Familia mea">
-      <button
-        aria-pressed={familySection === "members"}
-        onClick={() => setFamilySection("members")}
-      >
-        Membri
-      </button>
-      <button
-        aria-pressed={familySection === "documents"}
-        onClick={() => setFamilySection("documents")}
-      >
-        Documente
-      </button>
-    </nav>
+    <SectionTabs
+      label="Secțiuni Familia mea"
+      value={familySection}
+      options={[
+        { value: "members", label: "Membri" },
+        { value: "documents", label: "Documente" },
+      ]}
+      onChange={setFamilySection}
+    />
   );
   return (
     <div className="app-shell">
@@ -357,7 +353,10 @@ export default function App() {
             </button>
           </div>
         </header>
-        <main>
+        <main
+          className="page-view"
+          key={`${session.user.id}:${family?.id ?? "none"}:${page}`}
+        >
           {sessionNotice && (
             <p className="notice" role="status">
               Sesiunea s-a schimbat. Reia acțiunea.

@@ -18,6 +18,7 @@ import { RecipeForm } from "./RecipeForm";
 import { RecipeDetail } from "./RecipeDetail";
 import { RecipeMeta } from "./RecipeMeta";
 import { KitchenToday } from "./KitchenToday";
+import { SectionTabs } from "../../shared/SectionTabs";
 
 export function Kitchen({
   family,
@@ -112,58 +113,60 @@ export function Kitchen({
   return (
     <div className="kitchen-page">
       <section className="page-heading">
-        <div className="kitchen-heading-title">
-          {section === "recipes" && browsing && (
-            <button
-              className="icon-button"
-              aria-label="Înapoi la rețete"
-              onClick={showRecipes}
-            >
-              <ArrowLeft size={20} />
-            </button>
-          )}
-          <h1>Bucătărie</h1>
-        </div>
+        <h1>Bucătărie</h1>
         <div className="page-heading-actions">
-          {section === "recipes" && (
-            <button
-              className="icon-button"
-              aria-label="Caută rețete"
-              onClick={() => {
-                setBrowsing(true);
-                searchInput.current?.focus();
-              }}
-            >
-              <Search size={21} />
-            </button>
-          )}
-          {family.role !== "limited" && section === "recipes" && (
+          <button
+            className="icon-button"
+            aria-label="Caută rețete"
+            onClick={() => {
+              setSection("recipes");
+              setBrowsing(true);
+              searchInput.current?.focus();
+            }}
+          >
+            <Search size={21} />
+          </button>
+          {family.role !== "limited" && (
             <button
               className="button primary"
-              aria-label="Adaugă rețetă"
-              onClick={() => setAdding(true)}
+              aria-label={
+                section === "recipes"
+                  ? "Adaugă rețetă"
+                  : "Alege rețetă pentru masă"
+              }
+              onClick={() => {
+                if (section === "recipes") setAdding(true);
+                else {
+                  setSection("recipes");
+                  setBrowsing(true);
+                }
+              }}
             >
               <Plus size={19} />
-              <span>Adaugă rețetă</span>
+              <span>
+                {section === "recipes" ? "Adaugă rețetă" : "Alege rețetă"}
+              </span>
             </button>
           )}
         </div>
       </section>
-      <nav className="kitchen-sections" aria-label="Secțiuni Bucătărie">
-        <button aria-pressed={section === "recipes"} onClick={showRecipes}>
-          Rețete
-        </button>
-        <button
-          aria-pressed={section === "meals"}
-          onClick={() => setSection("meals")}
-        >
-          Mese
-        </button>
-      </nav>
+      <SectionTabs
+        label="Secțiuni Bucătărie"
+        value={section}
+        options={[
+          { value: "recipes", label: "Rețete" },
+          { value: "meals", label: "Mese" },
+        ]}
+        onChange={setSection}
+      />
       {section === "recipes" && (
         <>
           {browsing && (
             <>
+              <button className="text-button" onClick={showRecipes}>
+                <ArrowLeft size={18} />
+                Înapoi la rețete
+              </button>
               <div className="kitchen-toolbar">
                 <label className="search">
                   <Search size={18} aria-hidden="true" />
@@ -395,16 +398,20 @@ export function Kitchen({
           )}
         </>
       )}
-      {section === "meals" && (
+      <div hidden={section !== "meals"}>
         <Meals
+          active={section === "meals"}
           family={family}
           requestedRecipe={mealTarget}
           onRecipeConsumed={() => setMealTarget(null)}
           onRecipe={setSelected}
-          onChooseRecipe={() => setSection("recipes")}
+          onChooseRecipe={() => {
+            setSection("recipes");
+            setBrowsing(true);
+          }}
           onExpired={onExpired}
         />
-      )}
+      </div>
       {adding && (
         <RecipeForm
           base={base}

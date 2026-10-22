@@ -2,17 +2,17 @@
 
 Actualizat: 23 octombrie 2026, Europe/Bucharest.
 
-- **Modul/pas:** Familie, **FP1-demo — date în profilul Anei**, salvate local. [Exemple și verificare](modules/families.md#fp1-demo--date-în-profil-23-octombrie-2026).
-- **Rezultat:** în Familia Popescu → Ana Popescu sunt exact trei exemple noi: Control anual (21 octombrie), Micul Prinț (18 octombrie), Plimbare în parc (22 octombrie 2026). Apar în Prezentare și în categoriile lor. Toate au acces **Doar eu**, cu notițe demo. ID-urile sunt în fișa Familie; nu le duplica la reluare.
+- **Modul/pas:** Interfață, **UT1 — cadru stabil la schimbarea filelor**, implementat. [Contract și verificări](modules/interface.md#ut1--cadru-stabil-la-schimbarea-filelor-23-octombrie-2026).
+- **Rezultat:** antet cu înălțime stabilă și bară comună SectionTabs în Bucătărie, Familie, profil, Amintiri și Calendar. Animația de pagină se execută numai la navigația principală/context, nu la schimbarea filelor. Familia mea păstrează titlul și pe Documente. Bucătărie păstrează filtrele rețetelor și data/pagina meselor; Mese nu solicită date cât este ascunsă. Nu s-au redesenat conținuturile modulelor.
 - **Permisiuni:** neschimbate; public = numai familia. Privatele altui membru nu devin vizibile și nu se încarcă în numele lui. Profilurile fără cont și asocierea documentelor părinte–copil rămân în afara FD2.
-- **Verificat FP1-demo:** salvare prin API-ul existent și recitirea listei autorizate: trei ID-uri confirmate, acces privat și administrare de către Ana. Fără cod nou, seed/reset, build, teste sau probe vizuale. Aspectul final așteaptă feedbackul utilizatorului.
+- **Verificat UT1:** TypeScript/Vite build, Prettier, `git diff --check` și căutare de referințe pentru selectorii eliminați. Fără teste noi, suite sau probe vizuale, conform preferinței utilizatorului. Aspectul și interacțiunile așteaptă feedback; nu sunt declarate verificate în browser.
 - **Pas anterior FD2:** Familie → Documente conține numai documentele partajate familiei; Documente din profil este dosar separat. Încărcările din Familie/Acasă deschid profilul propriu și rămân private până la partajare. Build și un test API (16 aserțiuni) trecute anterior, fără probe vizuale.
 - **Limite/livrare:** build local, fără publicare în producție sau push. Verificarea automată anterioară a respins pushul fără acord explicit; nu îl reîncerca implicit. Nu există blocaj pentru dezvoltarea locală.
-- **Context păstrat:** Acasă → Familia mea → Bucătărie → Amintiri → Calendar, Cont separat. FP1 și regulile confirmate de vârstă/confidențialitate sunt în fișa Familie; H2/KH1/FD1/MH1/CH1 rămân existente. Planificatorul este schiță. Evenimentele, amintirile și mesele demo existente nu au fost schimbate.
+- **Context păstrat:** Acasă → Familia mea → Bucătărie → Amintiri → Calendar, Cont separat. FP1 și regulile confirmate de vârstă/confidențialitate sunt în fișa Familie; H2/KH1/FD1/MH1/CH1 rămân existente. Planificatorul este schiță. Datele demo nu au fost schimbate: Ana are Control anual, Micul Prinț și Plimbare în parc, toate private; ID-urile sunt în secțiunea FP1-demo din fișa Familie. Nu le duplica.
 
 ## Următoarea acțiune
 
-Preia feedbackul pentru cele trei exemple din profilul Anei; nu începe automat alt modul/layout. La reluare citește acest rezumat, numai secțiunea FP1-demo din fișa Familie și codul necesar cererii. Nu reciti tot planul sau toate modulele. După fiecare pas actualizează aici rezultatul, verificările, limitele și următoarea acțiune.
+Preia feedbackul pentru Rețete/Mese și cadrul comun al filelor; nu începe automat alt modul/layout. La reluare citește acest rezumat, numai secțiunea UT1 din fișa Interfață și codul necesar cererii. Nu reciti tot planul sau toate modulele. După fiecare pas actualizează aici rezultatul, verificările, limitele și următoarea acțiune.
 
 ## Mediu local
 

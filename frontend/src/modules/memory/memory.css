@@ -270,25 +270,6 @@
   justify-content: center;
   font-size: 13px;
 }
-.memory-sections {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 22px;
-}
-.memory-sections button {
-  min-height: 44px;
-  padding: 10px 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  color: var(--muted);
-  font-size: 14px;
-}
-.memory-sections button[aria-pressed="true"] {
-  color: white;
-  background: var(--accent);
-  border-color: var(--accent);
-}
 .timeline-tools {
   display: flex;
   align-items: center;
@@ -434,11 +415,6 @@
   }
   .memory-toolbar > select {
     font-size: 16px;
-  }
-  .memory-sections button {
-    flex: 1;
-    padding-inline: 10px;
-    font-size: 13px;
   }
   .memory-kind-filter {
     gap: 6px;

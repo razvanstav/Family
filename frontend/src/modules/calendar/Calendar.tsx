@@ -20,6 +20,7 @@ import {
   visibilityLabel,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
+import { SectionTabs } from "../../shared/SectionTabs";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import type { CalendarItem } from "./calendarTypes";
 import { CalendarMonth } from "../../shared/CalendarMonth";
@@ -244,23 +245,16 @@ export function CalendarPage({
           </button>
         </label>
       )}
-      <nav className="calendar-view-tabs" aria-label="Vizualizare Calendar">
-        {(
-          [
-            ["month", "Lună"],
-            ["week", "Săptămână"],
-            ["agenda", "Agendă"],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            aria-pressed={view === value}
-            onClick={() => setView(value)}
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
+      <SectionTabs
+        label="Vizualizare Calendar"
+        value={view}
+        options={[
+          { value: "month", label: "Lună" },
+          { value: "week", label: "Săptămână" },
+          { value: "agenda", label: "Agendă" },
+        ]}
+        onChange={setView}
+      />
       {notice && (
         <p className="notice" role="status">
           {notice}

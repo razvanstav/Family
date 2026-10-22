@@ -98,24 +98,8 @@
 .member-profile-tabs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 5px;
-  margin: 18px 0;
-}
-.member-profile-tabs button {
-  min-height: 44px;
-  min-width: 0;
-  padding: 8px 4px;
-  border-radius: 13px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
-}
-.member-profile-tabs button[aria-pressed="true"] {
-  background: var(--accent);
-  color: white;
-  border-color: var(--accent);
+  max-width: none;
+  margin-top: 18px;
 }
 .profile-entry--health {
   --profile-color: var(--icon-health);

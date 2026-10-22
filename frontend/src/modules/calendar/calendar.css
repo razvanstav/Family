@@ -10,29 +10,6 @@
 .calendar-search {
   margin-bottom: 18px;
 }
-.calendar-view-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 4px;
-  margin-bottom: 20px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  background: #eeece580;
-  max-width: 480px;
-}
-.calendar-view-tabs button {
-  flex: 1;
-  min-height: 44px;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-}
-.calendar-view-tabs button[aria-pressed="true"] {
-  background: var(--accent);
-  color: white;
-  box-shadow: var(--shadow);
-}
 .calendar-layout {
   display: grid;
   grid-template-columns: minmax(340px, 0.9fr) minmax(0, 1.3fr);
@@ -460,9 +437,6 @@
     gap: 18px;
   }
   .calendar-layout .calendar-month {
-    max-width: none;
-  }
-  .calendar-view-tabs {
     max-width: none;
   }
   .calendar-title {

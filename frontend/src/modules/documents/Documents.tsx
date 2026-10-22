@@ -134,7 +134,7 @@ export function Documents({
       <section
         className={ownerId === undefined ? "page-heading" : "section-header"}
       >
-        <Heading>Documente</Heading>
+        <Heading>{ownerId === undefined ? "Familia mea" : "Documente"}</Heading>
         {canAddToCollection && (
           <button
             className="button primary"

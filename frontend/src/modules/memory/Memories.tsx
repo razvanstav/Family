@@ -17,6 +17,7 @@ import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import { MomentDetail } from "./MomentDetail";
 import { MomentForm } from "./MomentForm";
 import { Timeline } from "./Timeline";
+import { SectionTabs } from "../../shared/SectionTabs";
 import { MealViewer } from "../kitchen/MealViewer";
 import { momentKinds, type Moment, type MomentList } from "./memoryTypes";
 import "./memory.css";
@@ -150,19 +151,18 @@ export function Memories({
       <section className="page-heading">
         <h1>Amintiri</h1>
         <div className="page-heading-actions">
-          {section === "moments" && (
-            <button
-              className="icon-button"
-              aria-label="Caută amintiri"
-              aria-expanded={searchOpen || Boolean(query)}
-              onClick={() => {
-                setSearchOpen(true);
-                searchInput.current?.focus();
-              }}
-            >
-              <Search size={21} aria-hidden="true" />
-            </button>
-          )}
+          <button
+            className="icon-button"
+            aria-label="Caută amintiri"
+            aria-expanded={searchOpen || Boolean(query)}
+            onClick={() => {
+              setSection("moments");
+              setSearchOpen(true);
+              searchInput.current?.focus();
+            }}
+          >
+            <Search size={21} aria-hidden="true" />
+          </button>
           {family.role !== "limited" && (
             <button
               className="button primary"
@@ -175,20 +175,15 @@ export function Memories({
           )}
         </div>
       </section>
-      <nav className="memory-sections" aria-label="Vizualizare Amintiri">
-        <button
-          aria-pressed={section === "moments"}
-          onClick={() => setSection("moments")}
-        >
-          Momente și note
-        </button>
-        <button
-          aria-pressed={section === "timeline"}
-          onClick={() => setSection("timeline")}
-        >
-          Cronologie
-        </button>
-      </nav>
+      <SectionTabs
+        label="Vizualizare Amintiri"
+        value={section}
+        options={[
+          { value: "moments", label: "Momente și note" },
+          { value: "timeline", label: "Cronologie" },
+        ]}
+        onChange={setSection}
+      />
       {section === "timeline" && (
         <Timeline
           familyId={family.id}

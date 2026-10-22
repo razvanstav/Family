@@ -1,10 +1,25 @@
 # Interfață comună
 
-Stare: FD2 — dosarul comun afișează numai documentele partajate familiei, iar Documente este o filă în profilul persoanei. Build și o verificare API punctuală trecute, fără probe vizuale la cererea utilizatorului. FP1, H2, KH1, FD1, MH1 și CH1 rămân existente. Navigația principală nu se schimbă; planificatorul rămâne schiță.
+Stare: **UT1 — cadru stabil la schimbarea filelor**, implementat la 23 octombrie 2026; build și verificări statice trecute, fără suite sau probe vizuale. FD2/FP1 și layouturile existente se păstrează. Navigația principală nu se schimbă; planificatorul rămâne schiță.
+
+## UT1 — Cadru stabil la schimbarea filelor, 23 octombrie 2026
+
+Cerere explicită de ajustare comună în aplicație, pornită de la Rețete/Mese. Nu este o nouă etapă de redesenare a fiecărui modul.
+
+- Cauze identificate în cod: Bucătărie ascundea acțiunile din antet pe Mese, schimbând înălțimea rândului; revenirea pe Rețete reseta filtrele, iar Mese se remonta cu data inițială. Familie alterna două componente animate cu titluri diferite. Documente din profil relua aceeași animație de pagină. Barele de file aveau cinci definiții CSS diferite.
+- `shared/SectionTabs.tsx` oferă bara comună pentru Bucătărie, Familie, profilul membrului, Amintiri și Calendar. Aceleași dimensiuni, spațiere și selecție, controale de minimum 44 px și nume accesibile. Profilul păstrează cinci coloane pe desktop și trei pe mobil; celelalte bare au maximum 480 px pe desktop și ocupă lățimea disponibilă pe mobil. Filtrele de conținut nu sunt transformate în navigație.
+- `styles.css` fixează înălțimea minimă a antetului/acțiunilor și dimensiunea butonului principal; pe mobil rămâne butonul compact existent. Gutterul de scrollbar este rezervat pentru a evita deplasarea laterală între conținuturi scurte/lungi. Animația `page-enter` se aplică numai elementului principal din App, la schimbarea paginii/familiei/contului; schimbarea filelor nu o reia.
+- Bucătărie păstrează titlul și cele două poziții de acțiuni. Căutarea deschide căutarea Rețete; acțiunea principală este Adaugă rețetă sau Alege rețetă pentru masă, reutilizând fluxurile existente. Înapoi la rețete este în conținutul listei complete. Schimbarea Rețete/Mese păstrează filtrele și data/pagina meselor; componenta Mese rămâne montată, cu cererile și timerul oprite cât este ascunsă. La revenire reîncarcă autorizarea și păstrează rândurile deja încărcate în timpul actualizării aceleiași zile.
+- Familie păstrează titlul Familia mea și pe fila Documente. Dosarul comun și documentele personale rămân separate conform FD2. Profilul păstrează fotografia/identitatea deasupra filelor. În Amintiri căutarea rămâne în aceeași poziție și deschide Momente și note. Calendar păstrează antetul și bara comună; grila și agenda rămân conținuturi specifice vizualizării.
+- Fără modificări de API, permisiuni, date, ordine de navigație sau dependențe. Selectorii vechi de file și stilurile lor mobile au fost eliminați, fără referințe rămase în sursele frontend.
+- **Verificat:** TypeScript/Vite build, Prettier și `git diff --check`. Fără teste noi, suite, browser sau probe vizuale, conform preferinței utilizatorului. Pozițiile pe dispozitiv, interacțiunile și acceptarea vizuală rămân pentru feedback; verificarea statică nu confirmă aceste probe. Build local, fără publicare în producție.
+
+Următorul pas: feedback pentru schimbarea Rețete/Mese și cadrul comun al filelor, fără alt layout început automat.
 
 ## Fișiere relevante
 
 - Tokenuri, tipografie și stiluri comune: `frontend/src/styles.css`.
+- File interne: `frontend/src/shared/SectionTabs.tsx`.
 - Shell, context de familie și autentificare: `frontend/src/app/App.tsx`.
 - Dialog accesibil: `frontend/src/shared/Modal.tsx`.
 - Client API: `frontend/src/shared/api.ts`; se aliniază rutelor efectiv implementate.
@@ -17,7 +32,7 @@ Stare: FD2 — dosarul comun afișează numai documentele partajate familiei, ia
 
 Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helvetica, paleta caldă și regulile de text direct; preluăm compoziția și ritmul din imagine. Nu introducem sloganul, statistici, ratinguri, favorite, planificare/cumpărături ori căutare globală fără funcționalitate reală. Navigația existentă și pagina implicită rămân cele stabilite.
 
-**Ritm explicit:** un singur layout, apoi feedback înainte de pasul următor. Pasul curent FD2 ajustează numai documentele comune/personale din Familie și profil. Pentru FD2 utilizatorul a cerut să nu facem probe vizuale; acestea nu sunt declarate verificate. Fără alte module și fără teste în exces.
+**Ritm explicit:** un singur layout, apoi feedback înainte de pasul următor. UT1 este ajustarea comună a filelor cerută explicit în toate secțiunile, fără redesenarea conținutului fiecăreia. Preferința de verificări restrânse, fără probe vizuale, se păstrează; acestea nu sunt declarate trecute.
 
 | Pagină                              | Adaptare                                                                                                                                                                        | Stare                                                                                                                                                                                           |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
