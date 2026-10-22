@@ -4,6 +4,8 @@ Pornim de la aplicația locală existentă și livrăm un singur pas verificabil
 
 ## Ordinea etapelor
 
+**Prioritate la reluarea din 22 octombrie 2026:** continuarea utilă pentru predarea Linux, fără teste, urmată de commit/push la cererea utilizatorului. [O2a](modules/operations.md#o2a--22-octombrie-2026) pregătește configurațiile și procedura; nu închide instalarea și acceptarea O2 pe server.
+
 **Prioritate actualizată la 21 octombrie 2026, la cererea utilizatorului:** după A1, livrăm Calendar C1 pentru testarea locală, apoi C3 pentru remindere in-app ale evenimentelor manuale și dashboardul cu date reale. Aceste felii preced restul M03–M06; folosesc numai dependențele necesare. A2–A3 și emailul extern rămân deschise pentru etapa de utilizare din afara mediului demo. C2/D4 și integrarea surselor se fac separat; livrarea C1 nu închide integral M07.
 
 Rezultat actualizat la 22 octombrie 2026: C1, C3 in-app, [Acasă H1](modules/interface.md#acasa-h1), [Bucătărie K1, K2, K3a și K4a–K4b](modules/kitchen.md) sunt implementate și verificate local. K2 păstrează mesele pe versiunea folosită, iar K4a livrează accesul selectiv și arhivarea/restaurarea privată. La cererea utilizatorului, K4b include [P3 strict necesar](modules/platform.md#p3--contract-și-execuție): outbox DB, retry/replay, confirmări per handler și index Kitchen reconstruibil, cu API autorizat prin sursele canonice. Ecranul timeline rămâne AM3; K3b și restul M04 rămân deschise. Secțiunea Bucătărie este după Documente, înainte de Calendar; Acasă rămâne prima și implicită.

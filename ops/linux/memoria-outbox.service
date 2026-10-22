@@ -1,0 +1,19 @@
+[Unit]
+Description=Memoria Familiei durable event delivery
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=memoria
+Group=memoria
+WorkingDirectory=/srv/memoria/current/backend
+ExecStart=/usr/bin/php artisan outbox:deliver --no-interaction
+TimeoutStartSec=0
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/srv/memoria/shared/storage /srv/memoria/current/backend/bootstrap/cache

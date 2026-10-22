@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Memoria Familiei in-app calendar reminders periodically
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=15s
+AccuracySec=1s
+
+[Install]
+WantedBy=timers.target

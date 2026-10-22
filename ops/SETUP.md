@@ -4,15 +4,97 @@ Aceste instrucțiuni sunt pentru dezvoltare locală. Folderul `.tools` de pe cal
 
 ## Predare pentru serverul Linux
 
-Decizie la 22 octombrie 2026: instalare pe serverul Linux dedicat al utilizatorului, de către o altă persoană. **Planificat; deployul Linux nu este implementat sau verificat.** Instrucțiunile locale de mai jos nu constituie un deploy public gata de aplicat. Acceptarea mediului de test este în [O2 — staging](../docs/modules/operations.md).
+Decizie la 22 octombrie 2026: instalare pe serverul Linux dedicat al utilizatorului, de către o altă persoană. **O2a: configurațiile de predare sunt pregătite în [ops/linux](linux/); instalarea și funcționarea pe server nu sunt verificate.** Instrucțiunile locale de mai jos rămân separate de staging. Acceptarea mediului de test este în [O2 — staging](../docs/modules/operations.md).
 
 - Confirmă distribuția/versiunea Linux, RAM-ul disponibil și site-urile existente. Pentru aplicație, PostgreSQL și ClamAV împreună se recomandă minimum 8 GB RAM pentru testare; consumul trebuie verificat pe server.
 - Dependențele și extensiile sunt în secțiunea 1. Păstrează PostgreSQL și politicile RLS; rulează migrațiile cu rolul de administrare, aplică `ops/grant-runtime.sql`, apoi rulează aplicația și workerii cu `memoria_app`, fără BYPASSRLS sau proprietatea tabelelor.
 - Construiește frontendul: rezultatul este `backend/public/app`, cu URL `/app/`. Configurează Nginx/PHP-FPM cu rădăcina web `backend/public` și API-ul pe aceeași origine. Nu publica rădăcina repository-ului.
 - Creează configurație, chei, bază și stocare private separate: `APP_ENV=staging`, `APP_DEBUG=false`, `MEMORIA_DEMO=false`, URL HTTPS și cookie de sesiune sigur. Nu rula seederele demo din instrucțiunile locale și nu copia `.env` sau datele calculatorului inițial. Provisionarea conturilor de test trebuie stabilită separat.
 - Păstrează fișierele private persistente, accesibile numai prin autorizarea aplicației. Configurează ClamAV local conform secțiunii 4 și actualizarea supravegheată a definițiilor.
-- Supraveghează prin systemd/Supervisor comenzile `php artisan calendar:deliver-reminders --watch` și `php artisan outbox:deliver --watch`, din `backend`, cu repornire după reboot și după actualizarea codului. Scripturile PowerShell locale nu instalează servicii Linux.
+- Configurațiile systemd livrate execută `calendar:deliver-reminders` și `outbox:deliver` fără `--watch`, prin timere separate, la 15 secunde după încheierea trecerii anterioare. Nu porni în paralel și workerii `--watch` ori un cron pentru aceleași comenzi. Scripturile PowerShell locale nu instalează servicii Linux.
 - Verifică pe server autentificarea, izolarea familiilor, uploadul/scanarea/downloadul privat, granturile după migrații și execuția workerilor. Configurează și probează backupul DB + fișiere înainte de utilizarea datelor reale. Nu deduce acceptarea Linux din testele locale consemnate.
+
+### O2a — configurații pentru instalator
+
+Acest pas pregătește un singur mediu staging, fără acces la server. Nu instalează pachete, certificate, conturi sau date. Înlocuiește domeniul `family.example.com`, căile certificatelor și utilizatorul/grupul Nginx din exemple după confirmarea serverului. Calea PHP presupusă este `/usr/bin/php` cu versiunea 8.4 și extensiile de la secțiunea 1, atât în CLI, cât și în FPM. Folosește pachetele de securitate curente ale distribuției, fără a copia runtime-ul Windows.
+
+| Fișier | Destinație/rol |
+| --- | --- |
+| [linux/.env.example](linux/.env.example) | Model pentru `/srv/memoria/shared/.env`; cheia și parola DB sunt necompletate |
+| [linux/nginx.conf](linux/nginx.conf) | Virtual host dedicat HTTPS, rădăcină `current/backend/public` |
+| [linux/php-fpm.conf](linux/php-fpm.conf) | Pool PHP-FPM `memoria`, socket `/run/php/memoria.sock` |
+| [linux/memoria-outbox.service](linux/memoria-outbox.service), [timer](linux/memoria-outbox.timer) | O trecere outbox per activare |
+| [linux/memoria-reminders.service](linux/memoria-reminders.service), [timer](linux/memoria-reminders.timer) | O trecere a reminderelor in-app per activare |
+
+Structura de instalare:
+
+```text
+/srv/memoria/
+  releases/<commit>/       surse + vendor + frontend construit
+  current -> releases/<commit>
+  shared/.env             configurație și cheie persistente
+  shared/storage/         bytes privați, sesiuni, cache, loguri
+```
+
+Separă utilizatorul de deploy de contul de serviciu `memoria`, fără shell de login. Sursele sunt deținute de utilizatorul de deploy și pot fi citite de `memoria`; Nginx are numai acces de citire/traversare la `backend/public` și la părinții lui. Numai `shared/storage` și `backend/bootstrap/cache` din fiecare release sunt inscriptibile pentru `memoria`. Fișierul `shared/.env` este deținut de deploy, grup `memoria`, mod `0640`. Nu acorda Nginx acces la storage sau la secrete. Creează în storage directoarele `app/private`, `app/public`, `framework/cache/data`, `framework/cache/locks`, `framework/sessions`, `framework/views` și `logs`, deținute de `memoria`.
+
+Pe clusterul PostgreSQL, creează separat baza `memoria_staging`, deținută de `memoria_admin`. Păstrează rolurile din secțiunea 2: `memoria_app` fără SUPERUSER/BYPASSRLS și fără proprietatea tabelelor. Scriptul `create-databases.sql` este pentru dezvoltare și creează și `memoria_test`; nu îl aplica automat pe server. Nu reutiliza parolele locale. Completează modelul `.env` cu parola runtime, domeniul HTTPS și baza staging; nu stoca parola administratorului în acest fișier. Generează `APP_KEY` o singură dată la prima instalare, apoi păstreaz-o la actualizări.
+
+Pregătește fiecare release ca utilizator de deploy, folosind un hash complet ales din Git, nu un checkout modificat în loc:
+
+```bash
+set -e
+MEMORIA_REVISION=COMMIT_SHA_COMPLET
+MEMORIA_RELEASE="/srv/memoria/releases/$MEMORIA_REVISION"
+git clone --no-checkout https://github.com/razvanstav/Family.git "$MEMORIA_RELEASE"
+git -C "$MEMORIA_RELEASE" checkout --detach "$MEMORIA_REVISION"
+ln -s /srv/memoria/shared/.env "$MEMORIA_RELEASE/backend/.env"
+# Storage-ul din clone conține numai structura inițială, fără date.
+rm -r "$MEMORIA_RELEASE/backend/storage"
+ln -s /srv/memoria/shared/storage "$MEMORIA_RELEASE/backend/storage"
+composer install --working-dir="$MEMORIA_RELEASE/backend" --no-dev --prefer-dist --optimize-autoloader --no-interaction
+npm --prefix "$MEMORIA_RELEASE/frontend" ci
+npm --prefix "$MEMORIA_RELEASE/frontend" run build
+```
+
+Înainte de Artisan, acordă contului `memoria` citire pentru surse și scriere pentru `bootstrap/cache`, inclusiv fișierele generate de Composer. La prima instalare, completează cheia prin `php artisan key:generate` într-o sesiune a utilizatorului de deploy care poate scrie `shared/.env`; nu regenera cheia la următoarele release-uri.
+
+Migrarea este o operație unică, efectuată de instalator. La upgrade, oprește întâi cele două timere și așteaptă încheierea serviciilor active; oprirea timerului nu întrerupe trecerea deja pornită. Pune aplicația curentă în mentenanță cu `sudo -u memoria /usr/bin/php /srv/memoria/current/backend/artisan down --retry=60` și lasă cererile existente să se încheie înaintea migrației. La prima instalare, menține virtual hostul inaccesibil până la încheierea pașilor. Din shellul în care `MEMORIA_RELEASE` este definit:
+
+```bash
+sudo -u memoria bash -c '
+  set -e
+  export DB_USERNAME=memoria_admin
+  read -r -s -p "Parola memoria_admin: " DB_PASSWORD
+  printf "\n"
+  export DB_PASSWORD
+  /usr/bin/php "$1/artisan" migrate --force --no-interaction
+' memoria-migrate "$MEMORIA_RELEASE/backend"
+psql -h 127.0.0.1 -p 5432 -U memoria_admin -W -d memoria_staging -f "$MEMORIA_RELEASE/ops/grant-runtime.sql"
+sudo -u memoria /usr/bin/php "$MEMORIA_RELEASE/backend/artisan" config:cache --no-interaction
+sudo -u memoria /usr/bin/php "$MEMORIA_RELEASE/backend/artisan" view:cache --no-interaction
+```
+
+Adaptează hostul/portul PostgreSQL dacă diferă. La orice eroare, oprește publicarea și păstrează mentenanța și timerele oprite. Rulează migrațiile înainte de `config:cache`: release-ul nou nu trebuie să conțină un cache de configurație anterior, iar cache-ul final trebuie generat cu rolul runtime din `.env`, după ieșirea din subshellul administrativ. Nu rula seederele demo. Provisionarea conturilor sintetice și a familiilor rămâne de stabilit; nu există încă înregistrare publică sau comandă dedicată de creare a unui cont staging.
+
+Instalează poolul FPM și virtual hostul în directoarele distribuției, fără a înlocui configurațiile celorlalte site-uri. Nginx trimite HTML-ul `/app/` prin Laravel pentru a păstra politica CSP și revalidarea; numai asseturile construite sunt servite direct cu cache lung. Nu executa `storage:link`: fișierele private rămân accesibile prin API-ul autorizat. Emite certificatul prin mecanismul existent al serverului înainte de activarea configurației HTTPS; exemplul nu configurează validarea ACME.
+
+După pregătirea release-ului și acordarea permisiunilor, schimbă legătura `current` prin redenumire pe același filesystem, ca utilizator de deploy:
+
+```bash
+ln -s "$MEMORIA_RELEASE" /srv/memoria/current.next
+mv -Tf /srv/memoria/current.next /srv/memoria/current
+```
+
+`current.next` trebuie să nu existe înainte de comandă. Reîncarcă serviciul PHP-FPM al distribuției pentru noul cod/opcache. Copiază cele patru fișiere `memoria-*.service`/`memoria-*.timer` în `/etc/systemd/system`, apoi aplică `systemctl daemon-reload`. Înainte de activare, instalatorul verifică sintaxa configurațiilor adaptate cu `nginx -t`, comanda `php-fpm8.4 -t` (numele diferă între distribuții) și `systemd-analyze verify` asupra celor două servicii și timere. Aceste comenzi nu au fost executate în sesiunea de pregătire.
+
+Scoate mentenanța cu `sudo -u memoria /usr/bin/php /srv/memoria/current/backend/artisan up`, reîncarcă Nginx și activează `systemctl enable --now memoria-outbox.timer memoria-reminders.timer`. Serviciile citesc `.env` prin Laravel; nu folosi `EnvironmentFile` cu un fișier dotenv și nu introduce credențiale administrative în unități. Timerul nu pornește o a doua instanță a aceluiași serviciu cât timp acesta rulează. `TimeoutStartSec=0` permite încheierea loturilor lungi; o execuție blocată trebuie investigată, nu presupusă sănătoasă. O eroare este reîncercată la activarea următoare, conform backoffului outbox; nu există încă alertare automată.
+
+Pentru urmărire pe server: `systemctl list-timers 'memoria-*'`, `systemctl status memoria-outbox.service memoria-reminders.service`, `journalctl -u memoria-outbox.service -u memoria-reminders.service` și logurile din storage. La actualizare oprește timerele și așteaptă terminarea serviciilor înaintea schimbării release-ului; nu adăuga separat `schedule:work`, queue worker sau cron, deoarece aceste două comenzi nu le folosesc. Scanarea uploadurilor rămâne sincronă, iar ClamAV/FreshClam trebuie supravegheate de serviciile distribuției conform secțiunii 4.
+
+Rămân neînchise în O2: adaptarea și instalarea pe distribuția reală, conturile sintetice, scanarea/cleanupul în worker și verificările serverului. `/up` confirmă bootul Laravel, fără să demonstreze DB, ClamAV, autorizarea ori backupul. Revenirea legăturii `current` nu anulează o migrație; nu rula rollback de schemă automat. Backupul DB + storage și compatibilitatea release-ului anterior se stabilesc separat în O3/O4.
+
+Referințe pentru instalator: [deploy Laravel 13](https://laravel.com/docs/13.x/deployment), [pool PHP-FPM](https://www.php.net/manual/en/install.fpm.configuration.php), [timere systemd](https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html).
 
 ## 1. Surse și dependențe
 
