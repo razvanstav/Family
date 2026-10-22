@@ -1,6 +1,19 @@
 # Bucătărie
 
-Stare: **K1, K2, K3a și K4a–K4b implementate și verificate local**, actualizat 22 octombrie 2026. După acces/arhivare, utilizatorul a ales K4b cu P3 strict necesar: publicare durabilă, index de referințe și citire autorizată prin API. Ecranul timeline rămâne AM3; preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
+Stare: **KH2 — cardurile Mese aliniate cu Rețete**, implementat la 23 octombrie 2026, cu build și verificări statice trecute. K1, K2, K3a și K4a–K4b rămân implementate și verificate anterior. Preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
+
+## KH2 — Carduri Mese, 23 octombrie 2026
+
+Cerere explicită: numai Bucătăria; și conținutul Mese trebuie să urmeze stilul Rețete, fără teste în exces.
+
+- `KitchenCard.tsx` reutilizează structura existentă a rețetelor pentru ambele file: fotografie pe lățimea cardului, titlu, acces restrâns prin iconița existentă, metadate și etichete. CSS-ul comun `recipe-card`/`recipe-grid`/`recipe-showcase` rămâne sursa unică pentru proporții, colțuri, padding și spațiere.
+- Mese folosește aceeași grilă desktop și același rând derulabil pe mobil ca prezentarea Rețete: carduri de maximum 260 px/72% din lățime, fotografii cu raport 1,55 și spațiere de 12 px pe mobil. Fotografia folosește KitchenPhoto inclusiv pentru lipsă/verificare/respingere sau eroare, păstrând dimensiunile cardului.
+- Cardurile de masă păstrează titlul complet în numele accesibil, voturile reale, tipul mesei și marcajul Exemplu când există. Voturile sunt compacte, cu iconiță/număr și nume accesibile; detaliul păstrează etichetele complete și toate acțiunile existente. Accesul complet rămâne și în detaliu. Fără date ori ratinguri inventate.
+- Selectorul de zi, paginația, deschiderea detaliilor și comportamentul UT1 (cadru stabil, filtre/data păstrate, cereri oprite pe fila ascunsă) nu se schimbă. Rândurile vechi de masă și selectorii lor CSS, inclusiv regulile mobile, au fost eliminate. Rezumatul Mesele de azi din Rețete rămâne lista compactă existentă; nu s-au modificat alte secțiuni.
+- Intrări: `KitchenCard.tsx`, `Kitchen.tsx`, `Meals.tsx`, `meals.css`; regulile comune sunt cele existente din `kitchen.css`. Fără modificări backend, API, permisiuni, date sau dependențe.
+- **Verificat:** TypeScript/Vite build, Prettier, `git diff --check` și căutarea referințelor selectorilor eliminați, fără resturi în frontend. Fără teste noi, suite, browser sau probe vizuale, conform preferinței utilizatorului. Acceptarea vizuală și interacțiunile pe dispozitiv rămân pentru feedback. Build local, fără publicare în producție.
+
+Următoarea acțiune: feedback pentru cardurile Mese și comparația cu Rețete, fără alt layout sau funcționalitate începută automat.
 
 ## KH1 — Layout Bucătărie, 22 octombrie 2026
 

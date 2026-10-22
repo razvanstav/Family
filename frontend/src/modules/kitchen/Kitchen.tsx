@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   CookingPot,
-  LockKeyhole,
   Plus,
   RefreshCw,
   Search,
@@ -13,6 +12,7 @@ import { api, ApiError, type Family } from "../../shared/api";
 import { recipeCategories, type Recipe, type RecipeList } from "./recipeTypes";
 import "./kitchen.css";
 import { KitchenPhoto } from "./KitchenPhoto";
+import { KitchenCard } from "./KitchenCard";
 import { Meals } from "./Meals";
 import { RecipeForm } from "./RecipeForm";
 import { RecipeDetail } from "./RecipeDetail";
@@ -329,40 +329,24 @@ export function Kitchen({
                   className={`recipe-grid${browsing ? "" : " recipe-showcase"}`}
                 >
                   {(browsing ? items : items.slice(0, 6)).map((recipe) => (
-                    <button
-                      className="recipe-card"
+                    <KitchenCard
                       key={recipe.id}
-                      onClick={() => setSelected(recipe)}
-                      aria-label={`Deschide rețeta ${recipe.title}`}
+                      title={recipe.title}
+                      visibility={recipe.visibility}
+                      onOpen={() => setSelected(recipe)}
+                      ariaLabel={`Deschide rețeta ${recipe.title}`}
+                      photo={<KitchenPhoto resource={recipe} base={base} />}
                     >
-                      <KitchenPhoto resource={recipe} base={base} />
-                      <div className="recipe-card-body">
-                        <div className="recipe-card-title">
-                          <h3>{recipe.title}</h3>
-                          {recipe.visibility !== "family" && (
-                            <LockKeyhole
-                              size={16}
-                              aria-label={
-                                recipe.visibility === "private"
-                                  ? "Doar eu"
-                                  : "Persoane alese"
-                              }
-                            />
-                          )}
-                        </div>
-                        <RecipeMeta recipe={recipe} />
-                        <div className="recipe-tags">
-                          <span
-                            className={`recipe-category ${recipe.category}`}
-                          >
-                            {recipeCategories[recipe.category]}
-                          </span>
-                          {recipe.is_example && (
-                            <span className="recipe-example">Exemplu</span>
-                          )}
-                        </div>
+                      <RecipeMeta recipe={recipe} />
+                      <div className="recipe-tags">
+                        <span className={`recipe-category ${recipe.category}`}>
+                          {recipeCategories[recipe.category]}
+                        </span>
+                        {recipe.is_example && (
+                          <span className="recipe-example">Exemplu</span>
+                        )}
                       </div>
-                    </button>
+                    </KitchenCard>
                   ))}
                 </div>
                 {browsing && (page > 1 || hasMore) && (

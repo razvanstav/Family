@@ -26,58 +26,6 @@
   min-height: 44px;
   max-width: 100%;
 }
-.meal-list {
-  display: grid;
-  gap: 12px;
-}
-.meal-row {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  min-width: 0;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  text-align: left;
-}
-.meal-row:hover {
-  border-color: #bcc7b8;
-}
-.meal-row > .recipe-photo,
-.meal-dish-icon {
-  width: 76px;
-  height: 76px;
-  border-radius: 14px;
-  flex-shrink: 0;
-}
-.meal-dish-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f2f0ea;
-  color: var(--accent);
-}
-.meal-row-body {
-  min-width: 0;
-  flex: 1;
-}
-.meal-type {
-  color: var(--muted);
-  font-size: 12px;
-}
-.meal-row h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-block: 4px 8px;
-  overflow-wrap: anywhere;
-}
-.meal-row-arrow {
-  color: var(--muted);
-  flex-shrink: 0;
-}
 .meal-vote-counts {
   display: flex;
   flex-wrap: wrap;
@@ -96,11 +44,11 @@
   align-items: center;
   gap: 5px;
 }
-.meal-vote-counts svg:first-child,
+:is(.meal-vote-counts, .meal-card-votes) svg:first-child,
 .meal-feedback-author .lucide-thumbs-up {
   color: var(--accent);
 }
-.meal-vote-counts > span:last-child svg,
+:is(.meal-vote-counts, .meal-card-votes) > span:last-child svg,
 .meal-feedback-author .lucide-thumbs-down {
   color: #a66d52;
 }
@@ -232,28 +180,9 @@
   .meal-day-controls > .button {
     padding-inline: 12px;
   }
-  .meal-row {
-    gap: 10px;
-    padding: 12px;
-  }
-  .meal-row > .recipe-photo,
-  .meal-dish-icon {
-    width: 62px;
-    height: 62px;
-    border-radius: 12px;
-  }
-  .meal-row h3 {
-    font-size: 14px;
-  }
-  .meal-type {
-    font-size: 11px;
-  }
   .meal-vote-counts {
     gap: 6px 12px;
     font-size: 11px;
-  }
-  .meal-row-arrow {
-    display: none;
   }
   .meal-vote-options {
     gap: 8px;

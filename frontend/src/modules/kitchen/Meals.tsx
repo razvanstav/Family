@@ -18,6 +18,7 @@ import {
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
 import { KitchenPhoto } from "./KitchenPhoto";
+import { KitchenCard } from "./KitchenCard";
 import {
   mealTypes,
   type Meal,
@@ -27,16 +28,34 @@ import {
 import type { Recipe } from "./recipeTypes";
 import "./meals.css";
 
-function VoteCounts({ meal }: { meal: Meal }) {
+function VoteCounts({
+  meal,
+  compact = false,
+}: {
+  meal: Meal;
+  compact?: boolean;
+}) {
   return (
-    <div className="meal-vote-counts">
-      <span>
+    <div
+      className={compact ? "recipe-meta meal-card-votes" : "meal-vote-counts"}
+    >
+      <span
+        role={compact ? "img" : undefined}
+        aria-label={compact ? `Mi-a plăcut: ${meal.liked_count}` : undefined}
+      >
         <ThumbsUp size={15} aria-hidden="true" />
-        Mi-a plăcut: {meal.liked_count}
+        {!compact && "Mi-a plăcut: "}
+        {meal.liked_count}
       </span>
-      <span>
+      <span
+        role={compact ? "img" : undefined}
+        aria-label={
+          compact ? `Nu mi-a plăcut: ${meal.disliked_count}` : undefined
+        }
+      >
         <ThumbsDown size={15} aria-hidden="true" />
-        Nu mi-a plăcut: {meal.disliked_count}
+        {!compact && "Nu mi-a plăcut: "}
+        {meal.disliked_count}
       </span>
     </div>
   );
@@ -218,35 +237,26 @@ export function Meals({
           </div>
         ) : (
           <>
-            <div className="meal-list">
+            <div className="recipe-grid recipe-showcase">
               {items.map((meal) => (
-                <button
-                  className="meal-row"
+                <KitchenCard
                   key={meal.id}
-                  onClick={() => setSelected(meal)}
-                  aria-label={`Deschide masa ${meal.dish_title}`}
+                  title={meal.dish_title}
+                  visibility={meal.visibility}
+                  onOpen={() => setSelected(meal)}
+                  ariaLabel={`Deschide masa ${meal.dish_title}`}
+                  photo={<KitchenPhoto resource={meal} base={base} />}
                 >
-                  {meal.photo_status === "ready" ? (
-                    <KitchenPhoto resource={meal} base={base} />
-                  ) : (
-                    <span className="meal-dish-icon">
-                      <UtensilsCrossed size={23} aria-hidden="true" />
+                  <VoteCounts meal={meal} compact />
+                  <div className="recipe-tags">
+                    <span className="recipe-category">
+                      {mealTypes[meal.meal_type]}
                     </span>
-                  )}
-                  <div className="meal-row-body">
-                    <span className="meal-type">
-                      {mealTypes[meal.meal_type]} ·{" "}
-                      {visibilityLabel[meal.visibility]}
-                    </span>
-                    <h3>{meal.dish_title}</h3>
-                    <VoteCounts meal={meal} />
+                    {meal.photo_is_example && (
+                      <span className="recipe-example">Exemplu</span>
+                    )}
                   </div>
-                  <ChevronRight
-                    className="meal-row-arrow"
-                    size={18}
-                    aria-hidden="true"
-                  />
-                </button>
+                </KitchenCard>
               ))}
             </div>
             {(page > 1 || hasMore) && (
