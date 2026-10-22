@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ArrowRight,
   ChevronDown,
-  FolderHeart,
   Heart,
   House,
   LogOut,
@@ -34,7 +33,6 @@ import { Memories } from "../modules/memory/Memories";
 const pageLabels = {
   home: "Acasă",
   family: "Familia mea",
-  documents: "Documente",
   kitchen: "Bucătărie",
   memory: "Amintiri",
   calendar: "Calendar",
@@ -45,6 +43,9 @@ export default function App() {
   const [familyId, setFamilyId] = useState("");
   const [error, setError] = useState("");
   const [page, setPage] = useState<keyof typeof pageLabels>("home");
+  const [familySection, setFamilySection] = useState<"members" | "documents">(
+    "members",
+  );
   const [documentTarget, setDocumentTarget] = useState<DocumentRequest | null>(
     null,
   );
@@ -74,14 +75,15 @@ export default function App() {
     return () => window.removeEventListener("hashchange", changed);
   }, []);
   useEffect(() => {
-    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? "Autentificare" : pageLabels[page]} · Memoria Familiei`;
-  }, [page, invitation, session?.user, checkingSession]);
+    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? "Autentificare" : page === "family" && familySection === "documents" ? "Documente · Familia mea" : pageLabels[page]} · Memoria Familiei`;
+  }, [page, familySection, invitation, session?.user, checkingSession]);
   function acceptSession(data: Session) {
     sessionRevision.current++;
     knownActor.current = data.user?.id ?? null;
     setSession(data);
     setFamilyId(data.families[0]?.id ?? "");
     setPage("home");
+    setFamilySection("members");
     setDocumentTarget(null);
     setCalendarTarget(null);
     setMemoryTarget(null);
@@ -222,6 +224,22 @@ export default function App() {
     }
   }
   const userInitials = initials(session.user.name);
+  const familyNavigation = (
+    <nav className="family-sections" aria-label="Secțiuni Familia mea">
+      <button
+        aria-pressed={familySection === "members"}
+        onClick={() => setFamilySection("members")}
+      >
+        Membri
+      </button>
+      <button
+        aria-pressed={familySection === "documents"}
+        onClick={() => setFamilySection("documents")}
+      >
+        Documente
+      </button>
+    </nav>
+  );
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -244,12 +262,6 @@ export default function App() {
             onClick={() => setPage("family")}
           >
             <Users size={21} /> Familia mea
-          </button>
-          <button
-            className={page === "documents" ? "active" : ""}
-            onClick={() => setPage("documents")}
-          >
-            <FolderHeart size={21} /> Documente
           </button>
           <button
             className={page === "kitchen" ? "active" : ""}
@@ -293,8 +305,15 @@ export default function App() {
             </button>
           </div>
           <span className="desktop-breadcrumb">
-            Spațiul familiei <span>/</span>{" "}
-            <strong>{page === "family" ? "Membri" : pageLabels[page]}</strong>
+            {page === "family" ? "Familia mea" : "Spațiul familiei"}{" "}
+            <span>/</span>{" "}
+            <strong>
+              {page === "family"
+                ? familySection === "documents"
+                  ? "Documente"
+                  : "Membri"
+                : pageLabels[page]}
+            </strong>
           </span>
           <div className="topbar-actions">
             <label className="family-selector">
@@ -362,18 +381,21 @@ export default function App() {
                 onKitchen={() => setPage("kitchen")}
                 onDocuments={(request) => {
                   setDocumentTarget(request);
-                  setPage("documents");
+                  setFamilySection("documents");
+                  setPage("family");
                 }}
                 onCalendar={(target) => {
                   setCalendarTarget(target);
                   setPage("calendar");
                 }}
               />
-            ) : page === "documents" ? (
+            ) : page === "family" && familySection === "documents" ? (
               <Documents
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 userId={session.user.id}
+                userName={session.user.name}
+                navigation={familyNavigation}
                 requestedAction={documentTarget}
                 onActionOpened={() => setDocumentTarget(null)}
                 onExpired={() => void refresh()}
@@ -411,6 +433,13 @@ export default function App() {
                 onExpired={() => void refresh()}
                 isOwner={family.role === "owner"}
                 userId={session.user.id}
+                navigation={familyNavigation}
+                onDocuments={(member) => {
+                  setDocumentTarget({
+                    owner: { id: member.user_id, name: member.name },
+                  });
+                  setFamilySection("documents");
+                }}
               />
             )
           ) : (
@@ -447,14 +476,6 @@ export default function App() {
         >
           <Users size={21} />
           <span>Familie</span>
-        </button>
-        <button
-          aria-label="Documente"
-          className={page === "documents" ? "active" : ""}
-          onClick={() => setPage("documents")}
-        >
-          <FolderHeart size={21} />
-          <span>Documente</span>
         </button>
         <button
           aria-label="Bucătărie"

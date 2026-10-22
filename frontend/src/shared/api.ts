@@ -45,6 +45,7 @@ export type DocumentRequest = {
   id?: string;
   category?: string;
   upload?: boolean;
+  owner?: { id: number; name: string };
 };
 export type CalendarRequest = {
   id?: string;

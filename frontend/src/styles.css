@@ -1039,7 +1039,7 @@ main {
     right: 0;
     bottom: 0;
     display: grid;
-    grid-template-columns: repeat(7, minmax(44px, 1fr));
+    grid-template-columns: repeat(6, minmax(44px, 1fr));
     gap: 2px;
     overflow-x: auto;
     border-top: 1px solid var(--line);

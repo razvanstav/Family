@@ -8,6 +8,8 @@ Stare: **D1–D3 verificate la 21 octombrie 2026; M02 închis local.** D4 extind
 
 Listă, căutare locală, categorii, filtru de acces, detaliu, upload PDF/JPEG/PNG/WebP, carantină/retry și descărcare. Documentul nou este privat. Proprietarul lui poate selecta acces privat, familie sau membri aleși; modificarea folosește `If-Match`.
 
+**FD1 — 22 octombrie 2026:** interfața se deschide în Familia mea → Documente, cu dosar comun (`visibility=family`), propriu (`owner_id` actual), pe persoană și vizualizare unificată. Gruparea se aplică exclusiv listei deja autorizate de API. Proprietarul de familie nu vede privatele altui adult. Partajările selective rămân în dosarul autorului și în „Toate documentele”. Nici proprietatea, nici accesul sau bytes nu sunt mutate. Contractul de navigație și probele sunt în [Familie FD1](families.md#fd1--documente-în-familie-22-octombrie-2026).
+
 ## Fișiere relevante
 
 - UI: `frontend/src/modules/documents/Documents.tsx`, `documentFilters.ts`, `documents.css`.

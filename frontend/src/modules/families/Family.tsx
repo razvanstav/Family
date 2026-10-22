@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Check,
   Crown,
@@ -12,6 +12,7 @@ import {
   Mail,
   Copy,
   MoreHorizontal,
+  FolderHeart,
 } from "lucide-react";
 import {
   api,
@@ -75,11 +76,15 @@ export function FamilyPage({
   isOwner,
   userId,
   onExpired,
+  navigation,
+  onDocuments,
 }: {
   familyId: string;
   isOwner: boolean;
   userId: number;
   onExpired: () => void;
+  navigation: ReactNode;
+  onDocuments: (member: Member) => void;
 }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -208,6 +213,7 @@ export function FamilyPage({
           </button>
         )}
       </section>
+      {navigation}
       <div className="family-search search">
         <Search size={20} aria-hidden="true" />
         <input
@@ -291,17 +297,28 @@ export function FamilyPage({
                   >
                     <span>{initials(member.name)}</span>
                   </div>
-                  <div className="family-member-info">
-                    <h3 title={member.name}>{member.name}</h3>
-                    <p className="family-role">
+                  <button
+                    className="family-member-info family-document-link"
+                    aria-label={`Documente: ${member.name}`}
+                    onClick={() => onDocuments(member)}
+                  >
+                    <span className="family-member-name" title={member.name}>
+                      {member.name}
+                    </span>
+                    <span className="family-role">
                       <RoleIcon
                         className={`role-${member.role}`}
                         size={15}
                         aria-hidden="true"
                       />
                       {roleLabel(member.role)}
-                    </p>
-                  </div>
+                    </span>
+                    <FolderHeart
+                      className="family-document-icon"
+                      size={18}
+                      aria-hidden="true"
+                    />
+                  </button>
                   {member.user_id === userId && (
                     <span className="family-self">Tu</span>
                   )}

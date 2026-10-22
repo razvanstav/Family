@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   ArrowDownToLine,
   Check,
@@ -39,15 +45,28 @@ import {
   DocumentCategories,
 } from "../../shared/DocumentCard";
 
+function documentCollection(
+  action: DocumentRequest | null,
+  userId: number,
+): string {
+  if (action?.owner) return `owner:${action.owner.id}`;
+  if (action?.upload) return `owner:${userId}`;
+  return action?.id || action?.category ? "all" : "family";
+}
+
 export function Documents({
   family,
   userId,
+  userName,
+  navigation,
   requestedAction,
   onActionOpened,
   onExpired,
 }: {
   family: Family;
   userId: number;
+  userName: string;
+  navigation: ReactNode;
   requestedAction: DocumentRequest | null;
   onActionOpened: () => void;
   onExpired: () => void;
@@ -66,6 +85,12 @@ export function Documents({
     requestedAction?.id ?? null,
   );
   const [notice, setNotice] = useState("");
+  const [person, setPerson] = useState(
+    requestedAction?.owner ?? { id: userId, name: userName },
+  );
+  const [collection, setCollection] = useState(() =>
+    documentCollection(requestedAction, userId),
+  );
   const endpoint = `/families/${family.id}`;
   const sequence = useRef(0);
   useEffect(() => {
@@ -73,6 +98,8 @@ export function Documents({
     setCategory(requestedAction.category ?? "all");
     setSelected(requestedAction.id ?? null);
     setUpload(Boolean(requestedAction.upload && family.role !== "limited"));
+    setPerson(requestedAction.owner ?? { id: userId, name: userName });
+    setCollection(documentCollection(requestedAction, userId));
     onActionOpened();
   }, [requestedAction]);
   async function load() {
@@ -105,20 +132,62 @@ export function Documents({
   useEffect(() => {
     if (family.role === "limited") setUpload(false);
   }, [family.role]);
-  const visible = filterDocuments(docs, search, category, privacy);
+  const owners = new Map(docs.map((doc) => [doc.owner_id, doc.owner_name]));
+  owners.set(userId, userName);
+  owners.set(person.id, person.name);
+  const collectionDocs = docs.filter(
+    (doc) =>
+      collection === "all" ||
+      (collection === "family"
+        ? doc.visibility === "family"
+        : doc.owner_id === Number(collection.slice(6))),
+  );
+  const visible = filterDocuments(collectionDocs, search, category, privacy);
+  const canAddToCollection =
+    collection === "family" ||
+    collection === "all" ||
+    collection === `owner:${userId}`;
   return (
     <div className="documents-page">
       <section className="page-heading">
         <h1>Documente</h1>
-        <button
-          className="button primary"
-          aria-label="Adaugă document"
-          onClick={() => setUpload(true)}
-          disabled={family.role === "limited"}
-        >
-          <Plus size={21} /> <span>Adaugă document</span>
-        </button>
+        {canAddToCollection && (
+          <button
+            className="button primary"
+            aria-label="Adaugă document"
+            onClick={() => setUpload(true)}
+            disabled={family.role === "limited"}
+          >
+            <Plus size={21} /> <span>Adaugă document</span>
+          </button>
+        )}
       </section>
+      {navigation}
+      <label className="document-collection">
+        <FolderHeart size={20} aria-hidden="true" />
+        <select
+          aria-label="Dosar de documente"
+          value={collection}
+          onChange={(event) => {
+            setCollection(event.target.value);
+            setSearch("");
+            setCategory("all");
+            setPrivacy("all");
+          }}
+        >
+          <option value="family">Documentele familiei</option>
+          <option value={`owner:${userId}`}>Documentele mele</option>
+          {[...owners]
+            .filter(([id]) => id !== userId)
+            .sort((a, b) => a[1].localeCompare(b[1], "ro"))
+            .map(([id, name]) => (
+              <option key={id} value={`owner:${id}`}>
+                {name}
+              </option>
+            ))}
+          <option value="all">Toate documentele</option>
+        </select>
+      </label>
       <div className="library-tools">
         <div className="search">
           <Search size={20} />
@@ -227,18 +296,24 @@ export function Documents({
         ) : error ? null : visible.length === 0 ? (
           <div className="empty">
             <FolderHeart size={40} strokeWidth={1.2} />
-            <h3>{docs.length ? "Niciun rezultat" : "Niciun document"}</h3>
-            <button
-              className="button primary"
-              disabled={!docs.length && family.role === "limited"}
-              onClick={() =>
-                docs.length
-                  ? (setSearch(""), setCategory("all"), setPrivacy("all"))
-                  : setUpload(true)
-              }
-            >
-              {docs.length ? "Resetează filtrele" : "Adaugă document"}
-            </button>
+            <h3>
+              {collectionDocs.length ? "Niciun rezultat" : "Niciun document"}
+            </h3>
+            {(collectionDocs.length > 0 || canAddToCollection) && (
+              <button
+                className="button primary"
+                disabled={!collectionDocs.length && family.role === "limited"}
+                onClick={() =>
+                  collectionDocs.length
+                    ? (setSearch(""), setCategory("all"), setPrivacy("all"))
+                    : setUpload(true)
+                }
+              >
+                {collectionDocs.length
+                  ? "Resetează filtrele"
+                  : "Adaugă document"}
+              </button>
+            )}
           </div>
         ) : (
           <div className="document-grid">
@@ -265,6 +340,7 @@ export function Documents({
           }}
           onSaved={(doc) => {
             setUpload(false);
+            setCollection(`owner:${userId}`);
             setNotice(
               doc.status === "ready"
                 ? "Document salvat. Acces: doar eu."

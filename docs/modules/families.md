@@ -1,6 +1,22 @@
 # Familie
 
-Stare: **F1–F3 verificate la 21 octombrie 2026; M01 închis local.** F4 se face după Autentificare, în M03. Următoarea etapă a proiectului este Documente D1, în M02.
+Stare: **F1–F3 verificate la 21 octombrie 2026; M01 închis local.** FD1 reorganizează Documente în interiorul Familiei la cererea utilizatorului din 22 octombrie 2026. F4 administrare extinsă rămâne separat.
+
+## FD1 — Documente în Familie, 22 octombrie 2026
+
+**Implementat și verificat local, cerere explicită de produs.** Documente este sub Familia mea; intrările principale Documente au fost eliminate de pe desktop și mobil. În Familia mea există Membri/Documente. Apăsarea numelui unui membru deschide dosarul său, separat de administrarea rolului/revocării.
+
+- Dosarul comun include documentele cu acces `family`. „Documentele mele” include documentele deținute de utilizator, inclusiv cele partajate. Dosarul altei persoane afișează numai documentele deja autorizate de API; proprietarul familiei nu primește acces la privatele altui adult. „Toate documentele” păstrează accesul unificat, inclusiv la partajări selective.
+- Dosarele sunt vizualizări ale documentelor existente; nu mută bytes, nu dublează documente și nu schimbă proprietari/granturi. Încărcarea rămâne privată și readuce dosarul propriu după salvare. Nu se oferă încărcare în numele altui membru.
+- App coordonează subsecțiunea și navigația spre Documents prin callback/`DocumentRequest.owner`; modulele nu își importă ecranele reciproc. Schimbarea familiei păstrează subsecțiunea Documente, remontează datele și golește ținta veche. Linkurile din Acasă rămân funcționale în noul context.
+- Intrări: `App.tsx`, `Family.tsx`, `Documents.tsx`, `shared/api.ts` și CSS-urile aferente. Fără modificări backend/schema/permisiuni; fără suite de teste, numai build și probe vizuale proporționale.
+
+### Verificare FD1
+
+- Build TypeScript/Vite, Prettier și `git diff --check` trecute; fără teste noi/suite automate. Căutate referințele vechi ale paginii principale Documente și selectorii de titlu eliminați, fără cod rămas.
+- Browser desktop: cinci secțiuni principale; numele Anei → Documentele mele (4 documente), dosarul comun → 2 documente; Mihai → dosar gol pentru Ana, fără expunerea documentului său privat și fără acțiune de încărcare în numele lui. Linkul Jurnal de călătorie din Acasă deschide detaliul privat în contextul Familia mea/Documente.
+- Popescu → Ionescu → Popescu păstrează subsecțiunea Documente și reîncarcă dosarul comun: 2 → 1 → 2 documente. Fără documente din familia anterioară în noua listă. Nu s-au modificat documente sau granturi pentru probe.
+- Previziualizare mobilă 390 px: Membri/Documente și bara cu cinci secțiuni plus Cont, fără tab principal Documente. Capturi ignorate: `.runtime/fd1-documents-desktop.png`, `.runtime/fd1-family-mobile.png`. Nu s-au reluat uploadul, concurența, revocările sau descărcarea bytes, ale căror contracte backend nu s-au schimbat; nu s-au verificat dispozitive fizice.
 
 ## Ce există
 
