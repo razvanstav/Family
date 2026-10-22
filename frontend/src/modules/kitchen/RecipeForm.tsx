@@ -34,7 +34,7 @@ export function RecipeForm({
   useEffect(() => {
     titleInput.current?.focus();
     return () => pendingRequest.current?.abort();
-  }, [recipe?.version]);
+  }, [recipe?.revision]);
   async function reload() {
     if (!recipe || busy) return;
     const controller = new AbortController();
@@ -103,7 +103,9 @@ export function RecipeForm({
         recipe ? `${base}/${recipe.id}/versions` : base,
         {
           method: "POST",
-          ...(recipe ? { headers: { "If-Match": `"${recipe.version}"` } } : {}),
+          ...(recipe
+            ? { headers: { "If-Match": `"${recipe.revision}"` } }
+            : {}),
           body: form,
           signal: controller.signal,
         },
@@ -113,7 +115,7 @@ export function RecipeForm({
       if (controller.signal.aborted) return;
       if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status))
         onExpired();
-      else if (e instanceof ApiError && e.status === 412) {
+      else if (e instanceof ApiError && [409, 412].includes(e.status)) {
         setConflict(true);
         setError(
           "Rețeta s-a schimbat între timp. Reîncarcă rețeta; modificările nesalvate vor fi înlocuite.",
@@ -134,11 +136,16 @@ export function RecipeForm({
       onClose={onClose}
       wide
     >
-      <form key={recipe?.version ?? 0} onSubmit={(e) => void save(e)}>
+      <form key={recipe?.revision ?? 0} onSubmit={(e) => void save(e)}>
         {recipe && (
           <p className="notice">
             Salvarea creează o versiune nouă. Mesele deja adăugate păstrează
             rețeta și fotografia folosite atunci.
+          </p>
+        )}
+        {recipe?.archived_at && (
+          <p className="notice">
+            Rețeta este arhivată. Revino la detaliu pentru a o restaura.
           </p>
         )}
         <label className="field">
@@ -303,7 +310,7 @@ export function RecipeForm({
         <button
           className="button primary full"
           type="submit"
-          disabled={busy || conflict}
+          disabled={busy || conflict || !!recipe?.archived_at}
         >
           {busy ? "Se salvează…" : "Salvează"}
         </button>

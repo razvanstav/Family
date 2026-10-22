@@ -22,7 +22,10 @@ export type Recipe = {
   servings: number;
   ingredients: string[];
   instructions: string;
-  visibility: "private" | "family";
+  visibility: "private" | "family" | "selected";
+  grants: string[];
+  revision: number;
+  archived_at: string | null;
   owner_id: number;
   owner_name: string;
   version: number;

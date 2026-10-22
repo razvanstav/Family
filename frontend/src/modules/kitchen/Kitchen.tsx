@@ -33,6 +33,7 @@ export function Kitchen({
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("");
   const [visibility, setVisibility] = useState("");
+  const [archived, setArchived] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [revision, setRevision] = useState(0);
@@ -59,6 +60,7 @@ export function Kitchen({
     if (search) params.set("q", search);
     if (category) params.set("category", category);
     if (visibility) params.set("visibility", visibility);
+    if (archived) params.set("archived", "1");
     api<RecipeList>(`${base}?${params}`, { signal: controller.signal })
       .then((data) => {
         if (controller.signal.aborted) return;
@@ -77,7 +79,7 @@ export function Kitchen({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [base, search, category, visibility, page, revision, section]);
+  }, [base, search, category, visibility, archived, page, revision, section]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -149,8 +151,20 @@ export function Kitchen({
               <option value="">Orice acces</option>
               <option value="private">Doar eu</option>
               <option value="family">Familia mea</option>
+              <option value="selected">Persoane alese</option>
             </select>
           </div>
+          <label className="recipe-archive-filter">
+            <input
+              type="checkbox"
+              checked={archived}
+              onChange={(e) => {
+                setArchived(e.target.checked);
+                setPage(1);
+              }}
+            />
+            Arhivate
+          </label>
           <div className="kitchen-categories" aria-label="Categorii de rețete">
             <button
               aria-pressed={!category}
@@ -181,7 +195,9 @@ export function Kitchen({
           )}
           <section aria-labelledby="recipes-title" aria-busy={loading}>
             <div className="section-header">
-              <h2 id="recipes-title">Rețete</h2>
+              <h2 id="recipes-title">
+                {archived ? "Rețete arhivate" : "Rețete"}
+              </h2>
               <button
                 className="icon-button"
                 disabled={loading}
@@ -253,8 +269,15 @@ export function Kitchen({
                       <div className="recipe-card-body">
                         <div className="recipe-card-title">
                           <h3>{recipe.title}</h3>
-                          {recipe.visibility === "private" && (
-                            <LockKeyhole size={16} aria-label="Doar eu" />
+                          {recipe.visibility !== "family" && (
+                            <LockKeyhole
+                              size={16}
+                              aria-label={
+                                recipe.visibility === "private"
+                                  ? "Doar eu"
+                                  : "Persoane alese"
+                              }
+                            />
                           )}
                         </div>
                         <RecipeMeta recipe={recipe} />
@@ -317,6 +340,7 @@ export function Kitchen({
             setSearch("");
             setCategory("");
             setVisibility("");
+            setArchived(false);
             setPage(1);
             setNotice("Rețeta a fost adăugată.");
             setRevision((value) => value + 1);
@@ -343,6 +367,17 @@ export function Kitchen({
             if (recipe.version === recipe.current_version) {
               setItems((current) =>
                 current.map((item) => (item.id === recipe.id ? recipe : item)),
+              );
+            }
+          }}
+          onManaged={(recipe) => {
+            setRevision((value) => value + 1);
+            if (!!recipe.archived_at !== archived) {
+              setSelected(null);
+              setNotice(
+                recipe.archived_at
+                  ? "Rețeta a fost arhivată."
+                  : "Rețeta a fost restaurată cu acces „Doar eu”.",
               );
             }
           }}

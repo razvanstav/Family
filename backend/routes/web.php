@@ -31,6 +31,9 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::get('/recipes', [RecipeController::class, 'index']);
         Route::post('/recipes', [RecipeController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/recipes/{recipe}', [RecipeController::class, 'show'])->whereUuid('recipe');
+        Route::put('/recipes/{recipe}/sharing', [RecipeController::class, 'sharing'])->whereUuid('recipe')->middleware('throttle:20,1');
+        Route::post('/recipes/{recipe}/archive', [RecipeController::class, 'archive'])->whereUuid('recipe')->middleware('throttle:20,1');
+        Route::post('/recipes/{recipe}/restore', [RecipeController::class, 'restore'])->whereUuid('recipe')->middleware('throttle:20,1');
         Route::get('/recipes/{recipe}/versions', [RecipeController::class, 'history'])->whereUuid('recipe');
         Route::post('/recipes/{recipe}/versions', [RecipeController::class, 'revise'])->whereUuid('recipe')->middleware('throttle:20,1');
         Route::get('/recipes/{recipe}/versions/{version}', [RecipeController::class, 'version'])->whereUuid(['recipe', 'version']);

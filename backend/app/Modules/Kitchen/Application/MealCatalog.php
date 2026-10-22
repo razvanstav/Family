@@ -26,7 +26,9 @@ final class MealCatalog
             })
             ->leftJoin('recipes as r', function ($join) use ($actorId) {
                 $join->on('r.id', '=', 'm.recipe_id')->on('r.family_id', '=', 'm.family_id')->whereNull('r.archived_at')
-                    ->where(fn ($access) => $access->where('r.owner_id', $actorId)->orWhere('r.visibility', 'family'));
+                    ->where(function (Builder $access) use ($actorId) {
+                        RecipeAccess::constrain($access, $actorId);
+                    });
             })
             ->leftJoin('media_assets as a', function ($join) {
                 $join->on('a.id', '=', 'v.photo_asset_id')->on('a.family_id', '=', 'v.family_id');
@@ -103,6 +105,7 @@ final class MealCatalog
     {
         return DB::transaction(function () use ($familyId, $actorId, $membershipId, $data) {
             $recipe = $this->recipes->find($familyId, $actorId, $data['recipe_id']);
+            abort_if($recipe['archived_at'], 409, 'Restaurează rețeta înainte de a adăuga masa.');
             abort_unless($recipe['recipe_version_id'] === $data['recipe_version_id'], 409, 'Rețeta s-a schimbat. Redeschide rețeta înainte de a adăuga masa.');
             $id = (string) Str::uuid();
             DB::table('kitchen_meals')->insert([

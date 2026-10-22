@@ -19,6 +19,36 @@
   flex-wrap: wrap;
   margin-bottom: 24px;
 }
+.recipe-archive-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  width: fit-content;
+}
+.recipe-management-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  margin-bottom: 16px;
+}
+.recipe-members {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+}
+.recipe-members label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+}
+.recipe-members label span {
+  min-width: 0;
+}
 .kitchen-categories button {
   min-height: 44px;
   padding: 10px 16px;

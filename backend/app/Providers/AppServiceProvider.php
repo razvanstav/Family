@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(MembershipRevoked::class, function (MembershipRevoked $event): void {
             $this->app->make(CalendarReminders::class)->cancelMembership($event->familyId, $event->membershipId);
+            $this->app->make(RecipeCatalog::class)->revokeMembership($event->familyId, $event->membershipId);
         });
     }
 }

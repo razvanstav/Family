@@ -5,6 +5,8 @@ import {
   UtensilsCrossed,
   Pencil,
   History,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { api, ApiError, visibilityLabel } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
@@ -12,6 +14,7 @@ import { recipeCategories, type Recipe, type RecipeList } from "./recipeTypes";
 import { KitchenPhoto } from "./KitchenPhoto";
 import { RecipeMeta } from "./RecipeMeta";
 import { RecipeForm } from "./RecipeForm";
+import { RecipeManagement, type RecipeAction } from "./RecipeManagement";
 
 const versionDate = new Intl.DateTimeFormat("ro-RO", {
   dateStyle: "medium",
@@ -28,6 +31,7 @@ export function RecipeDetail({
   onMeal,
   onClose,
   onChanged,
+  onManaged,
   onExpired,
 }: {
   recipe: Recipe;
@@ -38,11 +42,13 @@ export function RecipeDetail({
   onMeal: (recipe: Recipe) => void;
   onClose: () => void;
   onChanged: (recipe: Recipe) => void;
+  onManaged?: (recipe: Recipe) => void;
   onExpired: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [editing, setEditing] = useState(false);
+  const [management, setManagement] = useState<RecipeAction | null>(null);
   const [history, setHistory] = useState<RecipeList | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [viewed, setViewed] = useState<Recipe | null>(null);
@@ -101,6 +107,25 @@ export function RecipeDetail({
       if (!controller.signal.aborted) setBusy(false);
     }
   }
+  if (management)
+    return (
+      <RecipeManagement
+        recipe={recipe}
+        base={base}
+        action={management}
+        onClose={() => setManagement(null)}
+        onExpired={onExpired}
+        onReloaded={onChanged}
+        onSaved={(saved) => {
+          onChanged(saved);
+          setViewed(null);
+          setHistory(null);
+          setShowHistory(false);
+          setManagement(null);
+          onManaged?.(saved);
+        }}
+      />
+    );
   if (editing)
     return (
       <RecipeForm
@@ -128,15 +153,46 @@ export function RecipeDetail({
           </p>
           {!readOnly && (
             <div className="recipe-actions">
+              {canAddMeal &&
+                recipe.owner_id === userId &&
+                isCurrent &&
+                !recipe.archived_at && (
+                  <button
+                    className="button secondary"
+                    disabled={busy}
+                    onClick={() => setEditing(true)}
+                  >
+                    <Pencil size={16} />
+                    Editează
+                  </button>
+                )}
               {canAddMeal && recipe.owner_id === userId && isCurrent && (
-                <button
-                  className="button secondary"
-                  disabled={busy}
-                  onClick={() => setEditing(true)}
-                >
-                  <Pencil size={16} />
-                  Editează
-                </button>
+                <>
+                  {!recipe.archived_at && (
+                    <button
+                      className="button secondary"
+                      disabled={busy}
+                      onClick={() => setManagement("sharing")}
+                    >
+                      <LockKeyhole size={16} />
+                      Acces
+                    </button>
+                  )}
+                  <button
+                    className="button secondary"
+                    disabled={busy}
+                    onClick={() =>
+                      setManagement(recipe.archived_at ? "restore" : "archive")
+                    }
+                  >
+                    {recipe.archived_at ? (
+                      <ArchiveRestore size={16} />
+                    ) : (
+                      <Archive size={16} />
+                    )}
+                    {recipe.archived_at ? "Restaurează" : "Arhivează"}
+                  </button>
+                </>
               )}
               <button
                 className="button secondary"
@@ -153,6 +209,9 @@ export function RecipeDetail({
           )}
         </div>
         {readOnly && <p className="notice">Rețeta folosită la masă.</p>}
+        {recipe.archived_at && (
+          <p className="notice">Arhivată · vizibilă doar pentru tine.</p>
+        )}
         {!readOnly && !isCurrent && (
           <p className="notice">
             Versiune anterioară.{" "}
@@ -232,7 +291,7 @@ export function RecipeDetail({
             {recipeCategories[current.category]}
           </span>
           <span className="recipe-access">
-            {recipe.visibility === "private" ? (
+            {recipe.visibility !== "family" ? (
               <LockKeyhole size={13} />
             ) : (
               <Users size={13} />
@@ -241,7 +300,7 @@ export function RecipeDetail({
           </span>
         </div>
         <p className="recipe-author">Adăugată de {recipe.owner_name}</p>
-        {canAddMeal && isCurrent && !readOnly && (
+        {canAddMeal && isCurrent && !readOnly && !recipe.archived_at && (
           <button
             className="button primary full"
             onClick={() => onMeal(current)}
@@ -257,15 +316,19 @@ export function RecipeDetail({
           <div className="status-box">
             <div>
               <strong>Fotografia este în verificare.</strong>
-              {recipe.owner_id === userId && isCurrent && !readOnly && (
-                <button
-                  className="button secondary retry-scan"
-                  disabled={busy}
-                  onClick={() => void retry()}
-                >
-                  {busy ? "Se verifică…" : "Reîncearcă verificarea"}
-                </button>
-              )}
+              {canAddMeal &&
+                recipe.owner_id === userId &&
+                isCurrent &&
+                !readOnly &&
+                !recipe.archived_at && (
+                  <button
+                    className="button secondary retry-scan"
+                    disabled={busy}
+                    onClick={() => void retry()}
+                  >
+                    {busy ? "Se verifică…" : "Reîncearcă verificarea"}
+                  </button>
+                )}
             </div>
           </div>
         )}

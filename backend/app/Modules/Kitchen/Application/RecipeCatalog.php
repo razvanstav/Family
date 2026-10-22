@@ -17,22 +17,29 @@ final class RecipeCatalog implements Recipes
 
     private function visible(string $familyId, int $actorId, bool $currentOnly = true): Builder
     {
-        $query = DB::table('recipes as r')->where('r.family_id', $familyId)->whereNull('r.archived_at')
-            ->where(fn (Builder $query) => $query->where('r.owner_id', $actorId)->orWhere('r.visibility', 'family'))
+        $grants = DB::table('recipe_grants as g')->join('family_memberships as recipient', function ($join) {
+            $join->on('recipient.family_id', '=', 'g.family_id')->on('recipient.id', '=', 'g.membership_id');
+        })->where('g.family_id', $familyId)->whereNull('recipient.revoked_at')
+            ->selectRaw('g.recipe_id, json_agg(g.membership_id ORDER BY g.membership_id) as grants_json')->groupBy('g.recipe_id');
+        $query = DB::table('recipes as r')->where('r.family_id', $familyId)
             ->join('recipe_versions as v', function ($join) {
                 $join->on('v.family_id', '=', 'r.family_id')->on('v.recipe_id', '=', 'r.id');
             })
             ->join('users as u', 'u.id', '=', 'r.owner_id')
+            ->leftJoinSub($grants, 'grants', 'grants.recipe_id', '=', 'r.id')
+            ->selectRaw('CASE WHEN r.owner_id = ? THEN grants.grants_json ELSE NULL END AS grants_json', [$actorId])
             ->leftJoin('media_assets as a', function ($join) {
                 $join->on('a.family_id', '=', 'v.family_id')->on('a.id', '=', 'v.photo_asset_id');
             });
 
-        return $currentOnly ? $query->whereColumn('v.version_no', 'r.version') : $query;
+        RecipeAccess::constrain($query, $actorId);
+
+        return ($currentOnly ? $query->whereColumn('v.version_no', 'r.version') : $query)->addSelect($this->fields());
     }
 
     private function fields(): array
     {
-        return ['r.id', 'r.visibility', 'r.owner_id', 'v.version_no as version', 'r.version as current_version', 'r.is_example', 'r.created_at', 'u.name as owner_name',
+        return ['r.id', 'r.visibility', 'r.owner_id', 'r.revision', 'r.archived_at', 'v.version_no as version', 'r.version as current_version', 'r.is_example', 'r.created_at', 'u.name as owner_name',
             'v.created_at as version_created_at',
             'v.id as recipe_version_id', 'v.title', 'v.category', 'v.ingredients', 'v.instructions',
             'v.duration_minutes', 'v.servings', 'v.difficulty', 'a.status as photo_status'];
@@ -42,6 +49,8 @@ final class RecipeCatalog implements Recipes
     {
         $data = (array) $recipe;
         $data['ingredients'] = json_decode($recipe->ingredients, true, flags: JSON_THROW_ON_ERROR);
+        $data['grants'] = json_decode($recipe->grants_json ?? '[]', true, flags: JSON_THROW_ON_ERROR);
+        unset($data['grants_json']);
         $data['version_created_at'] = CarbonImmutable::parse($recipe->version_created_at, config('app.timezone'))->toIso8601String();
 
         return $data;
@@ -50,6 +59,7 @@ final class RecipeCatalog implements Recipes
     public function listing(string $familyId, int $actorId, array $filters): array
     {
         $query = $this->visible($familyId, $actorId);
+        ($filters['archived'] ?? false) ? $query->whereNotNull('r.archived_at') : $query->whereNull('r.archived_at');
         if (isset($filters['q']) && $filters['q'] !== '') {
             $query->whereLike('v.title', '%'.addcslashes($filters['q'], '%_\\').'%');
         }
@@ -60,7 +70,7 @@ final class RecipeCatalog implements Recipes
             $query->where('r.visibility', $filters['visibility']);
         }
         $page = (int) ($filters['page'] ?? 1);
-        $rows = $query->orderByDesc('r.created_at')->orderByDesc('r.id')->offset(($page - 1) * 12)->limit(13)->get($this->fields());
+        $rows = $query->orderByDesc('r.created_at')->orderByDesc('r.id')->offset(($page - 1) * 12)->limit(13)->get();
 
         return ['items' => $rows->take(12)->map(fn (object $recipe) => $this->payload($recipe))->all(), 'has_more' => $rows->count() > 12, 'page' => $page];
     }
@@ -69,21 +79,21 @@ final class RecipeCatalog implements Recipes
     {
         abort_unless(Str::isUuid($recipeId), 404);
 
-        return $this->payload($this->visible($familyId, $actorId)->where('r.id', $recipeId)->firstOrFail($this->fields()));
+        return $this->payload($this->visible($familyId, $actorId)->where('r.id', $recipeId)->firstOrFail());
     }
 
     public function findVersion(string $familyId, int $actorId, string $recipeId, string $versionId): array
     {
         abort_unless(Str::isUuid($recipeId) && Str::isUuid($versionId), 404);
 
-        return $this->payload($this->visible($familyId, $actorId, false)->where('r.id', $recipeId)->where('v.id', $versionId)->firstOrFail($this->fields()));
+        return $this->payload($this->visible($familyId, $actorId, false)->where('r.id', $recipeId)->where('v.id', $versionId)->firstOrFail());
     }
 
     public function history(string $familyId, int $actorId, string $recipeId, int $page): array
     {
         $this->find($familyId, $actorId, $recipeId);
         $rows = $this->visible($familyId, $actorId, false)->where('r.id', $recipeId)
-            ->orderByDesc('v.version_no')->offset(($page - 1) * 12)->limit(13)->get($this->fields());
+            ->orderByDesc('v.version_no')->offset(($page - 1) * 12)->limit(13)->get();
 
         return ['items' => $rows->take(12)->map(fn (object $row) => $this->payload($row))->all(), 'has_more' => $rows->count() > 12, 'page' => $page];
     }
@@ -103,9 +113,8 @@ final class RecipeCatalog implements Recipes
     {
         return DB::transaction(function () use ($familyId, $actorId, $recipeId, $data, $photo, $expected) {
             $recipe = $this->find($familyId, $actorId, $recipeId);
-            abort_unless($recipe['owner_id'] === $actorId, 403);
-            abort_unless($expected, 428, 'Versiunea rețetei este necesară.');
-            abort_unless($expected === '"'.$recipe['version'].'"', 412, 'Rețeta s-a schimbat. Reîncarcă rețeta înainte de a salva din nou.');
+            $this->checkMutation($recipe, $actorId, $expected);
+            abort_if($recipe['archived_at'], 409, 'Restaurează rețeta înainte de a o edita.');
             $assetId = match ($data['photo_action']) {
                 'replace' => $this->media->receiveImage($familyId, $actorId, $photo)['id'],
                 'remove' => null,
@@ -113,7 +122,7 @@ final class RecipeCatalog implements Recipes
             };
             $version = $recipe['version'] + 1;
             $this->insertVersion($familyId, $recipeId, $version, $data, $assetId);
-            DB::table('recipes')->where('family_id', $familyId)->where('id', $recipeId)->update(['version' => $version, 'updated_at' => now()]);
+            DB::table('recipes')->where('family_id', $familyId)->where('id', $recipeId)->update(['version' => $version, 'revision' => $recipe['revision'] + 1, 'updated_at' => now()]);
             Audit::record($familyId, $actorId, 'recipe.version_created', $recipeId);
 
             return $this->find($familyId, $actorId, $recipeId);
@@ -134,5 +143,59 @@ final class RecipeCatalog implements Recipes
 
             return $this->find($familyId, $actorId, $id);
         });
+    }
+
+    private function checkMutation(array $recipe, int $actorId, ?string $expected): void
+    {
+        abort_unless($recipe['owner_id'] === $actorId, 403);
+        abort_unless($expected, 428, 'Versiunea rețetei este necesară.');
+        abort_unless($expected === '"'.$recipe['revision'].'"', 412, 'Rețeta s-a schimbat. Reîncarcă rețeta înainte de a salva din nou.');
+    }
+
+    public function share(string $familyId, int $actorId, string $recipeId, array $data, ?string $expected): array
+    {
+        return DB::transaction(function () use ($familyId, $actorId, $recipeId, $data, $expected) {
+            $recipe = $this->find($familyId, $actorId, $recipeId);
+            $this->checkMutation($recipe, $actorId, $expected);
+            abort_if($recipe['archived_at'], 409, 'Restaurează rețeta înainte de a schimba accesul.');
+            $ids = $data['membership_ids'];
+            abort_if(($data['visibility'] === 'selected') !== (count($ids) > 0), 422, 'Alege persoane numai pentru accesul „Persoane alese”.');
+            $count = DB::table('family_memberships')->where('family_id', $familyId)->whereNull('revoked_at')
+                ->where('user_id', '!=', $actorId)->whereIn('id', $ids)->count();
+            abort_unless($count === count($ids), 422, 'Un membru selectat nu mai este disponibil.');
+            DB::table('recipe_grants')->where('family_id', $familyId)->where('recipe_id', $recipeId)->delete();
+            foreach ($ids as $id) {
+                DB::table('recipe_grants')->insert(['family_id' => $familyId, 'recipe_id' => $recipeId, 'membership_id' => $id]);
+            }
+            DB::table('recipes')->where('family_id', $familyId)->where('id', $recipeId)->update([
+                'visibility' => $data['visibility'], 'revision' => $recipe['revision'] + 1, 'updated_at' => now(),
+            ]);
+            DB::table('families')->where('id', $familyId)->increment('authz_revision');
+            Audit::record($familyId, $actorId, 'recipe.access_changed', $recipeId);
+
+            return $this->find($familyId, $actorId, $recipeId);
+        });
+    }
+
+    public function archive(string $familyId, int $actorId, string $recipeId, ?string $expected, bool $restore = false): array
+    {
+        return DB::transaction(function () use ($familyId, $actorId, $recipeId, $expected, $restore) {
+            $recipe = $this->find($familyId, $actorId, $recipeId);
+            $this->checkMutation($recipe, $actorId, $expected);
+            abort_if(($recipe['archived_at'] !== null) !== $restore, 409, 'Starea rețetei s-a schimbat. Reîncarcă rețeta.');
+            DB::table('recipes')->where('family_id', $familyId)->where('id', $recipeId)->update([
+                'archived_at' => $restore ? null : now(), 'visibility' => 'private', 'revision' => $recipe['revision'] + 1, 'updated_at' => now(),
+            ]);
+            DB::table('recipe_grants')->where('family_id', $familyId)->where('recipe_id', $recipeId)->delete();
+            DB::table('families')->where('id', $familyId)->increment('authz_revision');
+            Audit::record($familyId, $actorId, $restore ? 'recipe.restored' : 'recipe.archived', $recipeId);
+
+            return $this->find($familyId, $actorId, $recipeId);
+        });
+    }
+
+    public function revokeMembership(string $familyId, string $membershipId): void
+    {
+        DB::table('recipe_grants')->where('family_id', $familyId)->where('membership_id', $membershipId)->delete();
     }
 }
