@@ -1,6 +1,19 @@
 # Familie
 
-Stare: **FD2 implementat la 23 octombrie 2026**, build și verificare punctuală API trecute; fără probe vizuale, la cererea utilizatorului. FP1, F1–F3 și FD1 rămân existente. F4, profilurile fără cont și legarea confirmată la cont rămân separate.
+Stare: **FP1-demo — trei exemple salvate în profilul Anei la 23 octombrie 2026**, confirmate prin API. FD2 rămâne implementat, cu build și verificare punctuală API trecute. Fără probe vizuale noi. F4, profilurile fără cont și legarea confirmată la cont rămân separate.
+
+## FP1-demo — Date în profil, 23 octombrie 2026
+
+Cerere explicită: numai o vizită medicală, o carte și o activitate într-un singur profil. Salvate prin API-ul existent în aplicația locală cu demo activ, ca Ana Popescu (`ana@example.test`), în Familia Popescu. Toate au acces **Doar eu**; notițele le identifică drept exemple demo.
+
+| Exemplu          | Categorie                       | Dată              | ID                                     |
+| ---------------- | ------------------------------- | ----------------- | -------------------------------------- |
+| Control anual    | Sănătate, vizită medicală       | 21 octombrie 2026 | `4fae28f2-9d04-4066-803d-cadd9d2d0c1e` |
+| Micul Prinț      | Școală și cultură, carte citită | 18 octombrie 2026 | `86bbb3c5-4f52-4a59-a87a-7a47a0e29158` |
+| Plimbare în parc | Activități                      | 22 octombrie 2026 | `22621a75-70c6-4b7e-8e39-a1ac6b662765` |
+
+- Profilul Anei: `e12c6c30-7cac-42d1-b3d4-d9855a0d014f`; familia: `11111111-1111-4111-8111-111111111111`. Înainte de creare s-au verificat profilul propriu, dreptul de scriere și însemnările existente; create exact trei, fără duplicate. Lista autorizată a confirmat cele trei ID-uri, accesul privat și dreptul de administrare.
+- Fără schimbări de cod, permisiuni, date de naștere, fotografii, documente sau alte module. Fără seed/reset, build, suite de teste ori probe vizuale. Datele sunt salvate local în aplicație, fără integrare în DemoSeeder; nu le recrea implicit la reluare. Urmează feedbackul utilizatorului pentru Prezentare și cele trei categorii.
 
 ## FD2 — Dosarul comun și documentele din profil, 23 octombrie 2026
 
