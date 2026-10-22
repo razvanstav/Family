@@ -5,10 +5,13 @@ namespace App\Providers;
 use App\Modules\Calendar\Application\CalendarReminders;
 use App\Modules\Kitchen\Application\KitchenActivity;
 use App\Modules\Kitchen\Application\KitchenActivityReader;
+use App\Modules\Kitchen\Application\MealActivityReferences;
 use App\Modules\Kitchen\Application\RecipeCatalog;
 use App\Modules\Kitchen\Contracts\Activity;
+use App\Modules\Kitchen\Contracts\MealReferences;
 use App\Modules\Kitchen\Contracts\Recipes;
 use App\Modules\Memory\Application\MomentAccess;
+use App\Modules\Memory\Application\TimelineProjection;
 use App\Platform\Contracts\Outbox;
 use App\Platform\Contracts\PrivateMedia;
 use App\Platform\Events\DatabaseOutbox;
@@ -30,7 +33,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(PrivateMedia::class, LocalPrivateMedia::class);
         $this->app->bind(Recipes::class, RecipeCatalog::class);
         $this->app->bind(Activity::class, KitchenActivityReader::class);
-        $this->app->singleton(DatabaseOutbox::class, fn ($app) => new DatabaseOutbox([$app->make(KitchenActivity::class)]));
+        $this->app->bind(MealReferences::class, MealActivityReferences::class);
+        $this->app->singleton(DatabaseOutbox::class, fn ($app) => new DatabaseOutbox([$app->make(KitchenActivity::class), $app->make(TimelineProjection::class)]));
         $this->app->bind(Outbox::class, fn ($app) => $app->make(DatabaseOutbox::class));
     }
 

@@ -17,8 +17,7 @@ final class KitchenActivityReader implements Activity
     public function listing(string $familyId, int $actorId, string $membershipId, ?string $cursor, int $limit = 20): array
     {
         abort_unless($limit >= 1 && $limit <= 50, 422);
-        abort_unless(DB::table('family_memberships')->where('family_id', $familyId)->where('id', $membershipId)
-            ->where('user_id', $actorId)->whereNull('revoked_at')->exists(), 404);
+        $this->assertMember($familyId, $actorId, $membershipId);
         $query = DB::table('kitchen_activity_sources')->where('family_id', $familyId)->where('removed', false);
         if ($cursor !== null) {
             try {
@@ -57,5 +56,19 @@ final class KitchenActivityReader implements Activity
 
         return ['items' => $items, 'has_more' => $more, 'next_cursor' => $more && $last
             ? Crypt::encryptString(json_encode([$last->occurred_at, $last->source_kind, $last->source_id, $familyId], JSON_THROW_ON_ERROR)) : null];
+    }
+
+    private function assertMember(string $familyId, int $actorId, string $membershipId): void
+    {
+        abort_unless(DB::table('family_memberships')->where('family_id', $familyId)->where('id', $membershipId)
+            ->where('user_id', $actorId)->whereNull('revoked_at')->exists(), 404);
+    }
+
+    public function mealCards(string $familyId, int $actorId, string $membershipId, array $ids): array
+    {
+        abort_unless(count($ids) <= 200, 422);
+        $this->assertMember($familyId, $actorId, $membershipId);
+
+        return $ids ? $this->meals->activityCards($familyId, $actorId, $membershipId, $ids) : [];
     }
 }

@@ -102,9 +102,9 @@ final class KitchenOutboxTest extends TestCase
         $this->assertSame([1, 2], $events->where('source_kind', 'kitchen.meal')->sortBy('source_version')->pluck('source_version')->all());
         $this->assertStringNotContainsString($recipe['title'], json_encode($events));
         $this->assertStringNotContainsString('Comentariu privat', json_encode($events));
-        $this->assertSame(3, DB::connection('admin')->table('outbox_deliveries')->whereNull('delivered_at')->count());
+        $this->assertSame(5, DB::connection('admin')->table('outbox_deliveries')->whereNull('delivered_at')->count());
         $this->getJson($this->activity())->assertJsonCount(0, 'items');
-        $this->assertSame(['delivered' => 3, 'failed' => 0], $this->outbox()->deliverFamily(DemoSeeder::POPESCU));
+        $this->assertSame(['delivered' => 5, 'failed' => 0], $this->outbox()->deliverFamily(DemoSeeder::POPESCU));
         $items = $this->getJson($this->activity())->assertOk()->assertJsonCount(2, 'items')->json('items');
         $this->assertEqualsCanonicalizing(['kitchen.meal', 'kitchen.recipe'], array_column($items, 'kind'));
         $this->assertSame(2, DB::connection('admin')->table('kitchen_activity_sources')->count());
@@ -167,7 +167,7 @@ final class KitchenOutboxTest extends TestCase
             $this->assertSame(1, DB::connection('admin')->table('recipe_versions')->count());
             $this->assertSame(0, DB::connection('admin')->table('kitchen_meal_votes')->count());
             $this->assertSame(2, DB::connection('admin')->table('outbox_events')->count());
-            $this->assertSame(2, DB::connection('admin')->table('outbox_deliveries')->count());
+            $this->assertSame(3, DB::connection('admin')->table('outbox_deliveries')->count());
             $this->assertSame($audit, DB::connection('admin')->table('audit_events')->count());
             $this->assertSame($beforeAssets, DB::connection('admin')->table('media_assets')->count());
             $this->assertEqualsCanonicalizing($beforeFiles, Storage::disk('local')->allFiles());

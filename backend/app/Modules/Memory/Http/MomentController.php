@@ -4,6 +4,7 @@ namespace App\Modules\Memory\Http;
 
 use App\Modules\Memory\Application\MomentAccess;
 use App\Platform\Audit\Audit;
+use App\Platform\Contracts\Outbox;
 use App\Platform\Contracts\PrivateMedia;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +17,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class MomentController
 {
-    public function __construct(private readonly MomentAccess $access, private readonly PrivateMedia $media) {}
+    public function __construct(private readonly MomentAccess $access, private readonly PrivateMedia $media, private readonly Outbox $outbox) {}
 
     private function visible(Request $request, string $family): Builder
     {
@@ -164,6 +165,7 @@ final class MomentController
             $this->syncMemberships('memory_moment_people', $family, $id, $memberships);
             $this->syncMemberships('memory_moment_grants', $family, $id, $grants);
             Audit::record($family, $request->user()->id, 'memory.created', $id);
+            $this->outbox->append($family, 'memory.moment.changed', 'memory.moment', $id, 1);
 
             return $this->show($request, $family, $id)->setStatusCode(201);
         });
@@ -191,6 +193,7 @@ final class MomentController
             $this->syncMemberships('memory_moment_grants', $family, $moment, $grants);
             DB::table('families')->where('id', $family)->increment('authz_revision');
             Audit::record($family, $request->user()->id, 'memory.updated', $moment);
+            $this->outbox->append($family, 'memory.moment.changed', 'memory.moment', $moment, $item->version + 1);
 
             return $this->show($request, $family, $moment);
         });
@@ -228,6 +231,7 @@ final class MomentController
             $this->syncMemberships('memory_moment_grants', $family, $moment, []);
             DB::table('families')->where('id', $family)->increment('authz_revision');
             Audit::record($family, $request->user()->id, $restore ? 'memory.restored' : 'memory.archived', $moment);
+            $this->outbox->append($family, 'memory.moment.changed', 'memory.moment', $moment, $item->version + 1);
 
             return $this->show($request, $family, $moment);
         });

@@ -1,6 +1,6 @@
 # Amintiri
 
-Stare la 22 octombrie 2026: **AM1 și AM2 implementate**, cu fluxurile principale demonstrate local pe Windows, desktop și mobil. Acceptarea completă rămâne deschisă pentru scenariile neexercitate de mai jos. Se păstrează prioritatea funcțiilor, fără suite de teste, înaintea instalării Linux. AM3 rămâne planificat.
+Stare la 22 octombrie 2026: **AM1–AM3 implementate**, cu fluxurile principale demonstrate local pe Windows, desktop și mobil. Acceptarea completă rămâne deschisă pentru scenariile neexercitate de mai jos. Se păstrează prioritatea funcțiilor, fără suite de teste, înaintea instalării Linux.
 
 ## Scop
 
@@ -10,7 +10,7 @@ Momente și note private sau partajate, fotografii, asocieri cu persoane/subiec�
 
 - [ ] **AM1 — Momente și note.** Implementat; creare de moment/notă, listă, detaliu, menționare și editare demonstrate local, inclusiv conflict și reîncărcare. Acceptarea integrală a rolurilor, filtrelor și paginării nu este închisă. Subiecții care nu sunt membri așteaptă registrul P1, fără identități fictive sau acces implicit.
 - [ ] **AM2 — Fotografii și partajare.** Implementat; upload, înlocuire/eliminare, acces selectiv/retragere și arhivare/restaurare demonstrate local. Rollbackul după scrierea fișierului și scenariile de carantină/respingere nu au fost provocate în acest pas.
-- [ ] **AM3 — Timeline.** Integrează momentele și preparările din Bucătărie prin providere/outbox, cu paginare și proiecții reconstruibile. Verifică mesaje repetate/vechi, ștergerea sau arhivarea sursei și autorizarea actuală la citire.
+- [ ] **AM3 — Cronologie.** Implementat: amintiri și mese prin contractele Kitchen/Outbox, paginare și proiecție reconstruibilă. Integrarea, replay-ul repetat, arhivarea/restaurarea și paginarea după rebuild sunt demonstrate local; acceptarea rămâne deschisă pentru scenariile neexercitate de mai jos.
 
 ## Acceptare
 
@@ -52,7 +52,7 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 - `npm --prefix frontend run build`: TypeScript și Vite reușite. Prettier aplicat fișierelor frontend modificate; linkurile locale și `git diff --check` verificate.
 - La implementarea inițială pe macOS, PHP/Composer/vendor nu erau disponibile și nu s-au executat verificări backend/runtime. Rezultatele locale Windows observate ulterior sunt consemnate la AM2.
 - **Fără suite de teste**, conform priorității salvate: nu s-au adăugat sau rulat teste automate. Verificarea manuală nu închide acceptarea integrală a modulului sau a MVP-ului.
-- Fotografiile, accesul selectiv și arhivarea/restaurarea sunt adăugate în AM2. Ștergerea definitivă, subiecții fără cont, evenimentele Memory în outbox și timeline-ul rămân pentru pașii următori.
+- Fotografiile, accesul selectiv și arhivarea/restaurarea sunt adăugate în AM2; evenimentele Memory și cronologia, în AM3. Ștergerea definitivă și subiecții fără cont rămân pentru pașii următori.
 
 ## AM2 — fotografii și partajare
 
@@ -80,6 +80,37 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 - Nu s-au exercitat în AM2 rolul limitat, revocarea completă a apartenenței, cereri cross-tenant, limitele de cotă/dimensiuni, fișiere infectate, scanner indisponibil ori eșec forțat după scrierea media. Acestea nu sunt declarate acceptate doar prin reutilizarea codului existent.
 - Eliminarea/înlocuirea desprinde fotografia de moment, fără ștergere fizică imediată. Media nereferențiată rămâne privată și intră în cotă până la cleanupul planificat în P2; niciun endpoint Memory nu o poate descărca prin ID-ul media. Nu sunt albume cu mai multe fotografii, upload în fundal sau timeline în acest pas.
 
+## AM3 — cronologie
+
+### Comportament și contract
+
+- În Amintiri, vizualizarea nouă „Cronologie” reunește momentele/notele și mesele, cu grupare după data lor calendaristică, filtre Toate/Amintiri/Mese și paginare. Prima vizualizare rămâne „Momente și note”; meniul aplicației și pagina implicită nu se schimbă. Nu sunt incluse carduri separate de rețete, chat sau date fictive de activitate.
+- `memory_timeline_sources` conține numai familie, tip/ID de sursă, revizie, `occurred_on` și retragere, cu PK familie/tip/ID, RLS forțat și index pentru ordonare. Nu păstrează titluri, text, fotografii sau ACL-uri. Data vine din `memory_moments.occurred_on` ori, prin provider, din data mesei; nu se convertește după fusul cititorului.
+- `MomentController` publică `memory.moment.changed`, schema 1, în tranzacția creării/editării/arhivării/restaurării, alături de sursă, media și audit. Retry-ul scanării nu modifică versiunea conținutului și nu emite alt eveniment; starea fotografiei se citește live.
+- Handlerul `memory.timeline.v1` consumă `memory.moment.changed` și `kitchen.meal.changed`. Recitește sursa canonică sub contextul/lockul familiei, refuză schemele incompatibile și reconcilierea în urma versiunii evenimentului. Evenimentele vechi/repetate nu coboară revizia și nu reactivează arhive. Sursa absentă produce o referință retrasă.
+- Memory nu interoghează tabelele Kitchen. `Kitchen/Contracts/MealReferences` expune numai metadate canonice prin `find`/`each` în loturi de 100; `Activity::mealCards` rezolvă în loturi cardurile prin politica existentă a mesei/rețetei. Astfel, o masă partajată poate rămâne vizibilă fără fotografia/rețeta la care cititorul nu mai are acces.
+- `GET /api/v1/families/{family}/timeline?kind=all|memory|meals&limit=20&cursor=...` folosește `TenantContext` și răspuns privat fără cache. 1–50 carduri/pagină, maximum 200 de referințe scanate plus un rând pentru continuare. Rezumatul autorizat conține titlu, autor, acces, tip, dată, revizie, stare foto și, pentru amintiri, maximum 240 caractere din text. Detaliile complete se cer numai la deschiderea unei surse; nu există query per card.
+- Ordine: dată descrescătoare, tip crescător, UUID descrescător. Cursorul criptat/autentificat este legat de familie și filtru și indică ultima referință scanată. O pagină poate fi goală și avea continuare. Cardul cu dată canonică diferită de index este omis până la reconciliere, pentru a nu apărea într-o grupă greșită.
+- `memory:rebuild-timeline --family=<UUID>` reconstruiește atomic numai proiecția, inclusiv resursele anterioare instalării, prin sursele Memory și providerul Kitchen. Eșecul păstrează proiecția anterioară. `outbox:deliver --family=<UUID> --replay=memory.timeline.v1` reprocesează evenimentele păstrate, fără a crea surse sau evenimente istorice artificiale.
+- UI actualizează cronologia la 15 s cât pagina este vizibilă, cu păstrarea rândurilor/focusului la refresh în fundal. Detaliul amintirii refolosește `MomentDetail`/`MomentForm`; masa folosește componenta publică `Kitchen/MealViewer`, cu detaliul/votul/rețeta existentă și reautorizare la 60 s. Refreshul nu înlocuiește draftul votului. Listele inactive nu trimit cereri de polling paralele.
+
+### Intrări și instalare
+
+- Backend: `TimelineProjection`, `TimelineReader`, `Http/TimelineController`, comanda `RebuildMemoryTimeline`, migrația `2026_10_22_190000_create_memory_timeline_sources.php`, evenimentele MomentController și înregistrarea din `AppServiceProvider`. Dependența Kitchen: `MealReferences`, `MealActivityReferences`, `Activity::mealCards` și metadatele cardurilor MealCatalog.
+- Frontend: `memory/Timeline.tsx`, integrarea în `Memories.tsx`/`memory.css`, `kitchen/MealViewer.tsx` și reutilizarea/sincronizarea `MealDetail` din `Meals.tsx`. Nu sunt dependențe noi și nu se modifică `recipe_versions`.
+- După migrație și `ops/grant-runtime.sql`, reconstruiește explicit fiecare familie existentă și repornește workerul outbox. Replay-ul singur nu acoperă sursele create înaintea publicării evenimentelor. Vezi comenzile din [SETUP](../../ops/SETUP.md).
+
+### Verificări observate și limite
+
+- Migrație/granturi aplicate pe `memoria`, fără reset/seed; noul worker a livrat cele două receipts ale mesei demo fără erori. Sunt folosite cele două amintiri demo din AM2 și o masă/vot fictive adăugate prin browser.
+- Desktop: trei surse distincte, deschidere amintire/masă, vot salvat din cronologie și deschidere a versiunii rețetei folosite. Mihai vede nota și masa partajate, fără amintirea privată a Anei. Arhivarea scoate nota din cronologie; restaurarea este privată, iar partajarea ulterioară funcționează. Data unui moment a fost mutată la 21 octombrie, fără deplasarea datei la citire.
+- Replay de două ori cu câte 4 livrări, zero erori: trei referințe, una retrasă la revizia 3. După restaurare, rebuild repetat și replay cu 7 livrări/zero erori: trei referințe active. Amprentele rândurilor canonice Memory/Meal sunt identice înainte și după rebuild/replay.
+- API în browser, `limit=1`: trei pagini cu trei surse unice, ultima fără continuare. Cursorul primei pagini rămâne utilizabil după rebuild; folosirea lui în altă familie este respinsă prin validare.
+- Vizual: listă/grupe pe zile pe desktop și la 390 px, filtrele Toate/Mese și deschiderea mesei pe mobil, fără overflow orizontal observat. Controalele și derularea ferestrei mesei rămân utilizabile. Regulile mobile sunt după stilurile de bază, fără suprapuneri contradictorii. Capturi locale ignorate: `.runtime/am3-desktop.png`, `.runtime/am3-mobile.png`.
+- Build TypeScript/Vite, Prettier, Pint și lint PHP: reușite. S-au ajustat numai cele trei contoare de receipts din `KitchenOutboxTest` afectate de al doilea handler; nu sunt teste noi și nu s-au rulat suite automate, conform priorității salvate. Rezultatele istorice K4b nu reprezintă o regresie rerulată pentru AM3.
+- Rămân neexercitate în AM3 ștergerea fizică a sursei, eșecul forțat de handler/rebuild și rollbackul lui, concurența a doi workeri, schemă nouă, limitele de 200 de surse ascunse, volum mare și revocarea completă a apartenenței. Nu sunt declarate acceptate doar prin reutilizarea infrastructurii.
+- Apariția sau mutarea unei surse în cronologie este eventual consistentă (worker la 15 s plus polling UI). Politica se verifică live la fiecare citire; aplicația nu poate retrage copii salvate anterior. Publicarea/deploy-ul și acceptarea completă a MVP-ului rămân separate de această demonstrație locală.
+
 ## Următorul pas
 
-AM3: timeline cu momente și preparări, prin contractele publice Activity/Outbox, paginare stabilă și autorizarea canonică la citire. Păstrează separat acceptarea restantă AM1/AM2; nu modifica versiunile istorice din Bucătărie și nu începe automat alt modul.
+Închide verificările restante AM3 înainte de a marca acceptarea integrală: sursă eliminată, eșec de reconciliere/rebuild, pagini rare și acces retras înaintea livrării. Păstrează prioritatea demonstrației MVP și acceptarea restantă AM1/AM2; nu începe automat alt modul și nu modifica versiunile istorice din Bucătărie.

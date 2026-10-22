@@ -15,12 +15,15 @@ import { dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import { MomentDetail } from "./MomentDetail";
 import { MomentForm } from "./MomentForm";
+import { Timeline } from "./Timeline";
+import { MealViewer } from "../kitchen/MealViewer";
 import { momentKinds, type Moment, type MomentList } from "./memoryTypes";
 import "./memory.css";
 
 type View =
   | { mode: "detail"; moment: Moment }
   | { mode: "form"; moment?: Moment }
+  | { mode: "meal"; id: string }
   | null;
 
 export function Memories({
@@ -33,6 +36,7 @@ export function Memories({
   onExpired: () => void;
 }) {
   const base = `/families/${family.id}/moments`;
+  const [section, setSection] = useState<"moments" | "timeline">("moments");
   const [items, setItems] = useState<Moment[]>([]);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
@@ -55,6 +59,7 @@ export function Memories({
     return () => window.clearTimeout(timer);
   }, [query]);
   useEffect(() => {
+    if (section !== "moments") return;
     const controller = new AbortController();
     const params = new URLSearchParams({ page: String(page) });
     if (search) params.set("q", search);
@@ -81,14 +86,15 @@ export function Memories({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [base, search, kind, visibility, archived, page, revision]);
+  }, [base, search, kind, visibility, archived, page, revision, section]);
   useEffect(() => {
+    if (section !== "moments") return;
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible")
         setRevision((value) => value + 1);
     }, 60000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [section]);
 
   function unavailable() {
     setView(null);
@@ -121,203 +127,243 @@ export function Memories({
           </button>
         )}
       </section>
-      <div className="memory-toolbar">
-        <label className="search">
-          <Search size={18} aria-hidden="true" />
-          <input
-            type="search"
-            aria-label="Caută amintiri după titlu sau text"
-            placeholder="Caută amintiri"
-            maxLength={120}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          {query && (
-            <button aria-label="Șterge căutarea" onClick={() => setQuery("")}>
-              <X size={16} />
-            </button>
-          )}
-        </label>
-        <select
-          aria-label="Filtrează după acces"
-          value={visibility}
-          onChange={(event) => {
-            setVisibility(event.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">Orice acces</option>
-          <option value="private">Doar eu</option>
-          <option value="family">Familia mea</option>
-          <option value="selected">Persoane alese</option>
-        </select>
+      <nav className="memory-sections" aria-label="Vizualizare Amintiri">
         <button
-          className="icon-button"
-          aria-label="Actualizează amintirile"
-          disabled={loading}
-          onClick={() => setRevision((value) => value + 1)}
+          aria-pressed={section === "moments"}
+          onClick={() => setSection("moments")}
         >
-          <RefreshCw size={18} />
+          Momente și note
         </button>
-      </div>
-      <div className="memory-filter-row">
-        <div className="memory-kind-filter" aria-label="Tip de amintire">
-          {[
-            ["", "Toate"],
-            ["moment", "Momente"],
-            ["note", "Note"],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              aria-pressed={kind === value}
-              onClick={() => {
-                setKind(value);
+        <button
+          aria-pressed={section === "timeline"}
+          onClick={() => setSection("timeline")}
+        >
+          Cronologie
+        </button>
+      </nav>
+      {section === "timeline" && (
+        <Timeline
+          familyId={family.id}
+          revision={revision}
+          onMoment={(moment) => setView({ mode: "detail", moment })}
+          onMeal={(id) => setView({ mode: "meal", id })}
+          onUnavailable={unavailable}
+        />
+      )}
+      {section === "moments" && (
+        <>
+          <div className="memory-toolbar">
+            <label className="search">
+              <Search size={18} aria-hidden="true" />
+              <input
+                type="search"
+                aria-label="Caută amintiri după titlu sau text"
+                placeholder="Caută amintiri"
+                maxLength={120}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+              {query && (
+                <button
+                  aria-label="Șterge căutarea"
+                  onClick={() => setQuery("")}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </label>
+            <select
+              aria-label="Filtrează după acces"
+              value={visibility}
+              onChange={(event) => {
+                setVisibility(event.target.value);
                 setPage(1);
               }}
             >
-              {label}
-            </button>
-          ))}
-        </div>
-        <label className="memory-archive-filter">
-          <input
-            type="checkbox"
-            checked={archived}
-            onChange={(event) => {
-              setArchived(event.target.checked);
-              setPage(1);
-            }}
-          />
-          Arhivate
-        </label>
-      </div>
-      {notice && (
-        <p className="notice" role="status">
-          {notice}
-        </p>
-      )}
-      <section
-        aria-label={archived ? "Amintiri arhivate" : "Lista amintirilor"}
-        aria-busy={loading}
-      >
-        {loading ? (
-          <p role="status">Se încarcă amintirile…</p>
-        ) : error ? (
-          <div className="empty">
-            <p className="error" role="alert">
-              {error}
-            </p>
+              <option value="">Orice acces</option>
+              <option value="private">Doar eu</option>
+              <option value="family">Familia mea</option>
+              <option value="selected">Persoane alese</option>
+            </select>
             <button
-              className="button secondary"
+              className="icon-button"
+              aria-label="Actualizează amintirile"
+              disabled={loading}
               onClick={() => setRevision((value) => value + 1)}
             >
-              Reîncearcă
+              <RefreshCw size={18} />
             </button>
           </div>
-        ) : items.length === 0 ? (
-          <div className="empty">
-            <BookHeart size={36} aria-hidden="true" />
-            <h3>
-              {filtered
-                ? "Nicio amintire găsită"
-                : archived
-                  ? "Nicio amintire arhivată"
-                  : page > 1
-                    ? "Nicio amintire pe această pagină"
-                    : "Nicio amintire"}
-            </h3>
-            {filtered ? (
-              <button className="button secondary" onClick={clearFilters}>
-                Șterge filtrele
-              </button>
-            ) : (
-              page === 1 &&
-              !archived &&
-              family.role !== "limited" && (
+          <div className="memory-filter-row">
+            <div className="memory-kind-filter" aria-label="Tip de amintire">
+              {[
+                ["", "Toate"],
+                ["moment", "Momente"],
+                ["note", "Note"],
+              ].map(([value, label]) => (
                 <button
-                  className="button primary"
-                  onClick={() => setView({ mode: "form" })}
+                  key={value}
+                  aria-pressed={kind === value}
+                  onClick={() => {
+                    setKind(value);
+                    setPage(1);
+                  }}
                 >
-                  <Plus size={17} />
-                  Adaugă amintire
+                  {label}
                 </button>
-              )
+              ))}
+            </div>
+            <label className="memory-archive-filter">
+              <input
+                type="checkbox"
+                checked={archived}
+                onChange={(event) => {
+                  setArchived(event.target.checked);
+                  setPage(1);
+                }}
+              />
+              Arhivate
+            </label>
+          </div>
+          {notice && (
+            <p className="notice" role="status">
+              {notice}
+            </p>
+          )}
+          <section
+            aria-label={archived ? "Amintiri arhivate" : "Lista amintirilor"}
+            aria-busy={loading}
+          >
+            {loading ? (
+              <p role="status">Se încarcă amintirile…</p>
+            ) : error ? (
+              <div className="empty">
+                <p className="error" role="alert">
+                  {error}
+                </p>
+                <button
+                  className="button secondary"
+                  onClick={() => setRevision((value) => value + 1)}
+                >
+                  Reîncearcă
+                </button>
+              </div>
+            ) : items.length === 0 ? (
+              <div className="empty">
+                <BookHeart size={36} aria-hidden="true" />
+                <h3>
+                  {filtered
+                    ? "Nicio amintire găsită"
+                    : archived
+                      ? "Nicio amintire arhivată"
+                      : page > 1
+                        ? "Nicio amintire pe această pagină"
+                        : "Nicio amintire"}
+                </h3>
+                {filtered ? (
+                  <button className="button secondary" onClick={clearFilters}>
+                    Șterge filtrele
+                  </button>
+                ) : (
+                  page === 1 &&
+                  !archived &&
+                  family.role !== "limited" && (
+                    <button
+                      className="button primary"
+                      onClick={() => setView({ mode: "form" })}
+                    >
+                      <Plus size={17} />
+                      Adaugă amintire
+                    </button>
+                  )
+                )}
+              </div>
+            ) : (
+              <div className="moment-grid">
+                {items.map((moment) => (
+                  <button
+                    className="moment-card"
+                    key={moment.id}
+                    onClick={() => setView({ mode: "detail", moment })}
+                  >
+                    {moment.photo_status && (
+                      <PrivatePhoto
+                        src={`/api/v1${base}/${moment.id}/photo?v=${moment.version}`}
+                        status={moment.photo_status}
+                        className="moment-photo"
+                        placeholder={<Image size={28} aria-hidden="true" />}
+                      />
+                    )}
+                    <span className="moment-card-top">
+                      <span className="moment-kind">
+                        {moment.kind === "moment" ? (
+                          <BookHeart size={20} />
+                        ) : (
+                          <StickyNote size={20} />
+                        )}
+                        {momentKinds[moment.kind]}
+                      </span>
+                      <time dateTime={moment.occurred_on}>
+                        {dateLabel(moment.occurred_on, {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </time>
+                    </span>
+                    <strong>{moment.title}</strong>
+                    {moment.body && (
+                      <span className="moment-excerpt">{moment.body}</span>
+                    )}
+                    <span className="moment-card-bottom">
+                      <span>
+                        {moment.visibility !== "family" ? (
+                          <LockKeyhole size={15} />
+                        ) : (
+                          <Users size={15} />
+                        )}
+                        {visibilityLabel[moment.visibility]}
+                      </span>
+                      <span className="moment-card-author">
+                        {moment.owner_name}
+                      </span>
+                    </span>
+                  </button>
+                ))}
+              </div>
             )}
-          </div>
-        ) : (
-          <div className="moment-grid">
-            {items.map((moment) => (
-              <button
-                className="moment-card"
-                key={moment.id}
-                onClick={() => setView({ mode: "detail", moment })}
-              >
-                {moment.photo_status && (
-                  <PrivatePhoto
-                    src={`/api/v1${base}/${moment.id}/photo?v=${moment.version}`}
-                    status={moment.photo_status}
-                    className="moment-photo"
-                    placeholder={<Image size={28} aria-hidden="true" />}
-                  />
-                )}
-                <span className="moment-card-top">
-                  <span className="moment-kind">
-                    {moment.kind === "moment" ? (
-                      <BookHeart size={20} />
-                    ) : (
-                      <StickyNote size={20} />
-                    )}
-                    {momentKinds[moment.kind]}
-                  </span>
-                  <time dateTime={moment.occurred_on}>
-                    {dateLabel(moment.occurred_on, {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </time>
-                </span>
-                <strong>{moment.title}</strong>
-                {moment.body && (
-                  <span className="moment-excerpt">{moment.body}</span>
-                )}
-                <span className="moment-card-bottom">
-                  <span>
-                    {moment.visibility !== "family" ? (
-                      <LockKeyhole size={15} />
-                    ) : (
-                      <Users size={15} />
-                    )}
-                    {visibilityLabel[moment.visibility]}
-                  </span>
-                  <span className="moment-card-author">
-                    {moment.owner_name}
-                  </span>
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-        {!loading && !error && (page > 1 || hasMore) && (
-          <nav className="memory-pagination" aria-label="Paginare amintiri">
-            <button
-              className="button secondary"
-              disabled={page === 1}
-              onClick={() => setPage((value) => value - 1)}
-            >
-              Înapoi
-            </button>
-            <span>Pagina {page}</span>
-            <button
-              className="button secondary"
-              disabled={!hasMore}
-              onClick={() => setPage((value) => value + 1)}
-            >
-              Înainte
-            </button>
-          </nav>
-        )}
-      </section>
+            {!loading && !error && (page > 1 || hasMore) && (
+              <nav className="memory-pagination" aria-label="Paginare amintiri">
+                <button
+                  className="button secondary"
+                  disabled={page === 1}
+                  onClick={() => setPage((value) => value - 1)}
+                >
+                  Înapoi
+                </button>
+                <span>Pagina {page}</span>
+                <button
+                  className="button secondary"
+                  disabled={!hasMore}
+                  onClick={() => setPage((value) => value + 1)}
+                >
+                  Înainte
+                </button>
+              </nav>
+            )}
+          </section>
+        </>
+      )}
+      {view?.mode === "meal" && (
+        <MealViewer
+          key={view.id}
+          familyId={family.id}
+          actorId={actorId}
+          mealId={view.id}
+          onClose={() => setView(null)}
+          onUnavailable={unavailable}
+        />
+      )}
       {view?.mode === "detail" && (
         <MomentDetail
           key={view.moment.id}

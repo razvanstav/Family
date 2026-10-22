@@ -9,7 +9,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | Familie | Membri, invitații, roluri și revocare implementate local; prima etapă de reluat | [Familie](modules/families.md) |
 | Documente | Upload, listă, detaliu, acces și descărcare implementate local | [Documente](modules/documents.md) |
 | Bucătărie | Planificat; fără implementare de produs | [Bucătărie](modules/kitchen.md) |
-| Amintiri | AM1 în surse: momente și note, acces, persoane, căutare și editare; build UI reușit, runtime neverificat | [Amintiri](modules/memory.md) |
+| Amintiri | AM1–AM3 implementate: momente/note, fotografii, acces și cronologie cu mese; fluxuri demo locale verificate, acceptare completă deschisă | [Amintiri](modules/memory.md) |
 | Calendar | Planificat; fără implementare de produs | [Calendar](modules/calendar.md) |
 | Animale | Planificat; fără implementare de produs | [Animale](modules/pets.md) |
 | Vehicule | Planificat; fără implementare de produs | [Vehicule](modules/vehicles.md) |

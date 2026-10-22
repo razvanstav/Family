@@ -410,7 +410,7 @@ function MealForm({
   );
 }
 
-function MealDetail({
+export function MealDetail({
   meal,
   base,
   onClose,
@@ -452,6 +452,9 @@ function MealDetail({
       setError("");
     }
   }
+  useEffect(() => {
+    if ("feedback" in meal) setData(meal);
+  }, [meal]);
   function expired(e: unknown): boolean {
     if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status)) {
       onClose();

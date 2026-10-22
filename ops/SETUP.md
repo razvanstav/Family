@@ -223,9 +223,13 @@ După migrațiile K4b/P3 și aplicarea `ops/grant-runtime.sql`, același script 
 php -d extension=pdo_pgsql backend/artisan outbox:deliver --family=11111111-1111-4111-8111-111111111111
 php -d extension=pdo_pgsql backend/artisan kitchen:rebuild-activity --family=11111111-1111-4111-8111-111111111111
 php -d extension=pdo_pgsql backend/artisan outbox:deliver --family=11111111-1111-4111-8111-111111111111 --replay=kitchen.activity.v1
+php -d extension=pdo_pgsql backend/artisan memory:rebuild-timeline --family=11111111-1111-4111-8111-111111111111
+php -d extension=pdo_pgsql backend/artisan outbox:deliver --family=11111111-1111-4111-8111-111111111111 --replay=memory.timeline.v1
 ```
 
 Înlocuiește UUID-ul demo cu familia dorită. Rebuildul reconstruiește indexul din sursele actuale, inclusiv cele existente înainte de outbox, fără schimbarea surselor. Replay reprogramează handlerul pentru evenimentele păstrate; repetă livrarea până la epuizarea loturilor (implicit 100/familie, maximum 1000 prin `--limit`). Efectele handlerului și confirmarea sunt DB-atomice; emailul/alte servicii externe nu intră în acest contract. După modificarea codului handlerilor, oprește și repornește workerul outbox; în afara mediului local folosește un manager de procese. Nu porni două instanțe de teste pe aceeași bază de test și nu direcționa workerii de test către `memoria`.
+
+La instalarea AM3, aplică migrația `2026_10_22_190000_create_memory_timeline_sources.php` și granturile runtime înaintea publicării buildului și a pornirii workerului nou. Rulează `memory:rebuild-timeline` separat pentru fiecare familie existentă, apoi repornește workerul pentru înregistrarea handlerului `memory.timeline.v1`. Acesta consumă și `kitchen.meal.changed`; o masă nouă are receipts distincte pentru Kitchen și Memory. Replay-ul nu înlocuiește rebuildul pentru sursele fără evenimente istorice. Nu rula seedere sau resetări de date pentru instalarea cronologiei.
 
 FreshClam rulează la cerere, fără actualizare programată configurată aici. Logurile sunt `.runtime/freshclam.log`, `.runtime/clamd.log` și `.runtime/clamd.err.log`. După pornire, clamd încarcă bazele în memorie înainte să poată scana. `ops/stop-local.ps1` oprește procesele acestui checkout, inclusiv workerii pentru remindere și outbox.
 

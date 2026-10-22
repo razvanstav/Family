@@ -155,6 +155,10 @@ Implementarea este în `backend/app/Modules/Kitchen/` și `frontend/src/modules/
 - Local, reconstruirea Popescu a raportat 0 surse și livrarea unică 0 livrate / 0 eșuate; workerul outbox a pornit ascuns prin `ops/start-local.ps1`. Nu s-au creat probe sau resetat date în `memoria`; toate scrierile de test au folosit `memoria_test`.
 - Limite: indexul este eventual consistent până la livrare (implicit polling la 15 s); nu există încă ecran timeline/integrare AM3, transport extern, retenție/curățare outbox sau activare/dezactivare de module. Contractul de handler admite doar efecte DB pe conexiunea tranzacției; nu promite o singură livrare pentru email sau alte servicii externe. Nu s-a adăugat idempotency general la POST-urile HTTP de creare; retry-ul verificat aici este al evenimentelor/handlerilor. Producția și recuperarea după avarie fizică nu sunt verificate.
 
+## Integrare Amintiri — AM3
+
+Integrarea AM3 folosește contractele publice `MealReferences` (metadate canonice fără conținut, citire individuală/loturi de 100) și `Activity::mealCards` (maximum 200 de ID-uri, rezumate cu politica actuală). `MealActivityReferences` implementează primul contract; `KitchenActivityReader` îl păstrează pe al doilea. Cardul mesei adaugă data calendaristică, tipul mesei și marcajul imaginii de exemplu. Memory nu citește tabele Kitchen și nu modifică versiunile istorice. Componenta `MealViewer` permite deschiderea mesei din cronologie, refolosind detaliul/votul/rețeta existente. Verificările acestei extensii sunt în [AM3](memory.md#am3--cronologie); suitele istorice K4b nu au fost reluate în acest pas.
+
 ## Date și imagini demo
 
 `KitchenDemoSeeder` adaugă idempotent trei exemple numai în familia demo Popescu existentă, în mediul `local`/`testing` cu demo activ. Nu resetează familia sau identitățile și nu rulează automat la fiecare pornire. Exemplele folosesc aceeași scanare și stocare privată; sunt marcate „Exemplu” în listă și „Rețetă de exemplu · imagine generată.” în detaliu. Nu au note, favorite ori istoric inventat.

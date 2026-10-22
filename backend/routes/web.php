@@ -8,6 +8,7 @@ use App\Modules\Kitchen\Http\KitchenActivityController;
 use App\Modules\Kitchen\Http\MealController;
 use App\Modules\Kitchen\Http\RecipeController;
 use App\Modules\Memory\Http\MomentController;
+use App\Modules\Memory\Http\TimelineController;
 use App\Platform\Families\FamilyController;
 use App\Platform\Families\InvitationController;
 use App\Platform\Families\TenantContext;
@@ -22,6 +23,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/invitations/{family}/inspect', [InvitationController::class, 'inspect'])->whereUuid('family')->middleware('throttle:30,1');
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
+        Route::get('/timeline', TimelineController::class);
         Route::get('/moments', [MomentController::class, 'index']);
         Route::post('/moments', [MomentController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/moments/{moment}', [MomentController::class, 'show'])->whereUuid('moment');

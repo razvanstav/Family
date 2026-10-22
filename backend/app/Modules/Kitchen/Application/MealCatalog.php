@@ -176,6 +176,8 @@ final class MealCatalog
     {
         return $this->visible($familyId, $actorId, $membershipId)->whereIn('m.id', $ids)
             ->select(['m.id', 'm.dish_title as title', 'm.visibility', 'm.activity_revision as source_version', 'u.name as owner_name',
+                'm.meal_date as occurred_on', 'm.meal_type',
+                DB::raw('CASE WHEN r.id IS NOT NULL THEN r.is_example ELSE FALSE END AS photo_is_example'),
                 DB::raw('CASE WHEN r.id IS NOT NULL THEN a.status ELSE NULL END AS photo_status'), DB::raw('r.id IS NOT NULL AS recipe_available')])
             ->get()->mapWithKeys(fn (object $row) => [$row->id => ['kind' => 'kitchen.meal'] + (array) $row])->all();
     }
