@@ -2,6 +2,17 @@
 
 Stare la 22 octombrie 2026: **AM1–AM3 implementate**, cu fluxurile principale demonstrate local pe Windows, desktop și mobil. Acceptarea completă rămâne deschisă pentru scenariile neexercitate de mai jos. Se păstrează prioritatea funcțiilor, fără suite de teste, înaintea instalării Linux.
 
+## MH1 — Layout mobil Amintiri, 22 octombrie 2026
+
+**Implementat și verificat local**, ales explicit după FD1. Numai pagina Amintiri, în stilul Acasă/Bucătărie; așteaptă feedbackul utilizatorului înainte de alt layout.
+
+- Antet cu căutare/adăugare, selecție Momente și note/Cronologie cu butoane compacte. Tipurile Toate/Momente/Note rămân la vedere; accesul, arhiva și actualizarea sunt grupate în panoul de filtre. Căutarea se deschide din antet și primește focus.
+- Fotografia ocupă lățimea cardului, textul este grupat într-un singur bloc, notele rămân fără imagine fictivă. Pe mobil cardurile sunt într-o coloană; data, tipul, autorul și accesul se păstrează. Titlul complet are nume accesibil explicit și rămâne în detaliu. Stările fotografiilor folosesc PrivatePhoto existent.
+- Ordinea după dată, filtrele, arhivarea, detaliul complet, paginarea, cronologia și rutele private rămân existente. Refreshul de fundal păstrează cardurile; schimbarea filtrelor înlocuiește lista. Fără GET suplimentar la deschiderea unui moment din listă.
+- Modificări de cod limitate la `Memories.tsx` și `memory.css`. Stilurile comune page-heading/search/modal rămân în styles.css. TypeScript/Vite build, Prettier și `git diff --check` trecute. Fără teste noi sau suite automate.
+- Browser, previzualizare mobilă de 390 px: card foto pe lățime, notă compactă și controale fără overflow observat; căutarea „bunici” întoarce nota, iar închiderea readuce lista. Panoul de filtre expune accesul, actualizarea și arhiva. Cardul foto deschide detaliul complet. Cronologia afișează cele două amintiri și masa existente, grupate pe date. Pagina rămâne deschisă pe Momente și note, cu Toate selectat. Captură locală ignorată: `.runtime/mh1-memories-mobile.png`.
+- Nu s-au modificat date, permisiuni, rute sau backend. Nu s-au reluat scrierile/uploadul, conflictele, revocările ori dispozitivele fizice; limitele AM1–AM3 de mai jos rămân valabile. Refreshul periodic nu a fost verificat prin așteptare dedicată.
+
 ## Scop
 
 Momente și note private sau partajate, fotografii, asocieri cu persoane/subiecți și timeline autorizat. Momentele sunt surse canonice aici; activitățile altor module apar ca proiecții, fără copierea proprietății asupra datelor lor.

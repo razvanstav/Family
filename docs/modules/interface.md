@@ -1,6 +1,6 @@
 # Interfață comună
 
-Stare: H2 Acasă are feedback pozitiv, KH1 Bucătărie este implementat și verificat local. Ultima cerere explicită este FD1: Documente în Familia mea, cu dosar comun și dosare pe persoană, reducând navigația principală la cinci secțiuni. Planificatorul rămâne schiță; probele istorice H1/H2 rămân mai jos.
+Stare: H2 Acasă, KH1 Bucătărie, FD1 și MH1 Amintiri sunt livrate local. MH1 așteaptă revizuirea împreună cu utilizatorul. Navigația rămâne cu cinci secțiuni, Documente în Familia mea. Planificatorul rămâne schiță.
 
 ## Fișiere relevante
 
@@ -15,14 +15,14 @@ Stare: H2 Acasă are feedback pozitiv, KH1 Bucătărie este implementat și veri
 
 Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helvetica, paleta caldă și regulile de text direct; preluăm compoziția și ritmul din imagine. Nu introducem sloganul, statistici, ratinguri, favorite, planificare/cumpărături ori căutare globală fără funcționalitate reală. Navigația existentă și pagina implicită rămân cele stabilite.
 
-**Ritm explicit:** finalizăm și arătăm un singur layout, așteptăm feedback, apoi alegem pasul următor. După Acasă și Bucătărie, utilizatorul a ales explicit FD1, mutarea Documentelor în Familie. Nu redesena alte pagini în acest pas.
+**Ritm explicit:** finalizăm și arătăm un singur layout, așteptăm feedback, apoi alegem pasul următor. Pasul curent MH1 este Amintiri, ales explicit după FD1. Fără alte pagini și fără teste în exces.
 
 | Pagină | Adaptare | Stare |
 | --- | --- | --- |
 | Acasă — H2 | Acces rapid la module reale; amintire cu fotografie și dată; note compacte; documente/categorii existente; evenimente și remindere reale; calendar în coloana laterală desktop. | Implementat, probe locale mai jos; feedback pozitiv primit. |
-| Bucătărie — KH1, pas curent | Rețete cu fotografii în rând derulabil pe mobil, căutare în antet, listă completă cu filtre și rânduri compacte pentru mesele zilei; versiuni și voturi existente. | Implementat, build/probe vizuale locale trecute; așteaptă feedback. Vezi [fișa Bucătărie](kitchen.md#kh1--layout-bucătărie-22-octombrie-2026). |
-| Amintiri | Fotografii și liste compacte, continuitate cu noul card Acasă; momente/note și cronologia rămân funcționale. | Planificat după Bucătărie. |
-| Familia mea / Documente — FD1 | Membri/Documente în Familie, dosar comun și pe persoană; numele membrului deschide documentele autorizate, administrarea rămâne separată. Meniul principal are cinci secțiuni. | Pas curent, cerut explicit; vezi [Familie](families.md#fd1--documente-în-familie-22-octombrie-2026). |
+| Bucătărie — KH1 | Rețete cu fotografii în rând derulabil pe mobil, căutare în antet, listă completă cu filtre și rânduri compacte pentru mesele zilei; versiuni și voturi existente. | Implementat, build/probe vizuale locale trecute. Vezi [fișa Bucătărie](kitchen.md#kh1--layout-bucătărie-22-octombrie-2026). |
+| Amintiri — MH1, pas curent | Fotografii pe lățimea cardului, note compacte, căutare în antet și panou pentru acces/arhivă; momente/note și cronologia rămân funcționale. | Implementat, build și verificare mobilă scurtă trecute; așteaptă feedback. Vezi [Amintiri](memory.md#mh1--layout-mobil-amintiri-22-octombrie-2026). |
+| Familia mea / Documente — FD1 | Membri/Documente în Familie, dosar comun și pe persoană; numele membrului deschide documentele autorizate, administrarea rămâne separată. Meniul principal are cinci secțiuni. | Implementat și verificat local; vezi [Familie](families.md#fd1--documente-în-familie-22-octombrie-2026). |
 | Calendar | Aceeași densitate, borduri și iconuri, cu păstrarea politicilor și controalelor existente. | Pagină ulterioară, neîncepută în FD1. |
 | Animale / Mașini | Structura profilului, următoarelor activități și istoricului din imagine se folosește când modulele AN/V există. | Module de produs planificate; fără pagini sau numere fictive. |
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BookHeart,
   Image,
@@ -9,6 +9,7 @@ import {
   StickyNote,
   Users,
   X,
+  SlidersHorizontal,
 } from "lucide-react";
 import { api, ApiError, visibilityLabel, type Family } from "../../shared/api";
 import { dateLabel } from "../../shared/calendarDates";
@@ -54,6 +55,10 @@ export function Memories({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [view, setView] = useState<View>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const loadedPosition = useRef("");
 
   useEffect(() => {
     if (!requestedMoment) return;
@@ -91,11 +96,14 @@ export function Memories({
     if (kind) params.set("kind", kind);
     if (visibility) params.set("visibility", visibility);
     if (archived) params.set("archived", "1");
+    const position = `${base}?${params}`;
+    if (loadedPosition.current !== position) setItems([]);
     setLoading(true);
     setError("");
-    api<MomentList>(`${base}?${params}`, { signal: controller.signal })
+    api<MomentList>(position, { signal: controller.signal })
       .then((data) => {
         if (controller.signal.aborted) return;
+        loadedPosition.current = position;
         setItems(data.items);
         setHasMore(data.has_more);
       })
@@ -141,16 +149,31 @@ export function Memories({
     <div className="memories-page">
       <section className="page-heading">
         <h1>Amintiri</h1>
-        {family.role !== "limited" && (
-          <button
-            className="button primary"
-            aria-label="Adaugă amintire"
-            onClick={() => setView({ mode: "form" })}
-          >
-            <Plus size={19} />
-            <span>Adaugă amintire</span>
-          </button>
-        )}
+        <div className="page-heading-actions">
+          {section === "moments" && (
+            <button
+              className="icon-button"
+              aria-label="Caută amintiri"
+              aria-expanded={searchOpen || Boolean(query)}
+              onClick={() => {
+                setSearchOpen(true);
+                searchInput.current?.focus();
+              }}
+            >
+              <Search size={21} aria-hidden="true" />
+            </button>
+          )}
+          {family.role !== "limited" && (
+            <button
+              className="button primary"
+              aria-label="Adaugă amintire"
+              onClick={() => setView({ mode: "form" })}
+            >
+              <Plus size={19} />
+              <span>Adaugă amintire</span>
+            </button>
+          )}
+        </div>
       </section>
       <nav className="memory-sections" aria-label="Vizualizare Amintiri">
         <button
@@ -177,48 +200,31 @@ export function Memories({
       )}
       {section === "moments" && (
         <>
-          <div className="memory-toolbar">
-            <label className="search">
+          {(searchOpen || query) && (
+            <label className="search memory-search">
               <Search size={18} aria-hidden="true" />
               <input
                 type="search"
+                ref={searchInput}
+                autoFocus
                 aria-label="Caută amintiri după titlu sau text"
                 placeholder="Caută amintiri"
                 maxLength={120}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
-              {query && (
-                <button
-                  aria-label="Șterge căutarea"
-                  onClick={() => setQuery("")}
-                >
-                  <X size={16} />
-                </button>
-              )}
+              <button
+                aria-label="Șterge și închide căutarea"
+                onClick={() => {
+                  setQuery("");
+                  setSearch("");
+                  setSearchOpen(false);
+                }}
+              >
+                <X size={16} />
+              </button>
             </label>
-            <select
-              aria-label="Filtrează după acces"
-              value={visibility}
-              onChange={(event) => {
-                setVisibility(event.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Orice acces</option>
-              <option value="private">Doar eu</option>
-              <option value="family">Familia mea</option>
-              <option value="selected">Persoane alese</option>
-            </select>
-            <button
-              className="icon-button"
-              aria-label="Actualizează amintirile"
-              disabled={loading}
-              onClick={() => setRevision((value) => value + 1)}
-            >
-              <RefreshCw size={18} />
-            </button>
-          </div>
+          )}
           <div className="memory-filter-row">
             <div className="memory-kind-filter" aria-label="Tip de amintire">
               {[
@@ -238,18 +244,54 @@ export function Memories({
                 </button>
               ))}
             </div>
-            <label className="memory-archive-filter">
-              <input
-                type="checkbox"
-                checked={archived}
-                onChange={(event) => {
-                  setArchived(event.target.checked);
-                  setPage(1);
-                }}
-              />
-              Arhivate
-            </label>
+            <button
+              className={`icon-button memory-filter-toggle${visibility || archived ? " active" : ""}`}
+              aria-label="Filtre pentru amintiri"
+              aria-expanded={filtersOpen}
+              aria-controls="memory-filters"
+              onClick={() => setFiltersOpen((value) => !value)}
+            >
+              <SlidersHorizontal size={19} aria-hidden="true" />
+            </button>
           </div>
+          {filtersOpen && (
+            <div className="memory-options" id="memory-filters">
+              <div className="memory-toolbar">
+                <select
+                  aria-label="Filtrează după acces"
+                  value={visibility}
+                  onChange={(event) => {
+                    setVisibility(event.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Orice acces</option>
+                  <option value="private">Doar eu</option>
+                  <option value="family">Familia mea</option>
+                  <option value="selected">Persoane alese</option>
+                </select>
+                <button
+                  className="icon-button"
+                  aria-label="Actualizează amintirile"
+                  disabled={loading}
+                  onClick={() => setRevision((value) => value + 1)}
+                >
+                  <RefreshCw size={18} />
+                </button>
+              </div>
+              <label className="memory-archive-filter">
+                <input
+                  type="checkbox"
+                  checked={archived}
+                  onChange={(event) => {
+                    setArchived(event.target.checked);
+                    setPage(1);
+                  }}
+                />
+                Arhivate
+              </label>
+            </div>
+          )}
           {notice && (
             <p className="notice" role="status">
               {notice}
@@ -259,7 +301,7 @@ export function Memories({
             aria-label={archived ? "Amintiri arhivate" : "Lista amintirilor"}
             aria-busy={loading}
           >
-            {loading ? (
+            {loading && !items.length ? (
               <p role="status">Se încarcă amintirile…</p>
             ) : error ? (
               <div className="empty">
@@ -309,6 +351,7 @@ export function Memories({
                   <button
                     className="moment-card"
                     key={moment.id}
+                    aria-label={`Deschide amintirea ${moment.title}`}
                     onClick={() => setView({ mode: "detail", moment })}
                   >
                     {moment.photo_status && (
@@ -319,40 +362,42 @@ export function Memories({
                         placeholder={<Image size={28} aria-hidden="true" />}
                       />
                     )}
-                    <span className="moment-card-top">
-                      <span className="moment-kind">
-                        {moment.kind === "moment" ? (
-                          <BookHeart size={20} />
-                        ) : (
-                          <StickyNote size={20} />
-                        )}
-                        {momentKinds[moment.kind]}
+                    <div className="moment-card-content">
+                      <span className="moment-card-top">
+                        <span className="moment-kind">
+                          {moment.kind === "moment" ? (
+                            <BookHeart size={20} />
+                          ) : (
+                            <StickyNote size={20} />
+                          )}
+                          {momentKinds[moment.kind]}
+                        </span>
+                        <time dateTime={moment.occurred_on}>
+                          {dateLabel(moment.occurred_on, {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </time>
                       </span>
-                      <time dateTime={moment.occurred_on}>
-                        {dateLabel(moment.occurred_on, {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </time>
-                    </span>
-                    <strong>{moment.title}</strong>
-                    {moment.body && (
-                      <span className="moment-excerpt">{moment.body}</span>
-                    )}
-                    <span className="moment-card-bottom">
-                      <span>
-                        {moment.visibility !== "family" ? (
-                          <LockKeyhole size={15} />
-                        ) : (
-                          <Users size={15} />
-                        )}
-                        {visibilityLabel[moment.visibility]}
+                      <strong>{moment.title}</strong>
+                      {moment.body && (
+                        <span className="moment-excerpt">{moment.body}</span>
+                      )}
+                      <span className="moment-card-bottom">
+                        <span>
+                          {moment.visibility !== "family" ? (
+                            <LockKeyhole size={15} />
+                          ) : (
+                            <Users size={15} />
+                          )}
+                          {visibilityLabel[moment.visibility]}
+                        </span>
+                        <span className="moment-card-author">
+                          {moment.owner_name}
+                        </span>
                       </span>
-                      <span className="moment-card-author">
-                        {moment.owner_name}
-                      </span>
-                    </span>
+                    </div>
                   </button>
                 ))}
               </div>
