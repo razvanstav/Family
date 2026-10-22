@@ -2,17 +2,18 @@
 
 Actualizat: 22 octombrie 2026, Europe/Bucharest.
 
-- **Modul activ:** Interfață, **H2 — Acasă după noua referință, în lucru**. Cererea nouă a utilizatorului este apropierea treptată a MVP-ului de imaginea furnizată, pagină cu pagină, folosind produsul existent. Începem cu Acasă; nu începem simultan redesenarea celorlalte pagini.
-- **Rezultat urmărit:** acces rapid la module existente, amintiri cu fotografii reale, secțiuni compacte, activități și calendar funcționale; adaptare desktop/mobil, Helvetica și paleta caldă. Fără statistici, ratinguri, căutare globală ori module fictive.
+- **Modul activ:** Interfață, **H2 — Acasă implementat, verificat local; așteaptă feedback vizual**. Ultima instrucțiune explicită: terminăm un singur layout, îl arătăm utilizatorului și așteptăm feedback înainte de următorul. Nu începe altă pagină la reluare fără acest feedback.
+- **Rezultat:** acces rapid la Amintiri/Bucătărie/Documente/Calendar, amintire cu fotografie privată reală și note compacte, categorii/documente existente, evenimente/remindere/calendar. Desktop în două coloane, mobil 390 px; Helvetica, crem și iconuri colorate. Noua referință este `artifacts/design-reference-family-mvp.png`, salvată în AGENTS și [Interfață](modules/interface.md#referință-pe-pagini--22-octombrie-2026). Navigația și prima pagină rămân cele existente. Fără numere, ratinguri sau module fictive.
 - **Pas salvat înaintea schimbării priorității:** Documente D4a implementat; expirare opțională la upload și editare în detaliu, cu versiune. Migrația aplicată pe `memoria`, fără reset/seed. Build, Prettier, Pint, lint/rută și adăugare/ștergere dată pe document existent verificate desktop. Acceptarea rămasă este în [fișa Documente](modules/documents.md#d4a--expirarea-independentă-22-octombrie-2026); nu este închis D4 și nu există încă integrare Calendar.
 - **Pas anterior:** AM1–AM3 implementate, cu fluxurile demo locale desktop/mobil. Rezultatele și limitele de acceptare sunt în [Amintiri](modules/memory.md). Nu se reconstruiește cronologia.
-- **Verificări H2:** neîncepute. Fără teste noi sau suite automate, conform priorității anterioare; build, lint și probe manuale pentru fluxul modificat.
+- **Verificări H2:** build TypeScript/Vite, Prettier, Pint, lint PHP și diff check trecute. Browser desktop: fotografie încărcată și detaliul complet deschis din card. Mobil 390 px: compoziție, deschidere formular Calendar și schimbarea Popescu → Ionescu → Popescu cu stare goală și date separate. API cu sesiuni demo independente: Ana 2 amintiri/1 fotografie, Mihai 1 notă de familie/zero private, Ionescu zero amintiri Popescu; accesul Mihai la Ionescu dă 404. Fără teste noi/suite automate. Capturi ignorate `.runtime/h2-home-desktop.png` și `.runtime/h2-home-mobile.png`.
+- **Limite H2:** nu s-au provocat separat erori de rețea, revocare/grant retras în timpul citirii cardului sau limita peste trei amintiri; nu s-au verificat dispozitive fizice. Acceptarea vizuală aparține utilizatorului. Probe și contracte în fișa Interfață; nu s-a reluat integral acceptarea AM2/AM3.
 - **Livrare:** commituri locale pe `codex/documente-design`. Push-ul anterior a fost respins de verificarea automată de aprobare; lipsește acordul explicit de trimitere către GitHub. Cererea de continuare sau de redesign nu autorizează implicit push. Nu reîncerca.
 - **Blocaje:** numai publicarea remote; dezvoltarea și demonstrația locală pot continua.
 
 ## Prima acțiune la reluare
 
-Continuă H2 în [Interfață](modules/interface.md), după cererea vizuală nouă. Păstrează funcțiile reale existente și deschide resursele prin operațiile canonice autorizate. Înainte de încheiere salvează referința în repository și actualizează AGENTS/fișa/ROADMAP cu prioritatea.
+Așteaptă și aplică feedbackul utilizatorului pe **Acasă**, în [Interfață H2](modules/interface.md#referință-pe-pagini--22-octombrie-2026). Pagina este lăsată deschisă la http://127.0.0.1:8000/app/. Nu începe automat Bucătărie, Amintiri sau celelalte layouturi. După confirmarea acestui layout se alege următorul, câte unul. D4a/C2 și instalarea Linux nu redevin automat prioritare.
 
 Ordinea meniului rămâne Acasă → Familia mea → Documente → Bucătărie → Amintiri → Calendar, identică desktop/mobil; Acasă implicită. Bucătărie are și `artifacts/kitchen-reference.png`. Pregătirea Linux [O2a](../ops/SETUP.md#o2a--configurații-pentru-instalator) nu este noua prioritate.
 

@@ -20,7 +20,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | --- | --- | --- |
 | Autentificare | Sesiune, CSRF, login/logout și cont din invitație; recuperarea parolei și emailul rămân de construit | [Autentificare](modules/identity.md) |
 | Platformă | Izolare PostgreSQL, media locală, antivirus și audit; restul se construiește la nevoie | [Platformă](modules/platform.md) |
-| Interfață | Stiluri, shell, dialog și API comune; se verifică în fiecare modul | [Interfață](modules/interface.md) |
+| Interfață | H2 Acasă după noua referință, implementat și verificat local; așteaptă feedback vizual înainte de alt layout | [Interfață](modules/interface.md) |
 | Căutare și drepturi asupra datelor | Căutare locală în Documente; căutarea globală, exportul și ștergerea sunt planificate | [Căutare și date](modules/data.md) |
 | Operare | Pornire locală și configurații O2a pentru predare Linux; instalarea staging, CI și restaurarea rămân deschise | [Operare](modules/operations.md) |
 | Aplicații mobile | Planificate după stabilizarea web; fără PWA offline sau aplicații native actuale | [Mobil](modules/mobile.md) |

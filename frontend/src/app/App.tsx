@@ -49,6 +49,7 @@ export default function App() {
     null,
   );
   const [account, setAccount] = useState(false);
+  const [memoryTarget, setMemoryTarget] = useState<string | null>(null);
   const [calendarRevision, setCalendarRevision] = useState(0);
   const [calendarTarget, setCalendarTarget] = useState<CalendarRequest | null>(
     null,
@@ -83,6 +84,7 @@ export default function App() {
     setPage("home");
     setDocumentTarget(null);
     setCalendarTarget(null);
+    setMemoryTarget(null);
     setAccount(false);
     setError("");
     setSessionNotice(false);
@@ -304,6 +306,7 @@ export default function App() {
                   setFamilyId(e.target.value);
                   setCalendarTarget(null);
                   setDocumentTarget(null);
+                  setMemoryTarget(null);
                 }}
               >
                 {session.families.map((f) => (
@@ -352,6 +355,11 @@ export default function App() {
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 onExpired={() => void refresh()}
+                onMemories={(id) => {
+                  setMemoryTarget(id ?? null);
+                  setPage("memory");
+                }}
+                onKitchen={() => setPage("kitchen")}
                 onDocuments={(request) => {
                   setDocumentTarget(request);
                   setPage("documents");
@@ -382,6 +390,8 @@ export default function App() {
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 actorId={session.user.id}
+                requestedMoment={memoryTarget}
+                onMomentOpened={() => setMemoryTarget(null)}
                 onExpired={() => void refresh()}
               />
             ) : page === "calendar" ? (

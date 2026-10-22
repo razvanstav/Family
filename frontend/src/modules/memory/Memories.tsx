@@ -29,10 +29,14 @@ type View =
 export function Memories({
   family,
   actorId,
+  requestedMoment,
+  onMomentOpened,
   onExpired,
 }: {
   family: Family;
   actorId: number;
+  requestedMoment: string | null;
+  onMomentOpened: () => void;
   onExpired: () => void;
 }) {
   const base = `/families/${family.id}/moments`;
@@ -50,6 +54,27 @@ export function Memories({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [view, setView] = useState<View>(null);
+
+  useEffect(() => {
+    if (!requestedMoment) return;
+    const controller = new AbortController();
+    api<Moment>(`${base}/${requestedMoment}`, { signal: controller.signal })
+      .then((moment) => {
+        if (controller.signal.aborted) return;
+        setView({ mode: "detail", moment });
+        onMomentOpened();
+      })
+      .catch((e: unknown) => {
+        if (controller.signal.aborted) return;
+        setNotice(
+          e instanceof ApiError && [401, 403, 404, 419].includes(e.status)
+            ? "Amintirea nu mai este disponibilă sau nu mai ai acces."
+            : "Nu am putut deschide amintirea. Reîncearcă din listă.",
+        );
+        onMomentOpened();
+      });
+    return () => controller.abort();
+  }, [base, requestedMoment]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

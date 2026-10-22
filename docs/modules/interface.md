@@ -1,6 +1,6 @@
 # Interfață comună
 
-Stare: direcția vizuală și componentele comune există. H1 Acasă este implementat și verificat local la 21 octombrie 2026, în limitele consemnate mai jos. Fișa se aplică și fluxului UI modificat în fiecare etapă; nu introduce o redesenare generală.
+Stare: H1 Acasă este implementat și verificat local la 21 octombrie 2026, în limitele consemnate mai jos. La 22 octombrie utilizatorul a cerut explicit apropierea treptată a MVP-ului de noua referință. H2 Acasă este implementat, cu verificările locale consemnate mai jos; acceptarea vizuală așteaptă feedbackul utilizatorului. Celelalte pagini nu sunt redesenate în acest pas.
 
 ## Fișiere relevante
 
@@ -8,10 +8,39 @@ Stare: direcția vizuală și componentele comune există. H1 Acasă este implem
 - Shell, context de familie și autentificare: `frontend/src/app/App.tsx`.
 - Dialog accesibil: `frontend/src/shared/Modal.tsx`.
 - Client API: `frontend/src/shared/api.ts`; se aliniază rutelor efectiv implementate.
-- Referință principală de structură: [mock-up ales](../../artifacts/design-reference-layout.jpeg). Paletă și atmosferă: `artifacts/design-reference-warm.png`; referință secundară: `artifacts/design-reference.png`.
+- Referință principală: [MVP de familie — 22 octombrie](../../artifacts/design-reference-family-mvp.png), copia imaginii furnizate de utilizator. [Mock-upul anterior](../../artifacts/design-reference-layout.jpeg) rămâne referință secundară de structură. Paletă și atmosferă: `artifacts/design-reference-warm.png`.
 - Bucătărie are și [referința specifică aleasă](../../artifacts/kitchen-reference.png): rețete în interiorul Bucătăriei, fotografii, carduri și etichete compacte; funcțiile se adaugă numai când sunt reale. K3a adaugă secțiunea „Mese”, zile, vot binar și comentariu personal, la cererea utilizatorului. Implementare și probe: [Bucătărie](kitchen.md).
 
-## Referință pe ecrane — 21 octombrie 2026
+## Referință pe pagini — 22 octombrie 2026
+
+Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helvetica, paleta caldă și regulile de text direct; preluăm compoziția și ritmul din imagine. Nu introducem sloganul, statistici, ratinguri, favorite, planificare/cumpărături ori căutare globală fără funcționalitate reală. Navigația existentă și pagina implicită rămân cele stabilite.
+
+**Ritm explicit:** finalizăm și arătăm un singur layout, așteptăm feedback, apoi alegem pagina următoare. Nu porni automat Bucătărie după H2.
+
+| Pagină | Adaptare | Stare |
+| --- | --- | --- |
+| Acasă — H2, pas curent | Acces rapid la module reale; amintire cu fotografie și dată; note compacte; documente/categorii existente; evenimente și remindere reale; calendar în coloana laterală desktop. | Implementat, probe locale mai jos; așteaptă feedback vizual. |
+| Bucătărie | Fotografii mari pentru rețete, selecții compacte, rânduri pentru mesele recente; versiunea folosită și voturile existente rămân intacte. | Candidat după feedbackul pentru Acasă; neînceput în H2. |
+| Amintiri | Fotografii și liste compacte, continuitate cu noul card Acasă; momente/note și cronologia rămân funcționale. | Planificat după Bucătărie. |
+| Documente / Familia mea / Calendar | Aceeași densitate, borduri și iconuri, cu păstrarea politicilor, stărilor și controalelor existente. | Pagini ulterioare, fără audit/redesenare simultană. |
+| Animale / Mașini | Structura profilului, următoarelor activități și istoricului din imagine se folosește când modulele AN/V există. | Module de produs planificate; fără pagini sau numere fictive. |
+
+### H2 — Contractul Acasă
+
+- Endpointul Home păstrează documentele, calendarul și reminderele H1 și adaugă `memories`, maximum trei rezumate active, autorizate de `Memory\Application\RecentMoments` prin `MomentAccess`. Un singur query cu join media; fără granturi, ID media, cale de stocare ori text integral. Data rămâne calendaristică, extrasul are maximum 200 de caractere plus elipsă.
+- Cardul principal preferă fotografia gata din cele trei amintiri autorizate; în lipsa ei arată textul existent. Fotografia folosește ruta privată canonică și `PrivatePhoto`; eșecul încărcării are fallback. Notele rămase sunt rânduri compacte, fără carusel sau indicatori fictivi.
+- App coordonează accesul rapid și deschiderea amintirii prin ID; Home nu importă ecranul Memory. Amintiri citește detaliul canonic complet înainte de deschidere, deoarece rezumatul nu conține people/grants/version. Schimbarea familiei/contului golește ținta; modulele se remontează cu cheia existentă. Eroarea Home golește rezumatele încărcate.
+- Categorii, documente recente, creare eveniment, remindere și calendar rămân accesibile. Nu sunt implementate statistici ale modulelor, module AN/V, recomandări sau căutare globală. Shellul și ordinea navigației rămân cele existente.
+
+### Verificare H2 — 22 octombrie 2026
+
+- Build TypeScript/Vite, Prettier, Pint și lint PHP trecute. Fără dependențe noi; nu s-au creat teste și nu s-au rulat suite automate, conform priorității utilizatorului. `RecentMoments` nu schimbă sursele sau indexul AM3.
+- Browser desktop: fotografia privată se încarcă din ruta canonică; cardul deschide detaliul complet în Amintiri. Desktop și previzualizare 390 px: acces rapid, card foto și notă, categorii/documente, calendar și stările goale; pe mobil s-a deschis formularul Calendar din Acasă, fără a salva un eveniment nou.
+- API local cu sesiuni demo independente: Ana vede două amintiri (una cu fotografie); Mihai vede numai nota de familie, fără amintirea privată. Familia Ionescu nu primește amintirile Popescu; requestul Mihai către Ionescu dă 404. Rezumatele expun exclusiv `id,title,kind,excerpt,occurred_on,visibility,photo_status`.
+- Popescu → Ionescu → Popescu verificat și în previzualizarea mobilă: Acasă rămâne activă, Ionescu arată starea goală pentru amintiri și propriul document, apoi revin datele Popescu. Capturi ignorate: `.runtime/h2-home-desktop.png`, `.runtime/h2-home-mobile.png`. Nu s-au creat evenimente sau schimbat amintiri pentru noul layout.
+- Rămân neexercitate: revocare/grant retras în timp ce cardul Home este deschis, erori de rețea provocate, dispozitive fizice și limite cu mai mult de trei amintiri. Refolosirea politicii/media existente nu este prezentată ca repetarea întregii acceptări AM2/AM3. Acceptarea vizuală așteaptă feedback.
+
+## Referință secundară pe ecrane — 21 octombrie 2026
 
 Decizie de design salvată, nu funcționalitate deja implementată. Numerotare de la stânga la dreapta: 1–4 sus, 5–8 jos. Se aplică incremental când lucrăm la ecranul respectiv, păstrând Helvetica, crem, verde închis și iconurile semantice existente. Nu se copiază accentul albastru al aplicației imobiliare.
 

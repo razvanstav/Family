@@ -111,6 +111,10 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 - Rămân neexercitate în AM3 ștergerea fizică a sursei, eșecul forțat de handler/rebuild și rollbackul lui, concurența a doi workeri, schemă nouă, limitele de 200 de surse ascunse, volum mare și revocarea completă a apartenenței. Nu sunt declarate acceptate doar prin reutilizarea infrastructurii.
 - Apariția sau mutarea unei surse în cronologie este eventual consistentă (worker la 15 s plus polling UI). Politica se verifică live la fiecare citire; aplicația nu poate retrage copii salvate anterior. Publicarea/deploy-ul și acceptarea completă a MVP-ului rămân separate de această demonstrație locală.
 
+## Consum Acasă — H2, 22 octombrie 2026
+
+`Application/RecentMoments::forHome` expune maximum trei rezumate active prin politica `MomentAccess`, cu titlu, tip, extras de 200 de caractere, dată, acces și starea fotografiei. Un singur query cu join media; fără granturi, people, versiuni sau chei media în rezumat. Home nu citește tabelele Memory. La deschiderea din Acasă, App transmite ID-ul către Amintiri, care citește detaliul canonic complet; fotografia folosește ruta privată existentă. Modelul AM1–AM3 și indexul cronologiei rămân neschimbate. Probe H2 și limite: [Interfață](interface.md#verificare-h2--22-octombrie-2026).
+
 ## Următorul pas
 
 Închide verificările restante AM3 înainte de a marca acceptarea integrală: sursă eliminată, eșec de reconciliere/rebuild, pagini rare și acces retras înaintea livrării. Păstrează prioritatea demonstrației MVP și acceptarea restantă AM1/AM2; nu începe automat alt modul și nu modifica versiunile istorice din Bucătărie.

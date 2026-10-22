@@ -11,7 +11,9 @@ Preferință explicită a utilizatorului, valabilă pentru întregul proiect și
 
 ## Direcție vizuală
 
-Referința principală pentru organizarea ecranelor este acum `artifacts/design-reference-layout.jpeg`, mock-upul ales de utilizator la 21 octombrie 2026. Descompunerea fiecărui ecran și adaptarea pentru desktop sunt în `docs/modules/interface.md`. Păstrează paleta caldă de familie din `artifacts/design-reference-warm.png`: crem, carduri deschise, verde închis și iconițe colorate. `artifacts/design-reference.png` rămâne o referință secundară.
+Referința principală este acum `artifacts/design-reference-family-mvp.png`, imaginea cu Acasă, Bucătărie, Animale și Mașini furnizată de utilizator la 22 octombrie 2026. Apropiem produsul existent treptat, pagină cu pagină: acces rapid compact, fotografii personale mari, liste de activități cu iconuri colorate, etichete discrete și carduri neutre. Ordinea și starea fiecărui ecran sunt în `docs/modules/interface.md`. `artifacts/design-reference-layout.jpeg` rămâne referință secundară de structură; `artifacts/design-reference-warm.png` completează paleta crem și verde închis. Nu copia sloganurile, ratingurile, contoarele ori funcțiile din imagine înainte să existe date și acțiuni reale. Helvetica și regulile de text direct rămân valabile.
+
+- La redesenare, termină și verifică **un singur layout**, arată-l utilizatorului și așteaptă feedbackul său înainte de următorul. Cerere explicită la 22 octombrie 2026; nu modifica automat 4–6 pagini în aceeași trecere.
 
 - Preia din noul mock-up containerele bine separate, fotografiile, etichetele compacte, filtrele, rândurile de listă și gruparea calendarului/reminderelor. Dashboardul desktop folosește aceeași ierarhie, adaptată la o zonă principală și o coloană pentru calendar și remindere, când acestea au funcționalitate reală.
 - Notificările au acces din antet și stări citit/necitit când sunt implementate; nu adăuga indicatori fictivi. Nu există mesagerie: exclude chatul, conversațiile, compunerea mesajelor, apelurile și statusul online din mock-up. Nu prelua textele imobiliare, prețurile, ratingurile ori funcții fără corespondent în aplicație.

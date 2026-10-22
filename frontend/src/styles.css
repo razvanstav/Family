@@ -464,6 +464,11 @@ main {
   letter-spacing: -0.7px;
   line-height: 1.2;
 }
+.page-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .search {
   display: flex;
   align-items: center;
@@ -1089,17 +1094,17 @@ main {
   .modal.wide {
     max-width: 100%;
   }
-  .page-heading > .button {
+  :is(.page-heading, .page-heading-actions) > .button {
     width: 46px;
     height: 46px;
     padding: 0;
     flex-shrink: 0;
     border-radius: 14px;
   }
-  .page-heading > .button > span {
+  :is(.page-heading, .page-heading-actions) > .button > span {
     display: none;
   }
-  .page-heading > .button > svg {
+  :is(.page-heading, .page-heading-actions) > .button > svg {
     width: 22px;
     height: 22px;
   }
