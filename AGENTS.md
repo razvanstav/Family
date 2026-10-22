@@ -3,7 +3,7 @@
 Preferință explicită a utilizatorului, valabilă pentru întregul proiect și pentru toate dezvoltările viitoare:
 
 - Folosește titluri, etichete și butoane directe, care numesc obiectul sau acțiunea: „Adaugă document”, „Salvează”, „Acces”.
-- Nu adăuga mini-titluri, subtitluri decorative, sloganuri sau microdescrieri care repetă ce este deja evident din titlu, buton ori context.
+- Elimină mini-titlurile, subtitlurile decorative, sloganurile, textele ajutătoare redundante și etichetele secundare inutile. Dacă un ecran are nevoie de ele ca să fie înțeles, corectează structura, gruparea controalelor și ierarhia vizuală; nu compensa un layout neclar cu text suplimentar.
 - Evită formule precum „Un document de păstrat” și „Adaugă-l în spațiul familiei. Accesul începe cu tine.” în formulare și alte fluxuri funcționale.
 - Adaugă text ajutător numai dacă oferă informație necesară pentru decizie sau utilizare: restricții reale, formate și limite, erori, stări ori consecințe importante privind accesul și revocarea. Spune informația concret, o singură dată, lângă controlul relevant.
 - Nu elimina etichetele câmpurilor, numele accesibile ale controalelor sau explicațiile necesare despre permisiuni pentru a simplifica vizual interfața.
@@ -32,6 +32,7 @@ Referința principală pentru organizarea ecranelor este acum `artifacts/design-
 
 Reguli obligatorii la implementarea sau modificarea oricărui modul:
 
+- **Decizii pentru UX și DX:** în limitele sarcinii, alege soluții care fac interfața mai ușor de folosit și codul mai clar și mai ușor de întreținut. Preferă reutilizarea convențiilor existente și schimbările strict necesare; păstrează comportamentele, accesibilitatea și contractele existente, cu verificări proporționale pentru prevenirea regresiilor.
 - **Fără interogări N+1 în liste:** în metodele de listare (`index`), adu câmpurile asociate (de exemplu `users.name as owner_name`) prin `JOIN` în query-ul de bază, nu prin `DB::table(...)->value(...)` apelat în `.map()` / `payload()` pentru fiecare rând. Calificați coloanele ambigue (`tabela.id`) după `JOIN`.
 - **Fără parsări sau validări duble:** nu instanția de mai multe ori același `DateTimeImmutable` în același helper și nu combina reguli de validare redundante când un `regex` sau o regulă acoperă deja formatul.
 - **Fără requesturi HTTP redundante la deschiderea ferestrelor:** dacă endpointul de listă returnează deja payloadul complet al elementului (inclusiv `version`), inițializează fereastra de detaliu/editare direct din elementul deja încărcat în memorie. Fă `GET /{id}` suplimentar doar când detaliul conține date absente din listă (ex. `grants` la documente) sau când utilizatorul cere reîncărcarea după un conflict (`409`/`412`).
