@@ -12,8 +12,14 @@ final class FamilyController
     public function members(Request $request, string $family)
     {
         return DB::table('family_memberships as m')->join('users as u', 'u.id', '=', 'm.user_id')
+            ->leftJoin('member_profiles as p', function ($join) {
+                $join->on('p.family_id', '=', 'm.family_id')->on('p.membership_id', '=', 'm.id');
+            })->leftJoin('media_assets as photo', function ($join) {
+                $join->on('photo.family_id', '=', 'm.family_id')->on('photo.id', '=', 'p.photo_asset_id');
+            })
             ->where('m.family_id', $family)->whereNull('m.revoked_at')->orderBy('u.name')
-            ->get(['m.id', 'm.user_id', 'm.role', 'u.name']);
+            ->select('m.id', 'm.user_id', 'm.role', 'u.name', 'photo.status as photo_status')
+            ->selectRaw("coalesce(p.version, 0) as photo_version, extract(year from age((now() at time zone 'Europe/Bucharest')::date, p.birth_date))::integer as age")->get();
     }
 
     public function revoke(Request $request, string $family, string $member)

@@ -12,7 +12,7 @@ import {
   Mail,
   Copy,
   MoreHorizontal,
-  FolderHeart,
+  ChevronRight,
 } from "lucide-react";
 import {
   api,
@@ -22,6 +22,8 @@ import {
   type Invitation,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
+import { MemberProfile } from "./MemberProfile";
+import { PrivatePhoto } from "../../shared/PrivatePhoto";
 
 const roleLabel = (role: string) =>
   role === "owner"
@@ -87,6 +89,7 @@ export function FamilyPage({
   onDocuments: (member: Member) => void;
 }) {
   const [members, setMembers] = useState<Member[]>([]);
+  const [profileMember, setProfileMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -191,6 +194,21 @@ export function FamilyPage({
       .toLocaleLowerCase("ro")
       .includes(search.trim().toLocaleLowerCase("ro")),
   );
+  if (profileMember)
+    return (
+      <MemberProfile
+        key={profileMember.id}
+        familyId={familyId}
+        member={profileMember}
+        members={members}
+        onBack={() => {
+          setProfileMember(null);
+          void load();
+        }}
+        onDocuments={onDocuments}
+        onExpired={onExpired}
+      />
+    );
   return (
     <div className="family-page">
       <section className="page-heading">
@@ -291,30 +309,44 @@ export function FamilyPage({
                   className={`family-member member-${member.role}`}
                   key={member.id}
                 >
-                  <div
-                    className={`family-portrait portrait-${member.role}`}
-                    aria-hidden="true"
-                  >
-                    <span>{initials(member.name)}</span>
-                  </div>
                   <button
-                    className="family-member-info family-document-link"
-                    aria-label={`Documente: ${member.name}`}
-                    onClick={() => onDocuments(member)}
+                    className="family-member-info family-profile-link"
+                    aria-label={`Profil: ${member.name}`}
+                    onClick={() => setProfileMember(member)}
                   >
-                    <span className="family-member-name" title={member.name}>
-                      {member.name}
+                    <div
+                      className={`family-portrait portrait-${member.role}`}
+                      aria-hidden="true"
+                    >
+                      {member.photo_status === "ready" ? (
+                        <PrivatePhoto
+                          src={`/api/v1/families/${familyId}/members/${member.id}/profile/photo?v=${member.photo_version}`}
+                          status={member.photo_status}
+                          className="family-member-photo"
+                          placeholder={<Users size={23} />}
+                          alt=""
+                        />
+                      ) : (
+                        <span>{initials(member.name)}</span>
+                      )}
+                    </div>
+                    <span className="family-member-label">
+                      <span className="family-member-name" title={member.name}>
+                        {member.name}
+                      </span>
+                      <span className="family-role">
+                        <RoleIcon
+                          className={`role-${member.role}`}
+                          size={15}
+                          aria-hidden="true"
+                        />
+                        {member.age != null && member.age < 18
+                          ? `Copil · ${member.age} ani`
+                          : roleLabel(member.role)}
+                      </span>
                     </span>
-                    <span className="family-role">
-                      <RoleIcon
-                        className={`role-${member.role}`}
-                        size={15}
-                        aria-hidden="true"
-                      />
-                      {roleLabel(member.role)}
-                    </span>
-                    <FolderHeart
-                      className="family-document-icon"
+                    <ChevronRight
+                      className="family-profile-icon"
                       size={18}
                       aria-hidden="true"
                     />

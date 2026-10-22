@@ -180,7 +180,8 @@ input[type="radio"] {
   text-decoration: none;
   border: 1px solid transparent;
 }
-.primary {
+.primary,
+.icon-button.primary {
   background: #38654d;
   color: #fff;
   border-color: #38654d;

@@ -319,18 +319,41 @@
   border-color: var(--accent);
   color: white;
 }
-.family-document-link {
+.family-profile-link {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   min-height: 44px;
   padding: 0 28px 0 0;
   text-align: left;
   background: transparent;
 }
-.family-document-icon {
+.family-member-label {
+  min-width: 0;
+  flex: 1;
+}
+.family-profile-icon {
   position: absolute;
   right: 0;
   top: calc(50% - 9px);
 }
-.family-document-link:hover .family-member-name {
+.family-profile-link:hover .family-member-name {
   text-decoration: underline;
+}
+.family-member-photo,
+.family-member-photo img,
+.family-member-photo-empty {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+.family-member-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.family-member-photo-empty > span {
+  display: none;
 }

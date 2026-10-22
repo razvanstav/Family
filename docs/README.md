@@ -6,7 +6,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 
 | Modul | Situație la planificare | Fișă |
 | --- | --- | --- |
-| Familie | Membri, invitații, roluri/revocare și FD1: dosar comun și documente pe persoană | [Familie](modules/families.md) |
+| Familie | FP1: profil personal, fotografie, sănătate/școală/activități, acces privat/familie și părinți după vârstă; FD1 și administrarea membrilor rămân existente | [Familie](modules/families.md) |
 | Documente | În Familia mea → Documente; dosare pe persoană și comune, cu upload/acces/descărcare existente | [Documente](modules/documents.md) |
 | Bucătărie | Rețete, versiuni, mese, vot și acces implementate; KH1 mobil pregătit pentru feedback | [Bucătărie](modules/kitchen.md) |
 | Amintiri | MH1 mobil pregătit pentru feedback; AM1–AM3 implementate, acceptarea completă a fluxurilor rămâne deschisă | [Amintiri](modules/memory.md) |
@@ -20,7 +20,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | --- | --- | --- |
 | Autentificare | Sesiune, CSRF, login/logout și cont din invitație; recuperarea parolei și emailul rămân de construit | [Autentificare](modules/identity.md) |
 | Platformă | Izolare PostgreSQL, media locală, antivirus și audit; restul se construiește la nevoie | [Platformă](modules/platform.md) |
-| Interfață | H2 Acasă, KH1 Bucătărie, FD1, MH1 Amintiri și CH1 Calendar; cinci secțiuni principale, Documente în Familia mea | [Interfață](modules/interface.md) |
+| Interfață | FP1 profilul membrului pregătit pentru feedback; H2/KH1/FD1/MH1/CH1 existente, cinci secțiuni principale | [Interfață](modules/interface.md) |
 | Căutare și drepturi asupra datelor | Căutare locală în Documente; căutarea globală, exportul și ștergerea sunt planificate | [Căutare și date](modules/data.md) |
 | Operare | Pornire locală și configurații O2a pentru predare Linux; instalarea staging, CI și restaurarea rămân deschise | [Operare](modules/operations.md) |
 | Aplicații mobile | Planificate după stabilizarea web; fără PWA offline sau aplicații native actuale | [Mobil](modules/mobile.md) |

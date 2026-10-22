@@ -11,6 +11,7 @@ use App\Modules\Memory\Http\MomentController;
 use App\Modules\Memory\Http\TimelineController;
 use App\Platform\Families\FamilyController;
 use App\Platform\Families\InvitationController;
+use App\Platform\Families\MemberProfileController;
 use App\Platform\Families\TenantContext;
 use App\Platform\Identity\PrivateResponse;
 use App\Platform\Identity\SessionController;
@@ -62,6 +63,17 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::post('/calendar-items/{event}/archive', [CalendarController::class, 'archive'])->whereUuid('event');
         Route::post('/calendar-items/{event}/restore', [CalendarController::class, 'restore'])->whereUuid('event');
         Route::get('/members', [FamilyController::class, 'members']);
+        Route::prefix('/members/{member}/profile')->whereUuid('member')->group(function () {
+            Route::get('/', [MemberProfileController::class, 'show']);
+            Route::patch('/', [MemberProfileController::class, 'configure'])->middleware('throttle:20,1');
+            Route::get('/photo', [MemberProfileController::class, 'photo']);
+            Route::post('/photo', [MemberProfileController::class, 'uploadPhoto'])->middleware('throttle:20,1');
+            Route::post('/photo/scan', [MemberProfileController::class, 'retryPhoto'])->middleware('throttle:10,1');
+            Route::get('/entries', [MemberProfileController::class, 'entries']);
+            Route::post('/entries', [MemberProfileController::class, 'storeEntry'])->middleware('throttle:20,1');
+            Route::patch('/entries/{entry}', [MemberProfileController::class, 'updateEntry'])->whereUuid('entry')->middleware('throttle:20,1');
+            Route::post('/entries/{entry}/archive', [MemberProfileController::class, 'archiveEntry'])->whereUuid('entry')->middleware('throttle:20,1');
+        });
         Route::patch('/members/{member}/role', [FamilyController::class, 'updateRole'])->whereUuid('member')->middleware('throttle:20,1');
         Route::get('/invitations', [InvitationController::class, 'index']);
         Route::post('/invitations', [InvitationController::class, 'store'])->middleware('throttle:10,1');

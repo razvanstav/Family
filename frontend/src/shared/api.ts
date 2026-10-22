@@ -14,6 +14,9 @@ export type Member = {
   user_id: number;
   name: string;
   role: "owner" | "adult" | "limited";
+  age?: number | null;
+  photo_status?: "ready" | "quarantine" | "rejected" | null;
+  photo_version?: number;
 };
 export type Invitation = {
   id: string;
