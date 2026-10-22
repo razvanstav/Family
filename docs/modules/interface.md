@@ -1,6 +1,6 @@
 # Interfață comună
 
-Stare: H2 Acasă, KH1 Bucătărie, FD1, MH1 Amintiri și CH1 Calendar sunt implementate local. CH1 așteaptă feedback după verificarea mobilă limitată descrisă în fișa Calendar. Navigația rămâne cu cinci secțiuni, Documente în Familia mea. Planificatorul rămâne schiță.
+Stare: H2 Acasă, KH1 Bucătărie, FD1, MH1 Amintiri și CH1 Calendar sunt implementate local. CH1 are acum șase evenimente demo cerute explicit, cu luna și agenda verificate pe mobil; așteaptă feedback. Navigația rămâne cu cinci secțiuni, Documente în Familia mea. Planificatorul rămâne schiță.
 
 ## Fișiere relevante
 
@@ -24,7 +24,7 @@ Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helve
 | Bucătărie — KH1 | Rețete cu fotografii în rând derulabil pe mobil, căutare în antet, listă completă cu filtre și rânduri compacte pentru mesele zilei; versiuni și voturi existente. | Implementat, build/probe vizuale locale trecute. Vezi [fișa Bucătărie](kitchen.md#kh1--layout-bucătărie-22-octombrie-2026). |
 | Amintiri — MH1 | Fotografii pe lățimea cardului, note compacte, căutare în antet și panou pentru acces/arhivă; momente/note și cronologia rămân funcționale. | Implementat, build și verificare mobilă scurtă trecute. Vezi [Amintiri](memory.md#mh1--layout-mobil-amintiri-22-octombrie-2026). |
 | Familia mea / Documente — FD1 | Membri/Documente în Familie, dosar comun și pe persoană; numele membrului deschide documentele autorizate, administrarea rămâne separată. Meniul principal are cinci secțiuni. | Implementat și verificat local; vezi [Familie](families.md#fd1--documente-în-familie-22-octombrie-2026). |
-| Calendar — CH1, pas curent | Lună/Săptămână/Agendă, zile cu puncte după acces, carduri compacte și agendă cu ore; numai date reale. | Implementat; build, randare punctuală și verificare mobilă pe calendar gol trecute. Așteaptă feedback; vezi [Calendar](calendar.md#ch1--calendar-mobil-22-octombrie-2026). |
+| Calendar — CH1, pas curent | Lună/Săptămână/Agendă, zile cu puncte după acces, carduri compacte și agendă cu ore; date din API-ul existent. | Implementat; build și verificare mobilă inclusiv cu șase evenimente demo trecute. Așteaptă feedback; vezi [Calendar](calendar.md#ch1--calendar-mobil-22-octombrie-2026). |
 | Animale / Mașini | Structura profilului, următoarelor activități și istoricului din imagine se folosește când modulele AN/V există. | Module de produs planificate; fără pagini sau numere fictive. |
 
 ### H2 — Contractul Acasă
