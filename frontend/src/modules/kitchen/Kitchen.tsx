@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   CookingPot,
   LockKeyhole,
@@ -6,6 +6,8 @@ import {
   RefreshCw,
   Search,
   X,
+  ArrowLeft,
+  ChevronRight,
 } from "lucide-react";
 import { api, ApiError, type Family } from "../../shared/api";
 import { recipeCategories, type Recipe, type RecipeList } from "./recipeTypes";
@@ -15,6 +17,7 @@ import { Meals } from "./Meals";
 import { RecipeForm } from "./RecipeForm";
 import { RecipeDetail } from "./RecipeDetail";
 import { RecipeMeta } from "./RecipeMeta";
+import { KitchenToday } from "./KitchenToday";
 
 export function Kitchen({
   family,
@@ -42,6 +45,20 @@ export function Kitchen({
   const [notice, setNotice] = useState("");
   const [adding, setAdding] = useState(false);
   const [selected, setSelected] = useState<Recipe | null>(null);
+  const [browsing, setBrowsing] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  const loadedPosition = useRef("");
+
+  function showRecipes() {
+    setSection("recipes");
+    setBrowsing(false);
+    setQuery("");
+    setSearch("");
+    setCategory("");
+    setVisibility("");
+    setArchived(false);
+    setPage(1);
+  }
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -61,9 +78,12 @@ export function Kitchen({
     if (category) params.set("category", category);
     if (visibility) params.set("visibility", visibility);
     if (archived) params.set("archived", "1");
-    api<RecipeList>(`${base}?${params}`, { signal: controller.signal })
+    const position = `${base}?${params}`;
+    if (loadedPosition.current !== position) setItems([]);
+    api<RecipeList>(position, { signal: controller.signal })
       .then((data) => {
         if (controller.signal.aborted) return;
+        loadedPosition.current = position;
         setItems(data.items);
         setHasMore(data.has_more);
       })
@@ -92,23 +112,45 @@ export function Kitchen({
   return (
     <div className="kitchen-page">
       <section className="page-heading">
-        <h1>Bucătărie</h1>
-        {family.role !== "limited" && section === "recipes" && (
-          <button
-            className="button primary"
-            aria-label="Adaugă rețetă"
-            onClick={() => setAdding(true)}
-          >
-            <Plus size={19} />
-            <span>Adaugă rețetă</span>
-          </button>
-        )}
+        <div className="kitchen-heading-title">
+          {section === "recipes" && browsing && (
+            <button
+              className="icon-button"
+              aria-label="Înapoi la rețete"
+              onClick={showRecipes}
+            >
+              <ArrowLeft size={20} />
+            </button>
+          )}
+          <h1>Bucătărie</h1>
+        </div>
+        <div className="page-heading-actions">
+          {section === "recipes" && (
+            <button
+              className="icon-button"
+              aria-label="Caută rețete"
+              onClick={() => {
+                setBrowsing(true);
+                searchInput.current?.focus();
+              }}
+            >
+              <Search size={21} />
+            </button>
+          )}
+          {family.role !== "limited" && section === "recipes" && (
+            <button
+              className="button primary"
+              aria-label="Adaugă rețetă"
+              onClick={() => setAdding(true)}
+            >
+              <Plus size={19} />
+              <span>Adaugă rețetă</span>
+            </button>
+          )}
+        </div>
       </section>
       <nav className="kitchen-sections" aria-label="Secțiuni Bucătărie">
-        <button
-          aria-pressed={section === "recipes"}
-          onClick={() => setSection("recipes")}
-        >
+        <button aria-pressed={section === "recipes"} onClick={showRecipes}>
           Rețete
         </button>
         <button
@@ -120,74 +162,83 @@ export function Kitchen({
       </nav>
       {section === "recipes" && (
         <>
-          <div className="kitchen-toolbar">
-            <label className="search">
-              <Search size={18} aria-hidden="true" />
-              <input
-                type="search"
-                aria-label="Caută rețete după titlu"
-                placeholder="Caută rețete"
-                maxLength={120}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              {query && (
-                <button
-                  aria-label="Șterge căutarea"
-                  onClick={() => setQuery("")}
+          {browsing && (
+            <>
+              <div className="kitchen-toolbar">
+                <label className="search">
+                  <Search size={18} aria-hidden="true" />
+                  <input
+                    type="search"
+                    ref={searchInput}
+                    autoFocus
+                    aria-label="Caută rețete după titlu"
+                    placeholder="Caută rețete"
+                    maxLength={120}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                  {query && (
+                    <button
+                      aria-label="Șterge căutarea"
+                      onClick={() => setQuery("")}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </label>
+                <select
+                  aria-label="Filtrează după acces"
+                  value={visibility}
+                  onChange={(e) => {
+                    setVisibility(e.target.value);
+                    setPage(1);
+                  }}
                 >
-                  <X size={16} />
-                </button>
-              )}
-            </label>
-            <select
-              aria-label="Filtrează după acces"
-              value={visibility}
-              onChange={(e) => {
-                setVisibility(e.target.value);
-                setPage(1);
-              }}
-            >
-              <option value="">Orice acces</option>
-              <option value="private">Doar eu</option>
-              <option value="family">Familia mea</option>
-              <option value="selected">Persoane alese</option>
-            </select>
-          </div>
-          <label className="recipe-archive-filter">
-            <input
-              type="checkbox"
-              checked={archived}
-              onChange={(e) => {
-                setArchived(e.target.checked);
-                setPage(1);
-              }}
-            />
-            Arhivate
-          </label>
-          <div className="kitchen-categories" aria-label="Categorii de rețete">
-            <button
-              aria-pressed={!category}
-              onClick={() => {
-                setCategory("");
-                setPage(1);
-              }}
-            >
-              Toate
-            </button>
-            {Object.entries(recipeCategories).map(([key, label]) => (
-              <button
-                key={key}
-                aria-pressed={category === key}
-                onClick={() => {
-                  setCategory(key);
-                  setPage(1);
-                }}
+                  <option value="">Orice acces</option>
+                  <option value="private">Doar eu</option>
+                  <option value="family">Familia mea</option>
+                  <option value="selected">Persoane alese</option>
+                </select>
+              </div>
+              <label className="recipe-archive-filter">
+                <input
+                  type="checkbox"
+                  checked={archived}
+                  onChange={(e) => {
+                    setArchived(e.target.checked);
+                    setPage(1);
+                  }}
+                />
+                Arhivate
+              </label>
+              <div
+                className="kitchen-categories"
+                aria-label="Categorii de rețete"
               >
-                {label}
-              </button>
-            ))}
-          </div>
+                <button
+                  aria-pressed={!category}
+                  onClick={() => {
+                    setCategory("");
+                    setPage(1);
+                  }}
+                >
+                  Toate
+                </button>
+                {Object.entries(recipeCategories).map(([key, label]) => (
+                  <button
+                    key={key}
+                    aria-pressed={category === key}
+                    onClick={() => {
+                      setCategory(key);
+                      setPage(1);
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           {notice && (
             <p className="notice" role="status">
               {notice}
@@ -196,18 +247,32 @@ export function Kitchen({
           <section aria-labelledby="recipes-title" aria-busy={loading}>
             <div className="section-header">
               <h2 id="recipes-title">
-                {archived ? "Rețete arhivate" : "Rețete"}
+                {archived
+                  ? "Rețete arhivate"
+                  : browsing
+                    ? "Toate rețetele"
+                    : "Rețete"}
               </h2>
-              <button
-                className="icon-button"
-                disabled={loading}
-                aria-label="Actualizează rețetele"
-                onClick={() => setRevision((value) => value + 1)}
-              >
-                <RefreshCw size={18} />
-              </button>
+              {browsing ? (
+                <button
+                  className="icon-button"
+                  disabled={loading}
+                  aria-label="Actualizează rețetele"
+                  onClick={() => setRevision((value) => value + 1)}
+                >
+                  <RefreshCw size={18} />
+                </button>
+              ) : (
+                <button
+                  className="text-button"
+                  onClick={() => setBrowsing(true)}
+                  aria-label="Vezi toate rețetele"
+                >
+                  <span>Vezi toate</span> <ChevronRight size={17} />
+                </button>
+              )}
             </div>
-            {loading ? (
+            {loading && !items.length ? (
               <p className="loading-text" role="status">
                 Se încarcă rețetele…
               </p>
@@ -257,8 +322,10 @@ export function Kitchen({
               </div>
             ) : (
               <>
-                <div className="recipe-grid">
-                  {items.map((recipe) => (
+                <div
+                  className={`recipe-grid${browsing ? "" : " recipe-showcase"}`}
+                >
+                  {(browsing ? items : items.slice(0, 6)).map((recipe) => (
                     <button
                       className="recipe-card"
                       key={recipe.id}
@@ -295,7 +362,7 @@ export function Kitchen({
                     </button>
                   ))}
                 </div>
-                {(page > 1 || hasMore) && (
+                {browsing && (page > 1 || hasMore) && (
                   <div className="recipe-pagination">
                     <button
                       className="button secondary"
@@ -317,6 +384,15 @@ export function Kitchen({
               </>
             )}
           </section>
+          {!browsing && (
+            <KitchenToday
+              family={family}
+              actorId={userId}
+              revision={revision}
+              onAll={() => setSection("meals")}
+              onExpired={onExpired}
+            />
+          )}
         </>
       )}
       {section === "meals" && (

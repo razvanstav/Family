@@ -1,6 +1,6 @@
 # Interfață comună
 
-Stare: H1 Acasă este implementat și verificat local la 21 octombrie 2026, în limitele consemnate mai jos. La 22 octombrie utilizatorul a cerut explicit apropierea treptată a MVP-ului de noua referință. H2 Acasă este implementat, cu verificările locale consemnate mai jos; acceptarea vizuală așteaptă feedbackul utilizatorului. Celelalte pagini nu sunt redesenate în acest pas.
+Stare: H2 Acasă este implementat și verificat local, cu feedback vizual pozitiv la 22 octombrie 2026. Utilizatorul a ales explicit următoarea pagină, Bucătărie KH1. Lucrăm numai la acel layout; planificatorul de mese se schițează separat. H1 și probele istorice rămân consemnate mai jos.
 
 ## Fișiere relevante
 
@@ -15,12 +15,12 @@ Stare: H1 Acasă este implementat și verificat local la 21 octombrie 2026, în 
 
 Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helvetica, paleta caldă și regulile de text direct; preluăm compoziția și ritmul din imagine. Nu introducem sloganul, statistici, ratinguri, favorite, planificare/cumpărături ori căutare globală fără funcționalitate reală. Navigația existentă și pagina implicită rămân cele stabilite.
 
-**Ritm explicit:** finalizăm și arătăm un singur layout, așteptăm feedback, apoi alegem pagina următoare. Nu porni automat Bucătărie după H2.
+**Ritm explicit:** finalizăm și arătăm un singur layout, așteptăm feedback, apoi alegem pagina următoare. Acasă a primit feedback pozitiv; Bucătărie a fost autorizată explicit. Nu porni încă altă pagină.
 
 | Pagină | Adaptare | Stare |
 | --- | --- | --- |
-| Acasă — H2, pas curent | Acces rapid la module reale; amintire cu fotografie și dată; note compacte; documente/categorii existente; evenimente și remindere reale; calendar în coloana laterală desktop. | Implementat, probe locale mai jos; așteaptă feedback vizual. |
-| Bucătărie | Fotografii mari pentru rețete, selecții compacte, rânduri pentru mesele recente; versiunea folosită și voturile existente rămân intacte. | Candidat după feedbackul pentru Acasă; neînceput în H2. |
+| Acasă — H2 | Acces rapid la module reale; amintire cu fotografie și dată; note compacte; documente/categorii existente; evenimente și remindere reale; calendar în coloana laterală desktop. | Implementat, probe locale mai jos; feedback pozitiv primit. |
+| Bucătărie — KH1, pas curent | Rețete cu fotografii în rând derulabil pe mobil, căutare în antet, listă completă cu filtre și rânduri compacte pentru mesele zilei; versiuni și voturi existente. | Implementat, build/probe vizuale locale trecute; așteaptă feedback. Vezi [fișa Bucătărie](kitchen.md#kh1--layout-bucătărie-22-octombrie-2026). |
 | Amintiri | Fotografii și liste compacte, continuitate cu noul card Acasă; momente/note și cronologia rămân funcționale. | Planificat după Bucătărie. |
 | Documente / Familia mea / Calendar | Aceeași densitate, borduri și iconuri, cu păstrarea politicilor, stărilor și controalelor existente. | Pagini ulterioare, fără audit/redesenare simultană. |
 | Animale / Mașini | Structura profilului, următoarelor activități și istoricului din imagine se folosește când modulele AN/V există. | Module de produs planificate; fără pagini sau numere fictive. |
@@ -38,7 +38,7 @@ Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helve
 - Browser desktop: fotografia privată se încarcă din ruta canonică; cardul deschide detaliul complet în Amintiri. Desktop și previzualizare 390 px: acces rapid, card foto și notă, categorii/documente, calendar și stările goale; pe mobil s-a deschis formularul Calendar din Acasă, fără a salva un eveniment nou.
 - API local cu sesiuni demo independente: Ana vede două amintiri (una cu fotografie); Mihai vede numai nota de familie, fără amintirea privată. Familia Ionescu nu primește amintirile Popescu; requestul Mihai către Ionescu dă 404. Rezumatele expun exclusiv `id,title,kind,excerpt,occurred_on,visibility,photo_status`.
 - Popescu → Ionescu → Popescu verificat și în previzualizarea mobilă: Acasă rămâne activă, Ionescu arată starea goală pentru amintiri și propriul document, apoi revin datele Popescu. Capturi ignorate: `.runtime/h2-home-desktop.png`, `.runtime/h2-home-mobile.png`. Nu s-au creat evenimente sau schimbat amintiri pentru noul layout.
-- Rămân neexercitate: revocare/grant retras în timp ce cardul Home este deschis, erori de rețea provocate, dispozitive fizice și limite cu mai mult de trei amintiri. Refolosirea politicii/media existente nu este prezentată ca repetarea întregii acceptări AM2/AM3. Acceptarea vizuală așteaptă feedback.
+- Rămân neexercitate: revocare/grant retras în timp ce cardul Home este deschis, erori de rețea provocate, dispozitive fizice și limite cu mai mult de trei amintiri. Refolosirea politicii/media existente nu este prezentată ca repetarea întregii acceptări AM2/AM3. Utilizatorul a dat feedback vizual pozitiv și a ales Bucătărie ca următor layout.
 
 ## Referință secundară pe ecrane — 21 octombrie 2026
 

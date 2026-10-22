@@ -2,6 +2,32 @@
 
 Stare: **K1, K2, K3a și K4a–K4b implementate și verificate local**, actualizat 22 octombrie 2026. După acces/arhivare, utilizatorul a ales K4b cu P3 strict necesar: publicare durabilă, index de referințe și citire autorizată prin API. Ecranul timeline rămâne AM3; preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
 
+## KH1 — Layout Bucătărie, 22 octombrie 2026
+
+**Implementat și verificat local; așteaptă feedback vizual.** După acceptarea vizuală Acasă, utilizatorul a cerut numai următorul layout, Bucătărie, apropiat de telefonul din `artifacts/design-reference-family-mvp.png`, în special pe mobil. Fără teste noi sau suite automate; verificare proporțională prin build și browser.
+
+- Antet cu căutare și adăugare, secțiunile reale Rețete/Mese; fotografii în rând derulabil pe mobil, timp/dificultate/categorie reale. „Vezi toate” deschide lista existentă cu căutare, acces, categorii, arhivă și paginare. Fără recomandări, favorite sau ratinguri inventate.
+- „Mesele de azi” folosește endpointul canonic existent, maximum trei mese din ziua României, cu fotografie autorizată, tip, marcaj de exemplu și voturi reale. Deschiderea reutilizează MealViewer, deoarece lista nu conține feedbackul complet. „Vezi toate” duce la secțiunea Mese; nu se modifică date sau versiuni.
+- Fișiere: `Kitchen.tsx`, `KitchenToday.tsx`, `kitchen.css`, `meals.css`. Regulile pentru taburi se mută din meals.css în kitchen.css, unde este shellul; nu se suprapun teme.
+- Refreshul de fundal păstrează cardurile și poziția rândului derulabil; schimbarea filtrelor înlocuiește lista. Nu se introduc GET-uri de detaliu la deschiderea unei rețete deja complete în listă.
+
+### Verificare KH1
+
+- Build TypeScript/Vite, Prettier și `git diff --check` trecute. Nu s-au scris teste și nu s-au rulat suite, API-uri de verificare separate ori audituri extinse. Backendul, schema, dependențele și datele existente nu sunt modificate.
+- Browser: grilă desktop și previzualizare mobilă de 390 px, fotografii încărcate și carduri în rând cu derulare în interior, fără overflow al paginii observat. Pe mobil: rețetă deschisă cu ingrediente/preparare, masă deschisă cu votul/comentariul existente, căutare „Paste” → o rețetă, acces/arhivă disponibile în lista completă. Fără scrieri sau voturi noi.
+- Pagina este lăsată în previzualizarea mobilă pentru feedback. Captură ignorată de Git: `.runtime/kh1-kitchen-mobile.png`. Nu s-au reluat probele de permisiuni, concurență, paginare mare sau dispozitive fizice; contractele K1–K4 sunt reutilizate.
+
+### Planificator de mese — schiță, neimplementat
+
+Cererea este de a-l gândi la nevoie; acest layout nu introduce butoane inactive sau o listă de cumpărături fictivă. Propunerea pentru un pas separat:
+
+- O săptămână cu zile și momente de masă; alegerea unei rețete existente și a porțiilor. Pe mobil alegi ziua, apoi vezi mesele ei; fără grilă cu șapte coloane ilizibile.
+- Planul păstrează separat intenția de gătit; o masă planificată nu apare automat ca masă gătită în istoric sau în Amintiri. Acțiunea explicită „Am gătit” ar crea masa pe versiunea aleasă, o singură dată. Modificarea/anularea planului nu rescrie preparările existente.
+- Data rămâne calendaristică, iar accesul planului și al rețetei se verifică separat. Asocierea nu lărgește accesul la rețetă. Politica privat/familie și cazurile unei surse retrase trebuie stabilite înainte de implementare.
+- Cumpărăturile sunt un pas ulterior: agregarea ingredientelor cere unități/cantități compatibile. Nu promitem o listă automată din ingredientele actuale în text liber.
+
+Implementarea planificatorului se prioritizează separat după feedbackul pentru KH1; nu este declarată funcționalitate livrată.
+
 ## Scop
 
 Rețete și versiuni, mese pe o dată, vot personal binar și comentariu opțional. La 21 octombrie, utilizatorul a ales „Mi-a plăcut” / „Nu mi-a plăcut”, în locul notelor 1–5 propuse în blueprint. Preparările libere, participanții și evenimentele pentru timeline rămân planificate; nu sunt funcții livrate de K3a.
