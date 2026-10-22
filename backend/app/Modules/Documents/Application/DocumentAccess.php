@@ -16,7 +16,7 @@ final class DocumentAccess
             ->join('media_assets as a', function ($join) {
                 $join->on('a.id', '=', 'd.asset_id')->on('a.family_id', '=', 'd.family_id');
             })->orderByDesc('d.created_at')->orderByDesc('d.id')->limit(4)
-            ->get(['d.id', 'd.title', 'd.category', 'd.visibility', 'a.mime', 'a.status']);
+            ->get(['d.id', 'd.title', 'd.category', 'd.visibility', 'd.owner_id', 'a.mime', 'a.status']);
     }
 
     public function visible(string $family, int $actor, string $membership): Builder

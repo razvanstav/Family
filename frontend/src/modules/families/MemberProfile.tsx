@@ -16,7 +16,10 @@ import {
   initials,
   visibilityLabel,
   type Member,
+  type Family,
+  type DocumentRequest,
 } from "../../shared/api";
+import { Documents } from "../documents/Documents";
 import { dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import {
@@ -37,23 +40,29 @@ import {
 import "./memberProfile.css";
 
 export function MemberProfile({
-  familyId,
+  family,
+  userId,
   member,
   members,
   onBack,
-  onDocuments,
+  requestedDocument,
+  onDocumentOpened,
   onExpired,
 }: {
-  familyId: string;
+  family: Family;
+  userId: number;
   member: Member;
   members: Member[];
   onBack: () => void;
-  onDocuments: (member: Member) => void;
+  requestedDocument: DocumentRequest | null;
+  onDocumentOpened: () => void;
   onExpired: () => void;
 }) {
-  const base = `/families/${familyId}/members/${member.id}/profile`;
+  const base = `/families/${family.id}/members/${member.id}/profile`;
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(
+    requestedDocument ? "documents" : "overview",
+  );
   const [items, setItems] = useState<Entry[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -66,6 +75,9 @@ export function MemberProfile({
   const [dialog, setDialog] = useState<
     "configure" | "photo" | "new" | Entry | null
   >(null);
+  useEffect(() => {
+    if (requestedDocument) setTab("documents");
+  }, [requestedDocument]);
   useEffect(() => {
     const controller = new AbortController();
     api<Profile>(base, { signal: controller.signal })
@@ -82,6 +94,7 @@ export function MemberProfile({
     return () => controller.abort();
   }, [base, metadataRevision]);
   useEffect(() => {
+    if (tab === "documents") return;
     const controller = new AbortController();
     setLoading(true);
     setError("");
@@ -125,6 +138,7 @@ export function MemberProfile({
     return () => controller.abort();
   }, [base, tab, page, archived, revision]);
   useEffect(() => {
+    if (tab === "documents") return;
     const timer = window.setInterval(() => {
       if (
         document.visibilityState === "visible" &&
@@ -135,7 +149,7 @@ export function MemberProfile({
       }
     }, 60_000);
     return () => window.clearInterval(timer);
-  }, [base, dialog]);
+  }, [base, dialog, tab]);
   function refresh() {
     setRevision((v) => v + 1);
     setMetadataRevision((v) => v + 1);
@@ -219,13 +233,6 @@ export function MemberProfile({
                       ? "Membru cu acces limitat"
                       : "Membru adult"}
               </span>
-              <button
-                className="text-button member-profile-documents"
-                onClick={() => onDocuments(member)}
-              >
-                <FolderHeart size={16} />
-                Documente
-              </button>
             </div>
           </section>
           {profile.age !== null && profile.age < 14 && (
@@ -275,124 +282,144 @@ export function MemberProfile({
                 {value.label}
               </button>
             ))}
+            <button
+              aria-pressed={tab === "documents"}
+              onClick={() => selectTab("documents")}
+            >
+              Documente
+            </button>
           </nav>
-          <section aria-labelledby="profile-entries-title">
-            <div className="section-header">
-              <h2 id="profile-entries-title">
-                {tab === "overview"
-                  ? "Însemnări recente"
-                  : categories[tab].label}
-              </h2>
-              <div className="member-profile-actions">
-                <button
-                  className="icon-button"
-                  aria-label="Actualizează profilul"
-                  onClick={refresh}
-                  disabled={loading}
-                >
-                  <RefreshCw size={17} />
-                </button>
-                {profile.can_write && (
+          {tab === "documents" ? (
+            <Documents
+              key={`${userId}:${family.id}:${member.id}`}
+              family={family}
+              userId={userId}
+              ownerId={member.user_id}
+              requestedAction={requestedDocument}
+              onActionOpened={onDocumentOpened}
+              onExpired={onExpired}
+            />
+          ) : (
+            <section aria-labelledby="profile-entries-title">
+              <div className="section-header">
+                <h2 id="profile-entries-title">
+                  {tab === "overview"
+                    ? "Însemnări recente"
+                    : categories[tab].label}
+                </h2>
+                <div className="member-profile-actions">
                   <button
-                    className="icon-button primary"
-                    aria-label="Adaugă însemnare"
-                    onClick={() => setDialog("new")}
+                    className="icon-button"
+                    aria-label="Actualizează profilul"
+                    onClick={refresh}
+                    disabled={loading}
                   >
-                    <Plus size={20} />
+                    <RefreshCw size={17} />
                   </button>
-                )}
+                  {profile.can_write && (
+                    <button
+                      className="icon-button primary"
+                      aria-label="Adaugă însemnare"
+                      onClick={() => setDialog("new")}
+                    >
+                      <Plus size={20} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-            <label className="member-profile-archive">
-              <input
-                type="checkbox"
-                checked={archived}
-                onChange={(e) => {
-                  setArchived(e.target.checked);
-                  setPage(1);
-                }}
-              />
-              Arhivate
-            </label>
-            {loading && !items.length ? (
-              <p role="status" className="member-profile-empty">
-                Se încarcă însemnările…
-              </p>
-            ) : !error && !items.length ? (
-              <div className="member-profile-empty">
-                <FolderHeart size={28} />
-                <p>
-                  {archived ? "Nicio însemnare arhivată." : "Nicio însemnare."}
+              <label className="member-profile-archive">
+                <input
+                  type="checkbox"
+                  checked={archived}
+                  onChange={(e) => {
+                    setArchived(e.target.checked);
+                    setPage(1);
+                  }}
+                />
+                Arhivate
+              </label>
+              {loading && !items.length ? (
+                <p role="status" className="member-profile-empty">
+                  Se încarcă însemnările…
                 </p>
-                {profile.can_write && !archived && (
+              ) : !error && !items.length ? (
+                <div className="member-profile-empty">
+                  <FolderHeart size={28} />
+                  <p>
+                    {archived
+                      ? "Nicio însemnare arhivată."
+                      : "Nicio însemnare."}
+                  </p>
+                  {profile.can_write && !archived && (
+                    <button
+                      className="button secondary"
+                      onClick={() => setDialog("new")}
+                    >
+                      <Plus size={17} />
+                      Adaugă însemnare
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="member-profile-entries">
+                  {items.map((entry) => {
+                    const Icon = kinds[entry.kind].icon;
+                    return (
+                      <button
+                        className={`profile-entry profile-entry--${entry.category}`}
+                        key={entry.id}
+                        aria-label={`Deschide ${entry.title}`}
+                        onClick={() => setDialog(entry)}
+                      >
+                        <span className="profile-entry-icon">
+                          <Icon size={22} />
+                        </span>
+                        <span className="profile-entry-body">
+                          <strong>{entry.title}</strong>
+                          <span>
+                            {kinds[entry.kind].label} ·{" "}
+                            {dateLabel(entry.occurred_on, {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                          <span className="profile-entry-access">
+                            {entry.visibility === "private" ? (
+                              <LockKeyhole size={12} />
+                            ) : (
+                              <Users size={12} />
+                            )}{" "}
+                            {visibilityLabel[entry.visibility]}
+                          </span>
+                        </span>
+                        <ChevronRight size={16} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              {(page > 1 || hasMore) && (
+                <div className="member-profile-pagination">
                   <button
                     className="button secondary"
-                    onClick={() => setDialog("new")}
+                    disabled={page === 1 || loading}
+                    onClick={() => setPage((v) => v - 1)}
                   >
-                    <Plus size={17} />
-                    Adaugă însemnare
+                    Înapoi
                   </button>
-                )}
-              </div>
-            ) : (
-              <div className="member-profile-entries">
-                {items.map((entry) => {
-                  const Icon = kinds[entry.kind].icon;
-                  return (
-                    <button
-                      className={`profile-entry profile-entry--${entry.category}`}
-                      key={entry.id}
-                      aria-label={`Deschide ${entry.title}`}
-                      onClick={() => setDialog(entry)}
-                    >
-                      <span className="profile-entry-icon">
-                        <Icon size={22} />
-                      </span>
-                      <span className="profile-entry-body">
-                        <strong>{entry.title}</strong>
-                        <span>
-                          {kinds[entry.kind].label} ·{" "}
-                          {dateLabel(entry.occurred_on, {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                        <span className="profile-entry-access">
-                          {entry.visibility === "private" ? (
-                            <LockKeyhole size={12} />
-                          ) : (
-                            <Users size={12} />
-                          )}{" "}
-                          {visibilityLabel[entry.visibility]}
-                        </span>
-                      </span>
-                      <ChevronRight size={16} />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            {(page > 1 || hasMore) && (
-              <div className="member-profile-pagination">
-                <button
-                  className="button secondary"
-                  disabled={page === 1 || loading}
-                  onClick={() => setPage((v) => v - 1)}
-                >
-                  Înapoi
-                </button>
-                <span>Pagina {page}</span>
-                <button
-                  className="button secondary"
-                  disabled={!hasMore || loading}
-                  onClick={() => setPage((v) => v + 1)}
-                >
-                  Înainte
-                </button>
-              </div>
-            )}
-          </section>
+                  <span>Pagina {page}</span>
+                  <button
+                    className="button secondary"
+                    disabled={!hasMore || loading}
+                    onClick={() => setPage((v) => v + 1)}
+                  >
+                    Înainte
+                  </button>
+                </div>
+              )}
+            </section>
+          )}
           {dialog === "configure" && (
             <ProfileSettings
               profile={profile}

@@ -45,30 +45,23 @@ import {
   DocumentCategories,
 } from "../../shared/DocumentCard";
 
-function documentCollection(
-  action: DocumentRequest | null,
-  userId: number,
-): string {
-  if (action?.owner) return `owner:${action.owner.id}`;
-  if (action?.upload) return `owner:${userId}`;
-  return action?.id || action?.category ? "all" : "family";
-}
-
 export function Documents({
   family,
   userId,
-  userName,
+  ownerId,
   navigation,
   requestedAction,
   onActionOpened,
+  onUpload,
   onExpired,
 }: {
   family: Family;
   userId: number;
-  userName: string;
-  navigation: ReactNode;
+  ownerId?: number;
+  navigation?: ReactNode;
   requestedAction: DocumentRequest | null;
   onActionOpened: () => void;
+  onUpload?: () => void;
   onExpired: () => void;
 }) {
   const [docs, setDocs] = useState<Document[]>([]);
@@ -85,12 +78,6 @@ export function Documents({
     requestedAction?.id ?? null,
   );
   const [notice, setNotice] = useState("");
-  const [person, setPerson] = useState(
-    requestedAction?.owner ?? { id: userId, name: userName },
-  );
-  const [collection, setCollection] = useState(() =>
-    documentCollection(requestedAction, userId),
-  );
   const endpoint = `/families/${family.id}`;
   const sequence = useRef(0);
   useEffect(() => {
@@ -98,8 +85,6 @@ export function Documents({
     setCategory(requestedAction.category ?? "all");
     setSelected(requestedAction.id ?? null);
     setUpload(Boolean(requestedAction.upload && family.role !== "limited"));
-    setPerson(requestedAction.owner ?? { id: userId, name: userName });
-    setCollection(documentCollection(requestedAction, userId));
     onActionOpened();
   }, [requestedAction]);
   async function load() {
@@ -132,30 +117,29 @@ export function Documents({
   useEffect(() => {
     if (family.role === "limited") setUpload(false);
   }, [family.role]);
-  const owners = new Map(docs.map((doc) => [doc.owner_id, doc.owner_name]));
-  owners.set(userId, userName);
-  owners.set(person.id, person.name);
-  const collectionDocs = docs.filter(
-    (doc) =>
-      collection === "all" ||
-      (collection === "family"
-        ? doc.visibility === "family"
-        : doc.owner_id === Number(collection.slice(6))),
+  const collectionDocs = docs.filter((doc) =>
+    ownerId === undefined
+      ? doc.visibility === "family"
+      : doc.owner_id === ownerId,
   );
   const visible = filterDocuments(collectionDocs, search, category, privacy);
-  const canAddToCollection =
-    collection === "family" ||
-    collection === "all" ||
-    collection === `owner:${userId}`;
+  const canAddToCollection = ownerId === undefined || ownerId === userId;
+  const Heading = ownerId === undefined ? "h1" : "h2";
+  function startUpload() {
+    if (onUpload) onUpload();
+    else setUpload(true);
+  }
   return (
     <div className="documents-page">
-      <section className="page-heading">
-        <h1>Documente</h1>
+      <section
+        className={ownerId === undefined ? "page-heading" : "section-header"}
+      >
+        <Heading>Documente</Heading>
         {canAddToCollection && (
           <button
             className="button primary"
             aria-label="Adaugă document"
-            onClick={() => setUpload(true)}
+            onClick={startUpload}
             disabled={family.role === "limited"}
           >
             <Plus size={21} /> <span>Adaugă document</span>
@@ -163,31 +147,6 @@ export function Documents({
         )}
       </section>
       {navigation}
-      <label className="document-collection">
-        <FolderHeart size={20} aria-hidden="true" />
-        <select
-          aria-label="Dosar de documente"
-          value={collection}
-          onChange={(event) => {
-            setCollection(event.target.value);
-            setSearch("");
-            setCategory("all");
-            setPrivacy("all");
-          }}
-        >
-          <option value="family">Documentele familiei</option>
-          <option value={`owner:${userId}`}>Documentele mele</option>
-          {[...owners]
-            .filter(([id]) => id !== userId)
-            .sort((a, b) => a[1].localeCompare(b[1], "ro"))
-            .map(([id, name]) => (
-              <option key={id} value={`owner:${id}`}>
-                {name}
-              </option>
-            ))}
-          <option value="all">Toate documentele</option>
-        </select>
-      </label>
       <div className="library-tools">
         <div className="search">
           <Search size={20} />
@@ -205,18 +164,20 @@ export function Documents({
             </button>
           )}
         </div>
-        <button
-          className={`filter-button ${privacy !== "all" ? "active" : ""}`}
-          aria-label="Filtrează după acces"
-          aria-expanded={filterOpen}
-          onClick={() => setFilterOpen(!filterOpen)}
-        >
-          <SlidersHorizontal size={18} />
-          <span>Acces</span>
-          <ChevronDown size={14} />
-        </button>
+        {ownerId !== undefined && (
+          <button
+            className={`filter-button ${privacy !== "all" ? "active" : ""}`}
+            aria-label="Filtrează după acces"
+            aria-expanded={filterOpen}
+            onClick={() => setFilterOpen(!filterOpen)}
+          >
+            <SlidersHorizontal size={18} />
+            <span>Acces</span>
+            <ChevronDown size={14} />
+          </button>
+        )}
       </div>
-      {filterOpen && (
+      {ownerId !== undefined && filterOpen && (
         <div className="filter-panel">
           <label htmlFor="privacy">Cine poate vedea</label>
           <select
@@ -306,7 +267,7 @@ export function Documents({
                 onClick={() =>
                   collectionDocs.length
                     ? (setSearch(""), setCategory("all"), setPrivacy("all"))
-                    : setUpload(true)
+                    : startUpload()
                 }
               >
                 {collectionDocs.length
@@ -340,7 +301,6 @@ export function Documents({
           }}
           onSaved={(doc) => {
             setUpload(false);
-            setCollection(`owner:${userId}`);
             setNotice(
               doc.status === "ready"
                 ? "Document salvat. Acces: doar eu."

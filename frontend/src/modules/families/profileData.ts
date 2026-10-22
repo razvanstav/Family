@@ -2,7 +2,7 @@ import { BookOpen, Activity, Stethoscope, Pill, Landmark } from "lucide-react";
 import type { PhotoStatus } from "../../shared/PrivatePhoto";
 
 export type Category = "health" | "learning" | "activities";
-export type Tab = "overview" | Category;
+export type Tab = "overview" | "documents" | Category;
 export const categories = {
   health: { label: "Sănătate" },
   learning: { label: "Școală și cultură" },

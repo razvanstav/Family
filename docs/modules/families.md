@@ -1,6 +1,19 @@
 # Familie
 
-Stare: **FP1 implementat și verificat local la 22 octombrie 2026**, pregătit pentru revizuire. F1–F3 și FD1 rămân existente. F4, profilurile fără cont și legarea confirmată la cont rămân separate.
+Stare: **FD2 implementat la 23 octombrie 2026**, build și verificare punctuală API trecute; fără probe vizuale, la cererea utilizatorului. FP1, F1–F3 și FD1 rămân existente. F4, profilurile fără cont și legarea confirmată la cont rămân separate.
+
+## FD2 — Dosarul comun și documentele din profil, 23 octombrie 2026
+
+**Implementat.** Cerere explicită: dosarul Familie → Documente conține numai documentele cu acces `family`, iar dosarul persoanei este fila Documente din profil, alături de celelalte categorii. Înlocuiește selectorul FD1 și butonul Documente din cardul de identitate FP1.
+
+- Același modul Documents este reutilizat cu un context fix: `visibility=family` pentru familie, `owner_id` pentru membru. Dosarul persoanei include documentele sale deja autorizate de API, inclusiv partajările selective; privatele altui membru nu devin vizibile. Fără mutări de fișiere, schimbări de proprietate sau granturi noi. Proprietatea actuală identifică persoana; asocierea unui document deținut de părinte cu profilul copilului rămâne D4/F4 separat.
+- Documente se deschide în profil, fără ieșire în dosarul comun. Pe mobil cele cinci categorii se așază pe două rânduri, cu controale de minimum 44 px. Cât fila Documente este activă nu se solicită însemnări din API-ul profilului.
+- Adaugă document din dosarul comun și din Acasă deschide încărcarea în profilul propriu. Documentele noi rămân private; apar în dosarul comun numai după partajare explicită cu familia. În profilul altei persoane nu se oferă încărcare în numele ei; rolul limitat păstrează restricția existentă.
+- Legăturile Acasă deschid documentele comune în Familie → Documente, iar pe cele personale/selective în profilul proprietarului. Rezumatul Home adaugă numai `owner_id` din query-ul autorizat existent, fără query suplimentar sau schimbarea ACL. Categoriile Acasă deschid dosarul comun filtrat.
+- Intrări: `App.tsx`, `Family.tsx`, `MemberProfile.tsx`, `profileData.ts`, `Documents.tsx`, CSS-urile lor, `Home.tsx`, `shared/api.ts` și `DocumentAccess::recent`. Fără migrații sau modificări ale API-ului de upload/partajare.
+- **Verificat:** TypeScript/Vite build, Prettier, Pint, legături documentație și `git diff --check`; testul existent Home pentru rezumatele documentelor, actualizat cu proprietarul: **1 test / 16 aserțiuni**, trecut exclusiv pe `memoria_test`. Prima încercare în sandbox nu a putut citi autoloaderul; reluarea aceleiași comenzi cu acces permis a trecut. Nu s-au rulat suite, browser, capturi sau probe vizuale, conform cererii. Fluxurile interactive și aspectul final așteaptă feedback; buildul reușit nu confirmă acceptarea vizuală ori publicarea în producție.
+
+Istoricul FP1/FD1 de mai jos descrie verificările anterioare. Următorul pas este feedbackul pentru separarea FD2, fără extinderea altor module.
 
 ## FP1 — Profilul membrului, 22 octombrie 2026
 

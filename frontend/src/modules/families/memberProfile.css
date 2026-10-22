@@ -97,7 +97,7 @@
 }
 .member-profile-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 5px;
   margin: 18px 0;
 }
@@ -116,12 +116,6 @@
   background: var(--accent);
   color: white;
   border-color: var(--accent);
-}
-.member-profile-documents {
-  align-self: flex-start;
-  padding-inline: 0;
-  padding-block: 6px;
-  color: var(--ink);
 }
 .profile-entry--health {
   --profile-color: var(--icon-health);
@@ -295,6 +289,9 @@
   margin-bottom: 14px;
 }
 @media (max-width: 700px) {
+  .member-profile-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
   .member-profile-hero {
     padding: 20px 16px;
     gap: 18px;

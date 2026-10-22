@@ -317,7 +317,15 @@ export function Home({
                     <DocumentCard
                       key={document.id}
                       document={document}
-                      onOpen={(id) => onDocuments({ id })}
+                      onOpen={(id) =>
+                        onDocuments({
+                          id,
+                          ownerId:
+                            document.visibility === "family"
+                              ? undefined
+                              : document.owner_id,
+                        })
+                      }
                     />
                   ))}
                 </div>

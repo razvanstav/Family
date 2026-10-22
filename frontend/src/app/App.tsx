@@ -381,7 +381,11 @@ export default function App() {
                 onKitchen={() => setPage("kitchen")}
                 onDocuments={(request) => {
                   setDocumentTarget(request);
-                  setFamilySection("documents");
+                  setFamilySection(
+                    request.ownerId !== undefined || request.upload
+                      ? "members"
+                      : "documents",
+                  );
                   setPage("family");
                 }}
                 onCalendar={(target) => {
@@ -394,10 +398,13 @@ export default function App() {
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 userId={session.user.id}
-                userName={session.user.name}
                 navigation={familyNavigation}
                 requestedAction={documentTarget}
                 onActionOpened={() => setDocumentTarget(null)}
+                onUpload={() => {
+                  setDocumentTarget({ upload: true });
+                  setFamilySection("members");
+                }}
                 onExpired={() => void refresh()}
               />
             ) : page === "kitchen" ? (
@@ -429,17 +436,12 @@ export default function App() {
             ) : (
               <FamilyPage
                 key={`${session.user.id}:${family.id}`}
-                familyId={family.id}
+                family={family}
                 onExpired={() => void refresh()}
-                isOwner={family.role === "owner"}
                 userId={session.user.id}
                 navigation={familyNavigation}
-                onDocuments={(member) => {
-                  setDocumentTarget({
-                    owner: { id: member.user_id, name: member.name },
-                  });
-                  setFamilySection("documents");
-                }}
+                requestedDocument={documentTarget}
+                onDocumentOpened={() => setDocumentTarget(null)}
               />
             )
           ) : (

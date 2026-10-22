@@ -20,6 +20,8 @@ import {
   initials,
   type Member,
   type Invitation,
+  type Family,
+  type DocumentRequest,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { MemberProfile } from "./MemberProfile";
@@ -74,22 +76,26 @@ function RolePicker({
 }
 
 export function FamilyPage({
-  familyId,
-  isOwner,
+  family,
   userId,
   onExpired,
   navigation,
-  onDocuments,
+  requestedDocument,
+  onDocumentOpened,
 }: {
-  familyId: string;
-  isOwner: boolean;
+  family: Family;
   userId: number;
   onExpired: () => void;
   navigation: ReactNode;
-  onDocuments: (member: Member) => void;
+  requestedDocument: DocumentRequest | null;
+  onDocumentOpened: () => void;
 }) {
+  const familyId = family.id;
+  const isOwner = family.role === "owner";
   const [members, setMembers] = useState<Member[]>([]);
   const [profileMember, setProfileMember] = useState<Member | null>(null);
+  const [profileDocument, setProfileDocument] =
+    useState<DocumentRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -141,6 +147,19 @@ export function FamilyPage({
       sequence.current++;
     };
   }, [familyId]);
+  useEffect(() => {
+    if (!requestedDocument || loading || error) return;
+    const member = members.find(
+      (item) => item.user_id === (requestedDocument.ownerId ?? userId),
+    );
+    if (member) {
+      setProfileMember(member);
+      setProfileDocument(requestedDocument);
+    } else {
+      setMessage("Membrul nu mai este disponibil în această familie.");
+    }
+    onDocumentOpened();
+  }, [requestedDocument, members, loading, error]);
 
   async function revoke() {
     if (!target || busy) return;
@@ -198,14 +217,17 @@ export function FamilyPage({
     return (
       <MemberProfile
         key={profileMember.id}
-        familyId={familyId}
+        family={family}
+        userId={userId}
         member={profileMember}
         members={members}
         onBack={() => {
           setProfileMember(null);
+          setProfileDocument(null);
           void load();
         }}
-        onDocuments={onDocuments}
+        requestedDocument={profileDocument}
+        onDocumentOpened={() => setProfileDocument(null)}
         onExpired={onExpired}
       />
     );

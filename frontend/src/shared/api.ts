@@ -42,13 +42,13 @@ export type Document = {
 };
 export type DocumentSummary = Pick<
   Document,
-  "id" | "title" | "category" | "visibility" | "mime" | "status"
+  "id" | "title" | "category" | "visibility" | "mime" | "status" | "owner_id"
 >;
 export type DocumentRequest = {
   id?: string;
   category?: string;
   upload?: boolean;
-  owner?: { id: number; name: string };
+  ownerId?: number;
 };
 export type CalendarRequest = {
   id?: string;
