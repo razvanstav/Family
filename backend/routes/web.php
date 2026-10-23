@@ -11,20 +11,28 @@ use App\Modules\Memory\Http\MomentController;
 use App\Modules\Memory\Http\TimelineController;
 use App\Modules\Vehicles\Http\VehicleController;
 use App\Platform\Families\FamilyController;
+use App\Platform\Families\InvitationCodeController;
 use App\Platform\Families\InvitationController;
 use App\Platform\Families\MemberProfileController;
 use App\Platform\Families\TenantContext;
+use App\Platform\Identity\AccountController;
 use App\Platform\Identity\PrivateResponse;
+use App\Platform\Identity\RegistrationController;
 use App\Platform\Identity\SessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::get('/session', [SessionController::class, 'show']);
     Route::post('/login', [SessionController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('/register', RegistrationController::class)->middleware('throttle:6,1');
     Route::post('/logout', [SessionController::class, 'logout'])->middleware('auth');
+    Route::patch('/account', [AccountController::class, 'update'])->middleware(['auth', 'throttle:20,1']);
     Route::post('/invitations/{family}/inspect', [InvitationController::class, 'inspect'])->whereUuid('family')->middleware('throttle:30,1');
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
+        Route::get('/invitation-codes', [InvitationCodeController::class, 'index']);
+        Route::post('/invitation-codes', [InvitationCodeController::class, 'store'])->middleware('throttle:20,1');
+        Route::delete('/invitation-codes/{invitationCode}', [InvitationCodeController::class, 'revoke'])->whereUuid('invitationCode');
         Route::get('/vehicles', [VehicleController::class, 'index']);
         Route::post('/vehicles', [VehicleController::class, 'store'])->middleware('throttle:20,1');
         Route::prefix('/vehicles/{vehicle}')->whereUuid('vehicle')->group(function () {

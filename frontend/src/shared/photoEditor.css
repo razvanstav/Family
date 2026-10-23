@@ -1,0 +1,15 @@
+.photo-editor-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.photo-editor-fields small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+}
+.photo-editor-remove {
+  margin-top: 12px;
+}

@@ -1,6 +1,32 @@
 # Familie
 
-Stare: **F4a/FD3 — copii fără cont și dosare pe categorii**, implementat la 23 octombrie 2026. Build și verificări API țintite trecute; fără probe vizuale. F4a închide numai adăugarea copilului sub 14 ani fără email; legarea ulterioară la cont și restul F4 rămân separate.
+Stare: **FW1 — Familia mea caldă**, implementat și verificat local la 23 octombrie 2026; acceptarea vizuală așteaptă feedback. F3b — coduri de invitație și F4a/FD3 — copii fără cont și dosare pe categorii rămân implementate cu verificările consemnate mai jos. F4a închide numai adăugarea copilului sub 14 ani fără email; AR1 acoperă crearea familiei la înscriere. Legarea ulterioară la cont și restul F4 rămân separate.
+
+## FW1 — Familia mea caldă, 23 octombrie 2026
+
+- După acceptarea explicită a aspectului [Acasă H4](interface.md#h4--acasă-cald-23-octombrie-2026), utilizatorul a cerut aceeași direcție pentru Familia mea: crem, verde salvie, iconițe prietenoase și fonturile comune Nunito/Fraunces. Acesta este singurul layout de modul redesenat în pas; cererea ulterioară de fotografii estompate în toate paginile principale este tratată separat prin antetul comun PB1 din [Interfață](interface.md).
+- `Family.tsx` folosește `PageBackdrop image="family"`, cu fotografia decorativă a interiorului de acasă și fade comun. Membri și Documente păstrează același titlu Familia mea, înălțimea antetului, lățimea și poziția `SectionTabs`; acțiunea relevantă se schimbă între Adaugă membru și Adaugă document. Nu sunt adăugate texte promoționale, contoare sau persoane fictive.
+- `family.css` grupează căutarea și lista într-un panou neutru cu bordură și umbră discrete. Cardurile sunt pe două coloane desktop și o coloană mobilă, cu rânduri compacte, avatar de 48 px, inițiale în Fraunces sau fotografia autorizată existentă, nume și rol cu iconiță. Culorile rolurilor, insigna Tu și controlul de administrare folosesc paleta caldă; invitațiile păstrează suprafața neutră și acțiunile existente.
+- Profilul și administrarea rămân butoane distincte. Numele complet rămâne accesibil; `aria-describedby` leagă butonul Profil de rolul sau vârsta afișată printr-un ID unic. Butonul de administrare rămâne de minimum 44 px și respectă autorizarea existentă. Fotografiile lipsă nu sunt înlocuite cu portrete inventate.
+- Schimbare numai frontend, fără backend, migrații, modificări ale datelor sau permisiunilor, funcții noi ori GET suplimentar la deschiderea ferestrelor. Profilurile, invitația prin email, copilul fără cont și codurile F3b își păstrează contractele.
+- **Verificări automate:** TypeScript/Vite build, cele 20 de teste frontend existente și formatarea trecute. Nu sunt reluate suite backend pentru această schimbare de layout.
+- **Browser desktop:** Mihai/Popescu, 1280 px: carduri de circa 452 × 88 px, antet de 130 px și file la aceeași poziție verticală, 240 px, în Membri și Documente. Căutarea `ana` arată un membru, iar resetarea restabilește lista. Nu s-au salvat modificări de date în această probă.
+- **Browser mobil:** Mihai și Ana/Popescu, 390 × 844 și 360 × 800: carduri 303/273 × 80 px, fără overflow; antet 120 px, file la y=217 identic în Membri/Documente. Ana poate deschide Adaugă membru și Gestionează Mihai; buton de administrare 44 × 44 px, dialoguri închise cu Escape fără modificări. Profilul Mihai are fotografia decorativă încărcată și wrapperul de aceeași înălțime ca identitatea, 132 px, fără deplasarea filelor. Inițialele au contrast de circa 4,9–5,2:1 pe fundalurile rolurilor.
+- Capturi ignorate `.runtime/fw1-family-desktop.png`, `.runtime/fw1-family-mobile.png`, `.runtime/fw1-family-owner-360.png`; viewportul temporar resetat și sesiunea Mihai/Popescu restaurată la încheiere. Nu s-au schimbat roluri, invitații, fotografii sau date. Fără dispozitiv fizic ori probă nouă de revocare/eroare de rețea. Acceptarea vizuală a FW1 rămâne pentru feedback.
+
+## F3b — Coduri de invitație, 23 octombrie 2026
+
+**Implementat la cererea explicită a utilizatorului**, ca dependență a [AR1 — Creare cont](identity.md#ar1--creare-cont-23-octombrie-2026). Un proprietar generează un cod, iar persoana invitată introduce numele familiei și codul în formularul de înscriere. Codul acordă rolul **Membru adult** unui cont nou, este valabil **7 zile** și poate fi folosit **o singură dată**. Nu este legat de email și nu trimite mail; invitația existentă prin link/email/rol rămâne disponibilă separat pentru conturi noi sau existente.
+
+- În Familia mea → Adaugă membru, fila „Cod de invitație” completează invitația prin email și formularul Copil sub 14 ani. Numai proprietarul are acces. Generarea afișează numele familiei, codul și copierea; valoarea brută se vede numai cât rămâne montată fila curentă. Redeschiderea păstrează numai metadatele, fără posibilitatea recuperării codului. Lista arată Activ/Folosit/Anulat/Expirat și permite anularea unui cod încă activ.
+- `GET /api/v1/families/{family}/invitation-codes` întoarce numai `id,created_at,expires_at,used_at,revoked_at`, în ordine descrescătoare; fără cod sau hash. `POST` pe aceeași rută, limitat la 20/min, întoarce 201 și codul numai la creare. `DELETE /.../invitation-codes/{invitationCode}` anulează un cod activ, neconsumat și neexpirat, cu 204; altfel 404. Rutele cer autentificare, CSRF pentru mutații, TenantContext și rolul `owner`; un adult sau membru limitat primește 403.
+- Codul are 43 de caractere base64url canonice și include identificatorul familiei plus 16 octeți aleatori. Serverul stochează numai SHA-256 al codului în `family_invitation_codes`. Tabela are RLS activat și forțat pe `app.family_id`, FK-uri compuse către apartenențe pentru creator/consumator și indexul listei; codul brut nu apare în audit.
+- La înscriere, serverul validează formatul înaintea decodării, blochează familia, verifică numele fără diferențierea majusculelor, setează contextul local tranzacției și caută hashul numai în familia respectivă. Creatorul trebuie să rămână proprietar activ. Nu se caută global familia după nume și nu se ocolește RLS. Codurile invalide, expirate, anulate, folosite sau numele greșit primesc aceeași eroare, fără dezvăluirea stării familiei.
+- Acceptarea este atomică împreună cu utilizatorul și apartenența adult: completează `used_at/used_by`, incrementează revizia de autorizare și auditează acceptarea/adăugarea membrului. Blocarea codului împiedică utilizarea concurentă repetată. Validarea eșuată sau adresa deja existentă nu consumă codul și nu lasă conturi/apartenențe parțiale. Un cod nu reactivează membri revocați și nu leagă un profil fără cont.
+- `Family.tsx` păstrează în cache numai metadatele pe durata modulului familiei. Lista se citește la prima deschidere a filei sau la actualizare explicită; generarea/anularea actualizează rezultatul local, fără GET redundant. Schimbarea familiei remontează modulul și retrage contextul anterior. Formularul păstrează stări de încărcare, generare, eroare, copiere și pierdere a accesului.
+- Migrația aditivă `2026_10_23_111349_create_family_invitation_codes_table.php` este aplicată pe `memoria_test` și `memoria`, cu granturile runtime numai pentru noua tabelă; fără reset, seed sau migrații fără legătură în baza aplicației.
+- **Verificat backend:** `RegistrationTest.php` + `AccountTest.php`, **26 teste / 237 aserțiuni**, trecute pe `memoria_test`; lint PHP, Pint și inventarul rutelor trecute. Acoperă ciclul codului, proprietar/adult, RLS, nume/format greșit, expirare/anulare/refolosire, cont duplicat fără consumarea codului și înscrierea fără mail ori verificarea adresei. Aceste rezultate nu închid F4, A2 sau A3.
+- **Browser:** proprietar într-o familie sintetică → Adaugă membru → Cod de invitație → cod generat; înscrierea cu nume și cod intră direct în aceeași familie ca adult, fără butonul de administrare. Refolosirea refuzată. Capturi ignorate `.runtime/registration-invitation-code.png`, `.runtime/registration-joined-family.png`, `.runtime/registration-used-code-error.png`. Fixtures curățate după logout, cu ID-uri/emailuri exacte și verificare zero rânduri; detalii în AR1. Copierea și anularea nu au o probă manuală nouă; anularea este acoperită API. Acceptarea vizuală rămâne pentru feedback.
 
 Corecție ulterioară cerută la 23 octombrie: [UT2 — subcategorii profil](interface.md#ut2--subcategorii-profil-23-octombrie-2026) înlocuiește distribuția 3+2 a filelor mobile cu un rând derulabil, fără etichete suprapuse. Verificată în browser; fără schimbarea contractelor F4a/FD3 sau redesenarea altor ecrane Familie.
 
@@ -93,27 +119,29 @@ Acesta este comportamentul inițial FD1. Din FP1, numele/fotografia deschid prof
 
 ## Ce există
 
-Selector de familie, membri activi, căutare, invitații prin link, acceptare cu cont nou sau existent, schimbare adult/acces limitat și revocare. Cardurile compacte și administrarea rolurilor sunt în ultima schimbare funcțională `e9ef880`.
+Selector de familie, membri activi și copii fără cont, căutare, profiluri și dosare autorizate, invitații prin link cu cont nou sau existent, coduri de înscriere F3b, schimbare adult/acces limitat și revocare. AR1 permite crearea unei familii la înscriere; nu oferă editarea familiei sau transferul proprietății. Istoricul cardurilor compacte și al administrării rolurilor este în `e9ef880`.
 
 ## Fișiere relevante
 
-- UI: `frontend/src/modules/families/Family.tsx`, `AcceptInvitation.tsx`, `family.css`.
-- API și context: `backend/app/Platform/Families/FamilyController.php`, `InvitationController.php`, `TenantContext.php`.
+- UI: `frontend/src/modules/families/Family.tsx` (inclusiv `InvitationCodes`), `AcceptInvitation.tsx`, `family.css`; înscrierea este în `frontend/src/app/AuthEntry.tsx`.
+- API și context: `backend/app/Platform/Families/FamilyController.php`, `InvitationController.php`, `InvitationCodeController.php`, `InvitationCodes.php`, `TenantContext.php`; acceptarea codului este în `backend/app/Platform/Identity/RegistrationController.php`.
+- Schema codurilor: `backend/database/migrations/2026_10_23_111349_create_family_invitation_codes_table.php`.
 - Contractul actual: `backend/routes/web.php`, `frontend/src/shared/api.ts`.
-- Teste: `backend/tests/Feature/FamilyMembershipTest.php`, `FamilyInvitationTest.php`; interacțiunea cu documentele este în `DocumentSecurityTest.php`.
+- Teste: `backend/tests/Feature/RegistrationTest.php`, `FamilyMembershipTest.php`, `FamilyInvitationTest.php`; interacțiunea cu documentele este în `DocumentSecurityTest.php`.
 
 ## Pași
 
 - [x] **F1 — Verificarea paginii existente.** Verifică membrii, căutarea, meniul de administrare și stările fără rezultate pe mobil și desktop, cu proprietar și adult. Inventariază defectele concrete. Rezultat: listă scurtă de fluxuri verificate și prima corecție necesară; fără extinderea funcțiilor.
 - [x] **F2 — Roluri și revocare.** Verifică schimbarea rolului, protejarea proprietarului, conflictul de rol învechit și efectul în sesiunea deja deschisă. Rulează testele de membership; completează doar lacunele de comportament identificate. Un membru limitat nu încarcă documente noi, dar păstrează accesul permis la cele existente.
 - [x] **F3 — Invitații și acceptare.** Verifică creare, afișarea unică a linkului, anulare, expirare, cont greșit, cont nou și acceptare repetată. Rulează testele de invitații, verifică vizual formularul și închide defectele blocante din F1–F3.
-- [ ] **F4 — Extinderea administrării familiei.** După A2–A3, stabilește separat regulile pentru creare/editare familie, profil fără cont și legarea lui confirmată la cont. Apoi tratează plecarea/reactivarea și transferul proprietății ca fluxuri distincte, cu audit și teste; nu transforma automat un membru revocat în membru activ.
+- [x] **F3b — Cod de invitație pentru înscriere.** Implementat și verificat prin API: numai proprietarul, valabilitate 7 zile, o folosire, rol adult și administrare fără expunerea ulterioară a codului. Browserul și feedbackul vizual rămân în curs.
+- [ ] **F4 — Extinderea administrării familiei.** Subseturi implementate separat: copil fără cont în F4a și creare familie la înscriere în AR1. Editarea familiei, legarea confirmată a profilului la un cont, plecarea/reactivarea și transferul proprietății rămân fluxuri distincte, cu reguli, audit și teste; nu transforma automat un membru revocat în membru activ. F3b/AR1 nu pornesc automat A2–A3 sau restul F4.
 
 ## Acceptare M01
 
 - Proprietarul gestionează membrii; ceilalți primesc numai acțiunile permise. Proprietarul nu poate fi retrogradat sau revocat prin acest flux.
 - ID-uri din altă familie și membri revocați sunt respinși fără dezvăluirea datelor; sesiunile existente sunt reverificate.
-- Invitația este limitată la familie/email/rol, expiră și poate fi folosită o singură dată. Tokenul nu apare în loguri sau audit.
+- Invitația prin link este limitată la familie/email/rol; codul F3b leagă numele familiei și rolul adult pentru un cont nou. Ambele expiră și pot fi folosite o singură dată. Tokenurile brute nu apar în loguri sau audit și se întorc numai la creare.
 - Mobilul nu are overflow; cardurile și controalele respectă AGENTS. Dialogurile au focus și confirmări clare pentru revocare.
 
 ## Verificare F1 — 21 octombrie 2026
@@ -145,6 +173,6 @@ Selector de familie, membri activi, căutare, invitații prin link, acceptare cu
 
 ## Limite și decizii
 
-Invitațiile actuale nu trimit email și nu verifică adresa. Linkul localhost funcționează numai local. Livrarea și verificarea sunt în [Autentificare](identity.md), fără duplicarea transportului de email aici.
+Invitațiile prin link și codurile F3b nu trimit email și nu verifică adresa. AR1 autentifică imediat contul nou cu `email_verified_at` null, conform cererii explicite. Linkul localhost funcționează numai local. Livrarea și verificarea rămân planificate separat în [Autentificare](identity.md), fără duplicarea transportului de email aici sau pornirea automată a A2–A3.
 
 Datele private ale unui membru nu sunt transferate proprietarului familiei prin revocare sau schimbare de rol. Regulile F4 se stabilesc înainte de implementarea acelui pas.

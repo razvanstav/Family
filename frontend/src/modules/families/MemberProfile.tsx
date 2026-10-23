@@ -17,10 +17,11 @@ import {
   visibilityLabel,
   type Member,
   type Family,
-  type DocumentRequest,
 } from "../../shared/api";
+import { ProfilePhotoEditor } from "../../shared/ProfilePhotoEditor";
 import { Documents } from "../documents/Documents";
 import { SectionTabs } from "../../shared/SectionTabs";
+import { PageBackdrop } from "../../shared/PageBackdrop";
 import { dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import {
@@ -33,11 +34,7 @@ import {
   type Entry,
   type EntryList,
 } from "./profileData";
-import {
-  ProfileSettings,
-  ProfilePhoto,
-  ProfileEntryModal,
-} from "./ProfileForms";
+import { ProfileSettings, ProfileEntryModal } from "./ProfileForms";
 import "./memberProfile.css";
 
 export function MemberProfile({
@@ -46,8 +43,6 @@ export function MemberProfile({
   member,
   members,
   onBack,
-  requestedDocument,
-  onDocumentOpened,
   onExpired,
 }: {
   family: Family;
@@ -55,15 +50,11 @@ export function MemberProfile({
   member: Member;
   members: Member[];
   onBack: () => void;
-  requestedDocument: DocumentRequest | null;
-  onDocumentOpened: () => void;
   onExpired: () => void;
 }) {
   const base = `/families/${family.id}/members/${member.id}/profile`;
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [tab, setTab] = useState<Tab>(
-    requestedDocument ? "documents" : "overview",
-  );
+  const [tab, setTab] = useState<Tab>("overview");
   const [items, setItems] = useState<Entry[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -75,9 +66,6 @@ export function MemberProfile({
   const [dialog, setDialog] = useState<
     "configure" | "photo" | "new" | Entry | null
   >(null);
-  useEffect(() => {
-    if (requestedDocument) setTab("documents");
-  }, [requestedDocument]);
   useEffect(() => {
     const controller = new AbortController();
     api<Profile>(base, { signal: controller.signal })
@@ -186,53 +174,55 @@ export function MemberProfile({
         !error && <p role="status">Se încarcă profilul…</p>
       ) : (
         <>
-          <section
-            className="member-profile-hero"
-            aria-label={`Profil ${profile.name}`}
-          >
-            <div className="member-profile-avatar-wrap">
-              {profile.photo_status ? (
-                <PrivatePhoto
-                  src={`/api/v1${base}/photo?v=${profile.version}`}
-                  status={profile.photo_status}
-                  className="member-profile-photo"
-                  placeholder={<Users size={30} />}
-                  alt={`Fotografie: ${profile.name}`}
-                />
-              ) : (
-                <div className="member-profile-initials" aria-hidden="true">
-                  {initials(profile.name)}
-                </div>
-              )}
-              {profile.can_write && (
-                <button
-                  className="member-profile-camera icon-button"
-                  aria-label="Schimbă fotografia"
-                  onClick={() => setDialog("photo")}
-                >
-                  <Camera size={17} />
-                </button>
-              )}
-            </div>
-            <div className="member-profile-identity">
-              <h1>{profile.name}</h1>
-              {profile.age !== null && (
-                <span>
-                  {profile.age} {profile.age === 1 ? "an" : "ani"}
+          <PageBackdrop image="family" className="member-profile-backdrop">
+            <section
+              className="member-profile-hero"
+              aria-label={`Profil ${profile.name}`}
+            >
+              <div className="member-profile-avatar-wrap">
+                {profile.photo_status ? (
+                  <PrivatePhoto
+                    src={`/api/v1${base}/photo?v=${profile.version}`}
+                    status={profile.photo_status}
+                    className="member-profile-photo"
+                    placeholder={<Users size={30} />}
+                    alt={`Fotografie: ${profile.name}`}
+                  />
+                ) : (
+                  <div className="member-profile-initials" aria-hidden="true">
+                    {initials(profile.name)}
+                  </div>
+                )}
+                {profile.can_write && (
+                  <button
+                    className="member-profile-camera icon-button"
+                    aria-label="Schimbă fotografia"
+                    onClick={() => setDialog("photo")}
+                  >
+                    <Camera size={17} />
+                  </button>
+                )}
+              </div>
+              <div className="member-profile-identity">
+                <h1>{profile.name}</h1>
+                {profile.age !== null && (
+                  <span>
+                    {profile.age} {profile.age === 1 ? "an" : "ani"}
+                  </span>
+                )}
+                <span className="member-profile-role">
+                  <Users size={14} />
+                  {profile.age !== null && profile.age < 18
+                    ? "Copil"
+                    : profile.role === "owner"
+                      ? "Proprietar"
+                      : profile.role === "limited"
+                        ? "Membru cu acces limitat"
+                        : "Membru adult"}
                 </span>
-              )}
-              <span className="member-profile-role">
-                <Users size={14} />
-                {profile.age !== null && profile.age < 18
-                  ? "Copil"
-                  : profile.role === "owner"
-                    ? "Proprietar"
-                    : profile.role === "limited"
-                      ? "Membru cu acces limitat"
-                      : "Membru adult"}
-              </span>
-            </div>
-          </section>
+              </div>
+            </section>
+          </PageBackdrop>
           {profile.age !== null && profile.age < 14 && (
             <p className="member-profile-rule">
               Până la 14 ani, datele sunt adăugate numai de părinții desemnați.
@@ -279,8 +269,6 @@ export function MemberProfile({
               userId={userId}
               member={member}
               canCreate={profile.can_write}
-              requestedAction={requestedDocument}
-              onActionOpened={onDocumentOpened}
               onExpired={onExpired}
             />
           ) : (
@@ -407,7 +395,7 @@ export function MemberProfile({
             />
           )}
           {dialog === "photo" && (
-            <ProfilePhoto
+            <ProfilePhotoEditor
               profile={profile}
               base={base}
               onClose={() => setDialog(null)}

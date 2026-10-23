@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { api, ApiError, type Family } from "../../shared/api";
 import { SectionTabs } from "../../shared/SectionTabs";
+import { PageBackdrop } from "../../shared/PageBackdrop";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import { dateLabel } from "../../shared/calendarDates";
 import {
@@ -101,35 +102,37 @@ export function Vehicles({
   }
   return (
     <div className="vehicles-page">
-      <div className="page-heading">
-        <h1>Auto</h1>
-        <div className="page-heading-actions">
-          <button
-            className="icon-button"
-            aria-label="Caută mașini"
-            aria-expanded={searchOpen}
-            onClick={() => {
-              if (searchOpen) {
-                setSearch("");
-                setArchived(false);
-              }
-              setSearchOpen((v) => !v);
-            }}
-          >
-            <Search size={21} />
-          </button>
-          {canManage && (
+      <PageBackdrop image="vehicles">
+        <div className="page-heading">
+          <h1>Auto</h1>
+          <div className="page-heading-actions">
             <button
-              className="button primary"
-              aria-label="Adaugă mașină"
-              onClick={() => setNewVehicle(true)}
+              className="icon-button"
+              aria-label="Caută mașini"
+              aria-expanded={searchOpen}
+              onClick={() => {
+                if (searchOpen) {
+                  setSearch("");
+                  setArchived(false);
+                }
+                setSearchOpen((v) => !v);
+              }}
             >
-              <Plus size={20} />
-              <span>Adaugă mașină</span>
+              <Search size={21} />
             </button>
-          )}
+            {canManage && (
+              <button
+                className="button primary"
+                aria-label="Adaugă mașină"
+                onClick={() => setNewVehicle(true)}
+              >
+                <Plus size={20} />
+                <span>Adaugă mașină</span>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </PageBackdrop>
       {searchOpen && (
         <label className="search vehicle-search">
           <Search size={18} />

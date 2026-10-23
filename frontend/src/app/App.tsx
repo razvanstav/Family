@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
-  ArrowRight,
   ChevronDown,
   Heart,
   House,
-  LogOut,
   CalendarDays,
   BookHeart,
   Users,
@@ -14,17 +12,18 @@ import {
 import {
   api,
   ApiError,
-  initials,
   onSessionInvalidated,
   type Session,
-  type DocumentRequest,
   type CalendarRequest,
-  personalDocumentCategories,
 } from "../shared/api";
 import { Documents } from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
 import { AcceptInvitation } from "../modules/families/AcceptInvitation";
-import { Modal } from "../shared/Modal";
+import { MobileNavigation } from "./MobileNavigation";
+import { AccountDialog } from "./AccountDialog";
+import { AuthEntry, type AuthMode } from "./AuthEntry";
+import { UserAvatar } from "../shared/UserAvatar";
+import type { Profile } from "../modules/families/profileData";
 import { SectionTabs } from "../shared/SectionTabs";
 import { observeSessionLifecycle } from "./sessionLifecycle";
 import { CalendarPage } from "../modules/calendar/Calendar";
@@ -45,16 +44,21 @@ const pageLabels = {
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
+  const [authMode, setAuthMode] = useState<AuthMode>("register");
   const [familyId, setFamilyId] = useState("");
   const [error, setError] = useState("");
   const [page, setPage] = useState<keyof typeof pageLabels>("home");
   const [familySection, setFamilySection] = useState<"members" | "documents">(
     "members",
   );
-  const [documentTarget, setDocumentTarget] = useState<DocumentRequest | null>(
-    null,
-  );
   const [account, setAccount] = useState(false);
+  const [ownProfile, setOwnProfile] = useState<{
+    familyId: string;
+    profile: Profile;
+  } | null>(null);
+  const [profileError, setProfileError] = useState("");
+  const [profileRevision, setProfileRevision] = useState(0);
+  const [contentRevision, setContentRevision] = useState(0);
   const [memoryTarget, setMemoryTarget] = useState<string | null>(null);
   const [calendarRevision, setCalendarRevision] = useState(0);
   const [calendarTarget, setCalendarTarget] = useState<CalendarRequest | null>(
@@ -80,16 +84,23 @@ export default function App() {
     return () => window.removeEventListener("hashchange", changed);
   }, []);
   useEffect(() => {
-    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? "Autentificare" : page === "family" && familySection === "documents" ? "Documente · Familia mea" : pageLabels[page]} · Memoria Familiei`;
-  }, [page, familySection, invitation, session?.user, checkingSession]);
+    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? (authMode === "register" ? "Creează cont" : "Autentificare") : page === "family" && familySection === "documents" ? "Documente · Familia mea" : pageLabels[page]} · Memoria Familiei`;
+  }, [
+    page,
+    familySection,
+    invitation,
+    session?.user,
+    checkingSession,
+    authMode,
+  ]);
   function acceptSession(data: Session) {
     sessionRevision.current++;
     knownActor.current = data.user?.id ?? null;
     setSession(data);
+    if (!data.user) setAuthMode("login");
     setFamilyId(data.families[0]?.id ?? "");
     setPage("home");
     setFamilySection("members");
-    setDocumentTarget(null);
     setCalendarTarget(null);
     setMemoryTarget(null);
     setAccount(false);
@@ -108,9 +119,13 @@ export default function App() {
       try {
         const data = await api<Session>("/session");
         if (revision !== sessionRevision.current) return;
-        if (knownActor.current !== null && !data.user) setSessionNotice(true);
+        if (knownActor.current !== null && !data.user) {
+          setSessionNotice(true);
+          setAuthMode("login");
+        }
         knownActor.current = data.user?.id ?? null;
         setSession(data);
+        setProfileRevision((value) => value + 1);
         setFamilyId((id) =>
           data.families.some((f) => f.id === id)
             ? id
@@ -172,6 +187,34 @@ export default function App() {
     };
   }, []);
   const family = session?.families.find((f) => f.id === familyId);
+  useEffect(() => {
+    setOwnProfile(null);
+    setProfileError("");
+    if (!family || !session?.user) return;
+    const controller = new AbortController();
+    api<Profile>(
+      `/families/${family.id}/members/${family.membership_id}/profile`,
+      { signal: controller.signal },
+    )
+      .then((profile) => {
+        if (!controller.signal.aborted)
+          setOwnProfile({ familyId: family.id, profile });
+      })
+      .catch((error) => {
+        if (controller.signal.aborted) return;
+        setProfileError(
+          error instanceof Error
+            ? error.message
+            : "Nu am putut încărca fotografia.",
+        );
+        if (
+          error instanceof ApiError &&
+          [401, 403, 404, 419].includes(error.status)
+        )
+          void refresh();
+      });
+    return () => controller.abort();
+  }, [family?.id, family?.membership_id, session?.user?.id, profileRevision]);
   if (!session || checkingSession)
     return (
       <div className="startup">
@@ -207,10 +250,16 @@ export default function App() {
     );
   if (!session.user)
     return (
-      <Login
+      <AuthEntry
+        brand={<Brand />}
+        mode={authMode}
         demo={session.demo}
         expired={sessionNotice}
-        onLogin={acceptSession}
+        onAuthenticated={acceptSession}
+        onMode={(mode) => {
+          setAuthMode(mode);
+          setSessionNotice(false);
+        }}
       />
     );
   async function logout() {
@@ -228,7 +277,15 @@ export default function App() {
       setLogoutBusy(false);
     }
   }
-  const userInitials = initials(session.user.name);
+  const currentProfile =
+    ownProfile?.familyId === family?.id &&
+    ownProfile?.profile.user_id === session.user.id
+      ? ownProfile.profile
+      : null;
+  const userPhoto =
+    family && currentProfile?.photo_status === "ready"
+      ? `/api/v1/families/${family.id}/members/${family.membership_id}/profile/photo?v=${currentProfile.version}`
+      : undefined;
   const familyNavigation = (
     <SectionTabs
       label="Secțiuni Familia mea"
@@ -246,51 +303,75 @@ export default function App() {
         <Brand />
         <div className="sidebar-family">
           <span className="family-symbol">
-            <Heart size={23} />
+            <Users size={23} aria-hidden="true" />
           </span>
           <strong>{family?.name ?? "Familia ta"}</strong>
         </div>
         <nav aria-label="Navigație principală">
           <button
             className={page === "home" ? "active" : ""}
+            aria-current={page === "home" ? "page" : undefined}
             onClick={() => setPage("home")}
           >
-            <House size={21} /> Acasă
+            <span className="nav-symbol nav-symbol-home" aria-hidden="true">
+              <House size={21} />
+            </span>
+            Acasă
           </button>
           <button
             className={page === "family" ? "active" : ""}
+            aria-current={page === "family" ? "page" : undefined}
             onClick={() => setPage("family")}
           >
-            <Users size={21} /> Familia mea
+            <span className="nav-symbol nav-symbol-family" aria-hidden="true">
+              <Users size={21} />
+            </span>
+            Familia mea
           </button>
           <button
             className={page === "kitchen" ? "active" : ""}
+            aria-current={page === "kitchen" ? "page" : undefined}
             onClick={() => setPage("kitchen")}
           >
-            <UtensilsCrossed size={21} /> Bucătărie
+            <span className="nav-symbol nav-symbol-kitchen" aria-hidden="true">
+              <UtensilsCrossed size={21} />
+            </span>
+            Bucătărie
           </button>
           <button
             className={page === "memory" ? "active" : ""}
+            aria-current={page === "memory" ? "page" : undefined}
             onClick={() => setPage("memory")}
           >
-            <BookHeart size={21} /> Amintiri
+            <span className="nav-symbol nav-symbol-memory" aria-hidden="true">
+              <BookHeart size={21} />
+            </span>
+            Amintiri
           </button>
           <button
             className={page === "calendar" ? "active" : ""}
+            aria-current={page === "calendar" ? "page" : undefined}
             onClick={() => setPage("calendar")}
           >
-            <CalendarDays size={21} /> Calendar
+            <span className="nav-symbol nav-symbol-calendar" aria-hidden="true">
+              <CalendarDays size={21} />
+            </span>
+            Calendar
           </button>
           <button
             className={page === "vehicles" ? "active" : ""}
+            aria-current={page === "vehicles" ? "page" : undefined}
             onClick={() => setPage("vehicles")}
           >
-            <CarFront size={21} /> Auto
+            <span className="nav-symbol nav-symbol-vehicles" aria-hidden="true">
+              <CarFront size={21} />
+            </span>
+            Auto
           </button>
         </nav>
         <div className="sidebar-bottom">
           <button className="sidebar-profile" onClick={() => setAccount(true)}>
-            <span className="avatar">{userInitials}</span>
+            <UserAvatar name={session.user.name} photo={userPhoto} />
             <span>
               <strong>{session.user.name}</strong>
               <small>Contul meu</small>
@@ -307,7 +388,7 @@ export default function App() {
               aria-label="Contul meu"
               onClick={() => setAccount(true)}
             >
-              {userInitials}
+              <UserAvatar name={session.user.name} photo={userPhoto} />
             </button>
           </div>
           <span className="desktop-breadcrumb">
@@ -323,14 +404,13 @@ export default function App() {
           </span>
           <div className="topbar-actions">
             <label className="family-selector">
-              <Heart size={16} />
+              <Users size={16} aria-hidden="true" />
               <select
                 aria-label="Familia activă"
                 value={familyId}
                 onChange={(e) => {
                   setFamilyId(e.target.value);
                   setCalendarTarget(null);
-                  setDocumentTarget(null);
                   setMemoryTarget(null);
                 }}
               >
@@ -359,13 +439,13 @@ export default function App() {
               aria-label="Contul meu"
               onClick={() => setAccount(true)}
             >
-              {userInitials}
+              <UserAvatar name={session.user.name} photo={userPhoto} />
             </button>
           </div>
         </header>
         <main
           className="page-view"
-          key={`${session.user.id}:${family?.id ?? "none"}:${page}`}
+          key={`${session.user.id}:${family?.id ?? "none"}:${page}:${contentRevision}`}
         >
           {sessionNotice && (
             <p className="notice" role="status">
@@ -388,19 +468,6 @@ export default function App() {
                   setPage("memory");
                 }}
                 onKitchen={() => setPage("kitchen")}
-                onDocuments={(request) => {
-                  setDocumentTarget(request);
-                  setFamilySection(
-                    request.memberId ||
-                      request.ownerId !== undefined ||
-                      request.upload ||
-                      (request.category &&
-                        personalDocumentCategories.includes(request.category))
-                      ? "members"
-                      : "documents",
-                  );
-                  setPage("family");
-                }}
                 onCalendar={(target) => {
                   setCalendarTarget(target);
                   setPage("calendar");
@@ -412,8 +479,6 @@ export default function App() {
                 family={family}
                 userId={session.user.id}
                 navigation={familyNavigation}
-                requestedAction={documentTarget}
-                onActionOpened={() => setDocumentTarget(null)}
                 onExpired={() => void refresh()}
               />
             ) : page === "kitchen" ? (
@@ -455,8 +520,6 @@ export default function App() {
                 onExpired={() => void refresh()}
                 userId={session.user.id}
                 navigation={familyNavigation}
-                requestedDocument={documentTarget}
-                onDocumentOpened={() => setDocumentTarget(null)}
               />
             )
           ) : (
@@ -477,86 +540,45 @@ export default function App() {
           )}
         </main>
       </div>
-      <nav className="mobile-nav" aria-label="Navigație mobil">
-        <button
-          aria-label="Acasă"
-          className={page === "home" ? "active" : ""}
-          onClick={() => setPage("home")}
-        >
-          <House size={21} />
-          <span>Acasă</span>
-        </button>
-        <button
-          aria-label="Familia mea"
-          className={page === "family" ? "active" : ""}
-          onClick={() => setPage("family")}
-        >
-          <Users size={21} />
-          <span>Familie</span>
-        </button>
-        <button
-          aria-label="Bucătărie"
-          className={page === "kitchen" ? "active" : ""}
-          onClick={() => setPage("kitchen")}
-        >
-          <UtensilsCrossed size={21} />
-          <span>Bucătărie</span>
-        </button>
-        <button
-          aria-label="Amintiri"
-          className={page === "memory" ? "active" : ""}
-          onClick={() => setPage("memory")}
-        >
-          <BookHeart size={21} />
-          <span>Amintiri</span>
-        </button>
-        <button
-          aria-label="Calendar"
-          className={page === "calendar" ? "active" : ""}
-          onClick={() => setPage("calendar")}
-        >
-          <CalendarDays size={21} />
-          <span>Calendar</span>
-        </button>
-        <button
-          aria-label="Auto"
-          className={page === "vehicles" ? "active" : ""}
-          onClick={() => setPage("vehicles")}
-        >
-          <CarFront size={21} />
-          <span>Auto</span>
-        </button>
-        <button onClick={() => setAccount(true)} aria-label="Contul meu">
-          <span className="mobile-initial" aria-hidden="true">
-            {userInitials}
-          </span>
-          <span>Cont</span>
-        </button>
-      </nav>
+      <MobileNavigation
+        page={page}
+        onPage={setPage}
+        onAccount={() => setAccount(true)}
+      />
       {account && (
-        <Modal title="Contul meu" onClose={() => setAccount(false)}>
-          <div className="account-info">
-            <span className="avatar big">{userInitials}</span>
-            <h3>{session.user.name}</h3>
-            <p>{session.user.email}</p>
-          </div>
-          {session.demo && (
-            <p className="demo-note">Cont demo · date fictive.</p>
-          )}
-          {logoutError && (
-            <p className="error" role="alert">
-              {logoutError}
-            </p>
-          )}
-          <button
-            className="button primary full"
-            disabled={logoutBusy}
-            onClick={() => void logout()}
-          >
-            <LogOut size={18} />{" "}
-            {logoutBusy ? "Se deconectează…" : "Deconectează-te"}
-          </button>
-        </Modal>
+        <AccountDialog
+          key={`${session.user.id}:${family?.id ?? "none"}`}
+          user={session.user}
+          family={family}
+          profile={currentProfile}
+          profileError={profileError}
+          demo={session.demo}
+          logoutBusy={logoutBusy}
+          logoutError={logoutError}
+          onClose={() => setAccount(false)}
+          onLogout={() => void logout()}
+          onExpired={() => void refresh()}
+          onReloadProfile={() => setProfileRevision((value) => value + 1)}
+          onProfileSaved={(profile) => {
+            if (family) setOwnProfile({ familyId: family.id, profile });
+            setContentRevision((value) => value + 1);
+          }}
+          onUserSaved={(user) => {
+            setSession((current) =>
+              current?.user?.id === user.id ? { ...current, user } : current,
+            );
+            setOwnProfile((current) =>
+              current?.profile.user_id === user.id
+                ? {
+                    ...current,
+                    profile: { ...current.profile, name: user.name },
+                  }
+                : current,
+            );
+            setContentRevision((value) => value + 1);
+            sessionChannel.current?.postMessage("changed");
+          }}
+        />
       )}
     </div>
   );
@@ -564,125 +586,15 @@ export default function App() {
 
 function Brand() {
   return (
-    <div className="brand">
-      <span className="brand-mark">
-        <Heart size={23} strokeWidth={1.8} />
+    <div className="brand" aria-label="Memoria Familiei">
+      <span className="brand-mark" aria-hidden="true">
+        <House size={41} strokeWidth={1.7} />
+        <Heart className="brand-heart" size={12} strokeWidth={1.6} />
       </span>
-      <span>
-        memoria{" "}
-        <strong>
-          familiei<span className="brand-dot">.</span>
-        </strong>
+      <span className="brand-name">
+        <span>Memoria</span>
+        <span>Familiei</span>
       </span>
-    </div>
-  );
-}
-function Login({
-  demo,
-  expired,
-  onLogin,
-}: {
-  demo: boolean;
-  expired: boolean;
-  onLogin: (session: Session) => void;
-}) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  async function login(e: FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      onLogin(
-        await api<Session>("/login", {
-          method: "POST",
-          body: JSON.stringify({ email, password }),
-        }),
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Autentificarea nu a reușit.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  return (
-    <div className="login-page">
-      <div className="login-brand">
-        <Brand />
-      </div>
-      <div className="login-form-wrap">
-        <div className="login-form">
-          <h1>Autentificare</h1>
-          {expired && (
-            <p className="notice" role="status">
-              Sesiunea nu mai este activă. Intră din nou în cont.
-            </p>
-          )}
-          <form onSubmit={login}>
-            <label className="field">
-              Adresa de email
-              <input
-                type="email"
-                autoComplete="username"
-                disabled={busy}
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nume@exemplu.ro"
-              />
-            </label>
-            <label className="field">
-              Parola
-              <input
-                type="password"
-                autoComplete="current-password"
-                disabled={busy}
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Parola contului tău"
-              />
-            </label>
-            {error && (
-              <p role="alert" className="error">
-                {error}
-              </p>
-            )}
-            <button className="button primary full" disabled={busy}>
-              {busy ? "Se conectează…" : "Intră în cont"}
-              <ArrowRight size={19} />
-            </button>
-          </form>
-          {demo && (
-            <div className="demo-accounts">
-              <p>Conturi demo</p>
-              <div>
-                {["ana", "mihai", "elena"].map((name) => (
-                  <button
-                    key={name}
-                    disabled={busy}
-                    onClick={() => {
-                      setEmail(`${name}@example.test`);
-                      setPassword("Familie-Demo-2026!");
-                      setError("");
-                    }}
-                  >
-                    {name === "ana"
-                      ? "Ana"
-                      : name === "mihai"
-                        ? "Mihai"
-                        : "Elena"}
-                  </button>
-                ))}
-              </div>
-              <small>Date fictive.</small>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

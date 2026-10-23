@@ -1,5 +1,6 @@
 export type Family = {
   id: string;
+  membership_id: string;
   name: string;
   role: "owner" | "adult" | "limited";
 };
@@ -52,13 +53,6 @@ export type DocumentSummary = Pick<
   | "owner_id"
   | "subject_membership_id"
 >;
-export type DocumentRequest = {
-  id?: string;
-  category?: string;
-  upload?: boolean;
-  ownerId?: number;
-  memberId?: string;
-};
 export const familyDocumentCategories: readonly string[] = ["home", "memories"];
 export const personalDocumentCategories: readonly string[] = [
   "personal",
@@ -85,6 +79,8 @@ export class ApiError extends Error {
     super(message);
   }
 }
+export const errorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Nu am putut salva. Reîncearcă.";
 export async function api<T>(
   path: string,
   options: RequestInit = {},

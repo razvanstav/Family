@@ -1,24 +1,41 @@
+@font-face {
+  font-family: "Nunito";
+  src: url("./assets/fonts/Nunito-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 1000;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Fraunces";
+  src: url("./assets/fonts/Fraunces-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
 :root {
-  font-family: Helvetica, "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Nunito", sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  font-family: var(--font-body);
   font-synthesis: none;
+  font-size: 15px;
   font-weight: 400;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
-  color: #263831;
-  background: #f8f6f1;
-  --ink: #263831;
-  --muted: #737871;
-  --line: #48443714;
-  --panel: #f2f0ea;
-  --surface: #fffefa;
-  --accent: #38654d;
-  --icon-family: #4264c5;
-  --icon-documents: #a66d13;
-  --icon-private: #7954b3;
-  --icon-health: #b54d72;
-  --icon-home: #238472;
-  --shadow: 0 1px 3px #51452d04, 0 5px 20px #51452d06;
+  color: #2d4035;
+  background: #f6f3ec;
+  --ink: #2d4035;
+  --muted: #6b7165;
+  --line: #74634b1c;
+  --panel: #f1eee5;
+  --surface: #fffdf8;
+  --accent: #4c7053;
+  --icon-family: #5278a7;
+  --icon-documents: #a97931;
+  --icon-private: #8863ad;
+  --icon-health: #b9637e;
+  --icon-home: #557c59;
+  --shadow: 0 2px 3px #65553703, 0 7px 24px #65553707;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --motion-fast: 160ms;
   --motion-enter: 260ms;
@@ -50,7 +67,7 @@
 }
 .lucide-book-heart,
 .lucide-sticky-note {
-  color: #976137;
+  color: #8c657d;
 }
 .button.primary svg {
   color: inherit;
@@ -145,6 +162,13 @@ h3,
 p {
   margin: 0;
 }
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-variation-settings:
+    "SOFT" 60,
+    "WONK" 1;
+}
 a {
   color: inherit;
 }
@@ -182,21 +206,21 @@ input[type="radio"] {
 }
 .primary,
 .icon-button.primary {
-  background: #38654d;
+  background: var(--accent);
   color: #fff;
-  border-color: #38654d;
+  border-color: var(--accent);
   box-shadow: var(--shadow);
 }
 .primary:hover:not(:disabled) {
-  background: #2c513d;
+  background: #3c5d43;
 }
 .secondary {
-  background: #fff;
+  background: var(--surface);
   border-color: var(--line);
   box-shadow: var(--shadow);
 }
 .secondary:hover:not(:disabled) {
-  background: #f6f6f7;
+  background: #f5f1e8;
 }
 .full {
   width: 100%;
@@ -212,7 +236,7 @@ input[type="radio"] {
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 13px;
-  background: #fff;
+  background: var(--surface);
   flex-shrink: 0;
 }
 .text-button {
@@ -223,25 +247,25 @@ input[type="radio"] {
   min-height: 44px;
   padding: 8px;
   font-size: 12px;
-  color: #62666b;
+  color: #687265;
 }
 .text-button:hover {
   color: var(--ink);
-  background: #ededee;
+  background: #efede4;
   border-radius: 8px;
 }
 .avatar {
   width: 38px;
   height: 38px;
-  border: 1px solid #dee6dc;
+  border: 1px solid #dce4d5;
   border-radius: 50%;
-  background: #eaf0e6;
+  background: #eaf0e2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #38654d;
+  color: var(--accent);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 700;
   flex-shrink: 0;
 }
 .avatar.small {
@@ -263,56 +287,68 @@ input[type="radio"] {
   position: fixed;
   inset: 0 auto 0 0;
   width: 244px;
-  background: #fffefa;
+  background: #fcfaf5;
   border-right: 1px solid var(--line);
-  padding: 26px 16px 18px;
+  padding: 29px 16px 20px;
   display: flex;
   flex-direction: column;
 }
 .brand {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: 14px;
-  letter-spacing: -0.3px;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 550;
+  font-variation-settings:
+    "SOFT" 70,
+    "WONK" 1;
+  letter-spacing: -0.6px;
+  line-height: 1.05;
   white-space: nowrap;
 }
-.brand strong {
-  font-weight: 600;
-}
-.brand-dot {
-  color: inherit;
+.brand-name > span {
+  display: block;
 }
 .brand-mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-  background: #38654d;
-  color: #fff;
+  position: relative;
+  width: 42px;
+  height: 44px;
+  color: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.brand-mark svg {
-  width: 19px;
-  color: white;
+.brand-mark > .lucide-house {
+  width: 41px;
+  height: 41px;
+  color: inherit;
+}
+.brand-mark > .brand-heart {
+  position: absolute;
+  top: 22px;
+  left: 15px;
+  width: 12px;
+  height: 12px;
+  color: inherit;
+  fill: currentColor;
 }
 .sidebar > .brand {
   padding: 0 6px;
 }
 .sidebar-family {
-  margin-top: 30px;
+  margin-top: 27px;
   display: flex;
   align-items: center;
   gap: 9px;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  box-shadow: var(--shadow);
+  border-radius: 15px;
+  background: var(--surface);
 }
 .family-symbol {
-  color: #73767b;
+  color: var(--icon-family);
   display: flex;
 }
 .family-symbol svg {
@@ -320,40 +356,72 @@ input[type="radio"] {
   height: 18px;
 }
 .sidebar-family strong {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 .sidebar nav {
-  margin-top: 18px;
-  border-top: 1px dashed var(--line);
-  padding-top: 17px;
+  margin-top: 22px;
   display: grid;
-  gap: 5px;
+  gap: 6px;
 }
 .sidebar nav button {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   text-align: left;
-  min-height: 44px;
-  padding: 11px 12px;
-  border-radius: 8px;
-  color: #666a70;
+  min-height: 51px;
+  padding: 9px 11px;
+  border-radius: 14px;
+  color: #5b665c;
   background: transparent;
   font-size: 14px;
+  font-weight: 600;
 }
 .sidebar nav button svg {
-  width: 19px;
-  stroke-width: 1.7;
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.8;
+}
+.nav-symbol {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 11px;
+  flex-shrink: 0;
+}
+.nav-symbol-home {
+  background: #e6ecdf;
+}
+.nav-symbol-family {
+  background: #e9eff6;
+}
+.nav-symbol-kitchen {
+  background: #edf1e7;
+  color: #58795a;
+}
+.nav-symbol-memory {
+  background: #f4eaf0;
+}
+.nav-symbol-calendar {
+  background: #f8eadd;
+  color: #b8753e;
+}
+.nav-symbol-vehicles {
+  background: #e9eef3;
 }
 .sidebar nav button:hover {
-  background: #fafafa;
+  background: #f1f0e7;
 }
 .sidebar nav button.active {
-  color: #31553e;
-  background: #e9eee4;
-  font-weight: 500;
+  color: #34543d;
+  background: #e2e8d9;
+  font-weight: 750;
+}
+.sidebar nav button.active .nav-symbol {
+  background: #ffffff8c;
 }
 .sidebar-bottom {
   margin-top: auto;
@@ -365,23 +433,23 @@ input[type="radio"] {
   text-align: left;
   gap: 10px;
   background: transparent;
-  border-top: 1px dashed var(--line);
+  border-top: 1px solid var(--line);
   padding: 18px 0 0;
 }
 .sidebar-profile strong {
   display: block;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 700;
 }
 .sidebar-profile small {
   display: block;
-  margin-top: 5px;
-  font-size: 11px;
+  margin-top: 3px;
+  font-size: 12px;
   color: var(--muted);
 }
 .sidebar-profile > svg {
   margin-left: auto;
-  color: #888;
+  color: var(--muted);
 }
 .main-column {
   margin-left: 244px;
@@ -389,8 +457,8 @@ input[type="radio"] {
   min-width: 0;
 }
 .topbar {
-  background: #fffefa;
-  min-height: 78px;
+  background: #fcfaf6;
+  min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -399,16 +467,16 @@ input[type="radio"] {
   border-bottom: 1px solid var(--line);
 }
 .desktop-breadcrumb {
-  font-size: 13px;
-  color: #555960;
+  font-size: 14px;
+  color: #6f786c;
 }
 .desktop-breadcrumb span {
-  color: #aaa;
+  color: #b0b4a7;
   margin: 0 12px;
 }
 .desktop-breadcrumb strong {
-  color: #7c8086;
-  font-weight: 400;
+  color: var(--ink);
+  font-weight: 700;
 }
 .topbar-actions {
   display: flex;
@@ -421,16 +489,17 @@ input[type="radio"] {
   gap: 8px;
   padding: 0 11px;
   border: 1px solid var(--line);
-  border-radius: 9px;
-  box-shadow: var(--shadow);
-  font-size: 12px;
-  color: #4f5359;
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 13px;
+  font-weight: 700;
+  color: #4e654f;
 }
 .family-selector select {
   appearance: none;
   background: transparent;
   border: 0;
-  min-height: 42px;
+  min-height: 44px;
   max-width: 170px;
   color: inherit;
 }
@@ -461,9 +530,9 @@ main {
   margin-bottom: 24px;
 }
 .page-heading h1 {
-  font-size: 30px;
-  font-weight: 600;
-  letter-spacing: -0.7px;
+  font-size: 32px;
+  font-weight: 550;
+  letter-spacing: -0.8px;
   line-height: 1.2;
 }
 .page-heading-actions {
@@ -594,9 +663,9 @@ main {
   margin-bottom: 12px;
 }
 .section-header h2 {
-  font-size: 15px;
-  font-weight: 600;
-  color: #61656b;
+  font-size: 17px;
+  font-weight: 550;
+  color: var(--ink);
 }
 .modal {
   border: 1px solid var(--line);
@@ -952,12 +1021,12 @@ main {
   gap: 28px;
 }
 .login-form-wrap {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 22px;
   padding: 32px;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   box-shadow: var(--shadow);
 }
 .login-form h1 {
@@ -968,6 +1037,13 @@ main {
 }
 .login-form form > .button {
   margin-top: 6px;
+}
+.auth-switch {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 12px;
+  min-height: 44px;
 }
 .demo-accounts {
   margin-top: 24px;
@@ -1002,15 +1078,71 @@ main {
   text-align: center;
   padding: 8px 0 24px;
 }
-.account-info h3 {
-  font-size: 18px;
-  font-weight: 500;
-  margin: 15px 0 8px;
-}
 .account-info p {
+  margin-top: 12px;
   font-size: 13px;
   color: var(--muted);
   overflow-wrap: anywhere;
+}
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+button.avatar {
+  padding: 0;
+}
+button.avatar > .avatar {
+  width: 100%;
+  height: 100%;
+}
+.account-info .avatar.big {
+  margin-inline: auto;
+}
+.account-photo-controls {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.account-photo-controls > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.account-info + .account-photo-controls {
+  margin-top: -8px;
+}
+.account-reload {
+  margin-top: 10px;
+}
+.account-info ~ form {
+  margin-bottom: 20px;
+}
+.mobile-more-menu {
+  display: grid;
+}
+.mobile-more-menu button {
+  display: grid;
+  grid-template-columns: 24px 1fr 18px;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 12px 6px;
+  background: transparent;
+  text-align: left;
+  font-size: 16px;
+}
+.mobile-more-menu button + button {
+  border-top: 1px solid var(--line);
+}
+.mobile-more-menu button:hover,
+.mobile-more-menu button[aria-current="page"] {
+  background: var(--panel);
+}
+.mobile-more-menu .lucide-user-round {
+  color: var(--icon-home);
 }
 .demo-note {
   background: #f7f7f8;
@@ -1113,12 +1245,12 @@ main {
     right: 0;
     bottom: 0;
     display: grid;
-    grid-template-columns: repeat(7, minmax(44px, 1fr));
+    grid-template-columns: repeat(5, minmax(44px, 1fr));
     gap: 2px;
     overflow-x: auto;
     border-top: 1px solid var(--line);
     padding: 8px 8px max(8px, env(safe-area-inset-bottom));
-    background: #fffefaf5;
+    background: #fcfaf5f5;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
@@ -1130,29 +1262,36 @@ main {
     gap: 5px;
     min-height: 55px;
     background: transparent;
-    border-radius: 9px;
-    color: #777c83;
-    font-size: 10px;
+    border-radius: 14px;
+    color: #78816f;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .mobile-nav button > svg {
+    box-sizing: content-box;
+    padding: 5px 9px;
+    margin-block: -2px;
+    border-radius: 12px;
+    stroke-width: 1.8;
+  }
+  .mobile-nav .lucide-utensils-crossed {
+    color: #58795a;
+  }
+  .mobile-nav .lucide-calendar-days {
+    color: #b8753e;
   }
   .mobile-nav button.active {
-    color: #31553e;
-    background: #e9eee4;
+    color: #34543d;
+    background: #e2e8d9;
+  }
+  .mobile-nav button.active > svg {
+    background: #ffffff8c;
   }
   .mobile-nav button > span {
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-  .mobile-initial {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 21px;
-    height: 21px;
-    border: 1px solid currentColor;
-    border-radius: 50%;
-    font-size: 8px;
   }
   .modal {
     position: fixed;

@@ -1,0 +1,8 @@
+{
+  "asset": "warm-countryside.png",
+  "generator": "OpenAI built-in image_gen",
+  "generated_on": "2026-10-23",
+  "purpose": "Decorative background for the Home header; no family data or people depicted.",
+  "dimensions": [2172, 724],
+  "prompt": "Use case: illustration-story. Asset type: a decorative wide watercolor panorama background for the header of a warm Romanian family organizer web app, not a web-page mockup. Primary request: quiet hand-painted Carpathian countryside with distant soft sage mountains, gentle rolling hills, tiny trees and warm ochre sunlight. Composition: wide landscape aspect ratio about 3:1. Reserve the entire left half and upper two thirds as nearly empty warm ivory paper (#f8f5ee), suitable for dark page headings. Concentrate the delicate mountain and meadow painting low on the right, softly dissolving into the same warm ivory at all four edges, so it sits seamlessly on a cream page. Delicate watercolor washes, natural paper grain, restrained detail, light warm atmosphere and subtle nostalgic family-album feeling. Muted sage, olive, warm sand and touches of ochre, no saturated greens or blue. No people, animals, buildings, writing, lettering, logos, UI, frames or watermark. The image must be a standalone background art asset, not a laptop or a photograph of a screen."
+}

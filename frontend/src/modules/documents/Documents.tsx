@@ -34,9 +34,9 @@ import {
   type Document,
   type Family,
   type Member,
-  type DocumentRequest,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
+import { PageBackdrop } from "../../shared/PageBackdrop";
 import { filterDocuments } from "./documentFilters";
 import { ExpirationField } from "./ExpirationField";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
@@ -54,8 +54,6 @@ export function Documents({
   member,
   canCreate = member === undefined,
   navigation,
-  requestedAction,
-  onActionOpened,
   onExpired,
 }: {
   family: Family;
@@ -63,8 +61,6 @@ export function Documents({
   member?: Member;
   canCreate?: boolean;
   navigation?: ReactNode;
-  requestedAction: DocumentRequest | null;
-  onActionOpened: () => void;
   onExpired: () => void;
 }) {
   const categoryIds = member
@@ -74,35 +70,14 @@ export function Documents({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState(
-    requestedAction?.category && categoryIds.includes(requestedAction.category)
-      ? requestedAction.category
-      : "all",
-  );
+  const [category, setCategory] = useState("all");
   const [privacy, setPrivacy] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [upload, setUpload] = useState(
-    Boolean(requestedAction?.upload && canCreate && family.role !== "limited"),
-  );
-  const [selected, setSelected] = useState<string | null>(
-    requestedAction?.id ?? null,
-  );
+  const [upload, setUpload] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const endpoint = `/families/${family.id}`;
   const sequence = useRef(0);
-  useEffect(() => {
-    if (!requestedAction) return;
-    setCategory(
-      requestedAction.category && categoryIds.includes(requestedAction.category)
-        ? requestedAction.category
-        : "all",
-    );
-    setSelected(requestedAction.id ?? null);
-    setUpload(
-      Boolean(requestedAction.upload && canCreate && family.role !== "limited"),
-    );
-    onActionOpened();
-  }, [requestedAction]);
   async function load() {
     const id = ++sequence.current;
     setLoading(true);
@@ -141,21 +116,24 @@ export function Documents({
   const visible = filterDocuments(collectionDocs, search, category, privacy);
   const canAddToCollection = canCreate;
   const Heading = member ? "h2" : "h1";
+  const heading = (
+    <section className={member ? "section-header" : "page-heading"}>
+      <Heading>{member ? "Documente" : "Familia mea"}</Heading>
+      {canAddToCollection && (
+        <button
+          className="button primary"
+          aria-label="Adaugă document"
+          onClick={() => setUpload(true)}
+          disabled={family.role === "limited"}
+        >
+          <Plus size={21} /> <span>Adaugă document</span>
+        </button>
+      )}
+    </section>
+  );
   return (
     <div className="documents-page">
-      <section className={member ? "section-header" : "page-heading"}>
-        <Heading>{member ? "Documente" : "Familia mea"}</Heading>
-        {canAddToCollection && (
-          <button
-            className="button primary"
-            aria-label="Adaugă document"
-            onClick={() => setUpload(true)}
-            disabled={family.role === "limited"}
-          >
-            <Plus size={21} /> <span>Adaugă document</span>
-          </button>
-        )}
-      </section>
+      {member ? heading : <PageBackdrop image="family">{heading}</PageBackdrop>}
       {navigation}
       <div className="library-tools">
         <div className="search">

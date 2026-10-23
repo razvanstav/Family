@@ -19,6 +19,7 @@ import { RecipeDetail } from "./RecipeDetail";
 import { RecipeMeta } from "./RecipeMeta";
 import { KitchenToday } from "./KitchenToday";
 import { SectionTabs } from "../../shared/SectionTabs";
+import { PageBackdrop } from "../../shared/PageBackdrop";
 
 export function Kitchen({
   family,
@@ -112,44 +113,46 @@ export function Kitchen({
 
   return (
     <div className="kitchen-page">
-      <section className="page-heading">
-        <h1>Bucătărie</h1>
-        <div className="page-heading-actions">
-          <button
-            className="icon-button"
-            aria-label="Caută rețete"
-            onClick={() => {
-              setSection("recipes");
-              setBrowsing(true);
-              searchInput.current?.focus();
-            }}
-          >
-            <Search size={21} />
-          </button>
-          {family.role !== "limited" && (
+      <PageBackdrop image="kitchen">
+        <section className="page-heading">
+          <h1>Bucătărie</h1>
+          <div className="page-heading-actions">
             <button
-              className="button primary"
-              aria-label={
-                section === "recipes"
-                  ? "Adaugă rețetă"
-                  : "Alege rețetă pentru masă"
-              }
+              className="icon-button"
+              aria-label="Caută rețete"
               onClick={() => {
-                if (section === "recipes") setAdding(true);
-                else {
-                  setSection("recipes");
-                  setBrowsing(true);
-                }
+                setSection("recipes");
+                setBrowsing(true);
+                searchInput.current?.focus();
               }}
             >
-              <Plus size={19} />
-              <span>
-                {section === "recipes" ? "Adaugă rețetă" : "Alege rețetă"}
-              </span>
+              <Search size={21} />
             </button>
-          )}
-        </div>
-      </section>
+            {family.role !== "limited" && (
+              <button
+                className="button primary"
+                aria-label={
+                  section === "recipes"
+                    ? "Adaugă rețetă"
+                    : "Alege rețetă pentru masă"
+                }
+                onClick={() => {
+                  if (section === "recipes") setAdding(true);
+                  else {
+                    setSection("recipes");
+                    setBrowsing(true);
+                  }
+                }}
+              >
+                <Plus size={19} />
+                <span>
+                  {section === "recipes" ? "Adaugă rețetă" : "Alege rețetă"}
+                </span>
+              </button>
+            )}
+          </div>
+        </section>
+      </PageBackdrop>
       <SectionTabs
         label="Secțiuni Bucătărie"
         value={section}

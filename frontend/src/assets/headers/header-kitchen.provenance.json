@@ -1,0 +1,11 @@
+{
+  "asset": "header-kitchen.png",
+  "generator": "OpenAI built-in image_gen",
+  "generated_on": "2026-10-23",
+  "dimensions": [
+    2172,
+    724
+  ],
+  "purpose": "Decorative photographic header background for the kitchen page; frontend CSS applies fade. No user or family data depicted.",
+  "prompt": "Use case: photorealistic-natural. Asset type: standalone panoramic background photo for a family organizer's Kitchen page header, not a website mockup. Wide 3:1 composition. A real, cozy home kitchen, a warm oak worktop with a simple ceramic bowl, a few fresh tomatoes, herbs and a folded natural linen towel grouped on the RIGHT third. Diffused morning sunlight, quiet candid lifestyle photography, natural textures, gentle depth of field, restrained sage, warm ivory and honey wood palette. Leave the LEFT half and upper area almost empty softly out of focus warm cream wall, suitable for dark UI text. A calm welcoming family-home atmosphere, no staged advertising gloss. No people, writing, typography, labels, logos, watermark, border, screens or UI. The frontend will apply a subtle fade; keep the image photographic and lightly composed."
+}

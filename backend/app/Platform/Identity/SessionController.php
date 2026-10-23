@@ -5,6 +5,7 @@ namespace App\Platform\Identity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class SessionController
@@ -15,7 +16,7 @@ final class SessionController
         $families = $user ? DB::table('families')->join('family_memberships as m', 'm.family_id', '=', 'families.id')
             ->where('m.user_id', $user->id)->whereNull('m.revoked_at')
             ->orderByRaw("CASE WHEN m.role = 'owner' THEN 0 ELSE 1 END")->orderBy('families.name')
-            ->get(['families.id', 'families.name', 'm.role']) : [];
+            ->get(['families.id', 'families.name', 'm.role', 'm.id as membership_id']) : [];
 
         return response()->json([
             'user' => $user ? ['id' => $user->id, 'name' => $user->name, 'email' => $user->email] : null,
@@ -27,6 +28,7 @@ final class SessionController
     public function login(Request $request)
     {
         $credentials = $request->validate(['email' => 'required|email|max:254', 'password' => 'required|string|max:200']);
+        $credentials['email'] = Str::lower(trim($credentials['email']));
         if (! Auth::attempt($credentials)) {
             throw ValidationException::withMessages(['email' => 'Adresa de email sau parola nu este corectă.']);
         }

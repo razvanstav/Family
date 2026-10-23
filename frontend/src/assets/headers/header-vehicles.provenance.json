@@ -1,0 +1,11 @@
+{
+  "asset": "header-vehicles.png",
+  "generator": "OpenAI built-in image_gen",
+  "generated_on": "2026-10-23",
+  "dimensions": [
+    2172,
+    724
+  ],
+  "purpose": "Decorative photographic header background for the vehicles page; frontend CSS applies fade. No user or family data depicted.",
+  "prompt": "Use case: photorealistic-natural. Asset type: standalone panoramic background photo for a family organizer's Cars page header, not a website mockup. Wide 3:1 composition. A small unbranded neutral-colored family car parked on the RIGHT third beside a peaceful country lane in the Carpathian foothills. Muted autumn sage trees, soft distant hills and warm late-afternoon sunlight, natural candid travel photography with real textures and gentle depth of field. Keep the LEFT half and upper area quiet pale warm sky and softly out of focus countryside so dark UI text can sit there. Homey family-roadtrip mood, understated and warm, no luxury advertising. No people, no logos, no readable license plates, no writing, typography, watermark, border, screens or UI. The frontend will apply a subtle fade; keep the scene photographic."
+}

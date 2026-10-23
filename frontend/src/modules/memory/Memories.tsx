@@ -18,6 +18,7 @@ import { MomentDetail } from "./MomentDetail";
 import { MomentForm } from "./MomentForm";
 import { Timeline } from "./Timeline";
 import { SectionTabs } from "../../shared/SectionTabs";
+import { PageBackdrop } from "../../shared/PageBackdrop";
 import { MealViewer } from "../kitchen/MealViewer";
 import { momentKinds, type Moment, type MomentList } from "./memoryTypes";
 import "./memory.css";
@@ -148,33 +149,35 @@ export function Memories({
 
   return (
     <div className="memories-page">
-      <section className="page-heading">
-        <h1>Amintiri</h1>
-        <div className="page-heading-actions">
-          <button
-            className="icon-button"
-            aria-label="Caută amintiri"
-            aria-expanded={searchOpen || Boolean(query)}
-            onClick={() => {
-              setSection("moments");
-              setSearchOpen(true);
-              searchInput.current?.focus();
-            }}
-          >
-            <Search size={21} aria-hidden="true" />
-          </button>
-          {family.role !== "limited" && (
+      <PageBackdrop image="memory">
+        <section className="page-heading">
+          <h1>Amintiri</h1>
+          <div className="page-heading-actions">
             <button
-              className="button primary"
-              aria-label="Adaugă amintire"
-              onClick={() => setView({ mode: "form" })}
+              className="icon-button"
+              aria-label="Caută amintiri"
+              aria-expanded={searchOpen || Boolean(query)}
+              onClick={() => {
+                setSection("moments");
+                setSearchOpen(true);
+                searchInput.current?.focus();
+              }}
             >
-              <Plus size={19} />
-              <span>Adaugă amintire</span>
+              <Search size={21} aria-hidden="true" />
             </button>
-          )}
-        </div>
-      </section>
+            {family.role !== "limited" && (
+              <button
+                className="button primary"
+                aria-label="Adaugă amintire"
+                onClick={() => setView({ mode: "form" })}
+              >
+                <Plus size={19} />
+                <span>Adaugă amintire</span>
+              </button>
+            )}
+          </div>
+        </section>
+      </PageBackdrop>
       <SectionTabs
         label="Vizualizare Amintiri"
         value={section}

@@ -21,6 +21,7 @@ import {
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { SectionTabs } from "../../shared/SectionTabs";
+import { PageBackdrop } from "../../shared/PageBackdrop";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import type { CalendarItem } from "./calendarTypes";
 import { CalendarMonth } from "../../shared/CalendarMonth";
@@ -194,33 +195,35 @@ export function CalendarPage({
   }
   return (
     <div className="calendar-page">
-      <section className="page-heading">
-        <h1 className="calendar-title">
-          <CalendarDays size={25} aria-hidden="true" />
-          Calendar
-        </h1>
-        <div className="page-heading-actions">
-          <button
-            className="icon-button"
-            aria-label="Caută evenimente"
-            aria-expanded={searchOpen || Boolean(query)}
-            onClick={() => {
-              setSearchOpen(true);
-              searchInput.current?.focus();
-            }}
-          >
-            <Search size={21} aria-hidden="true" />
-          </button>
-          <button
-            className="button primary"
-            aria-label="Adaugă eveniment"
-            disabled={family.role === "limited"}
-            onClick={() => setEditor("new")}
-          >
-            <Plus size={18} /> <span>Adaugă eveniment</span>
-          </button>
-        </div>
-      </section>
+      <PageBackdrop image="calendar">
+        <section className="page-heading">
+          <h1 className="calendar-title">
+            <CalendarDays size={25} aria-hidden="true" />
+            Calendar
+          </h1>
+          <div className="page-heading-actions">
+            <button
+              className="icon-button"
+              aria-label="Caută evenimente"
+              aria-expanded={searchOpen || Boolean(query)}
+              onClick={() => {
+                setSearchOpen(true);
+                searchInput.current?.focus();
+              }}
+            >
+              <Search size={21} aria-hidden="true" />
+            </button>
+            <button
+              className="button primary"
+              aria-label="Adaugă eveniment"
+              disabled={family.role === "limited"}
+              onClick={() => setEditor("new")}
+            >
+              <Plus size={18} /> <span>Adaugă eveniment</span>
+            </button>
+          </div>
+        </section>
+      </PageBackdrop>
       {(searchOpen || query) && (
         <label className="search calendar-search">
           <Search size={18} aria-hidden="true" />

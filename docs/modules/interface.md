@@ -1,6 +1,108 @@
 # Interfață comună
 
-Stare: **UT3 — navigarea categoriilor ascunse**, implementat și verificat local la 23 octombrie 2026 după feedbackul pentru filele profilului. UT1/UT2, [Auto V1a](vehicles.md#v1a--ecranul-auto-23-octombrie-2026) și layouturile existente se păstrează; planificatorul rămâne schiță.
+Stare curentă: **DD1 — Date demo globale**, adăugate local la cererea utilizatorului. FW1 — Familia mea caldă și PB1 — Fotografii în antete rămân implementate și verificate local; acceptarea vizuală așteaptă feedback. H4 a fost acceptat explicit („Așa da, mult mai cald”) la 23 octombrie 2026. AR1, NM1, A1b și UT3 rămân existente.
+
+## DD1 — Date demo globale, 23 octombrie 2026
+
+Cerere explicită: câte minimum 3–4 exemple în toate zonele, inclusiv istoric, pentru previzualizarea rapidă a aplicației. Populată numai Familia Popescu, vizibilă în sesiunea Mihai. Fără resetarea bazei, modificarea datelor existente sau schimbări de cod/layout. Familia Ionescu rămâne neatinsă. Datele noi au marcajul demo; fotografiile sunt exemple locale existente, nu fotografii personale noi.
+
+| Zonă | Date după completare |
+| --- | --- |
+| Familia mea | 4 membri: Ana, Mihai și copiii fără cont Luca · demo / Emma · demo; ambii adulți sunt părinți desemnați |
+| Profiluri | 80 însemnări noi: câte 4 vizite, medicamente, cărți, cultură și activități pentru fiecare profil; însemnările existente păstrate |
+| Documente | 40 PDF-uri noi: 8 Casă, 4 Amintiri, 14 Personale, 14 Sănătate; fiecare profil are minimum 3 în fiecare categorie personală |
+| Bucătărie | 4 rețete cu fotografii, 12 mese (4 trecute, 4 azi, 4 viitoare), 16 voturi/comentarii demo |
+| Amintiri | 5 momente cu fotografii în total (albumul existent + 4 noi), 4 note noi; date pe ultimele trei luni |
+| Calendar | 9 evenimente vizibile pentru Mihai (4 istorice noi, 5 viitoare în total), 4 remindere programate pentru Mihai; reminderele istorice sunt expirate |
+| Auto | 4 mașini în total: mașina existentă + 3 demo; câte 4 revizii/costuri istorice și 4 programări pe mașină, 32 înregistrări; 4 documente auto comune asociate fiecărei mașini, 16 legături |
+
+- Copiii nu au utilizatori, emailuri sau autentificări fictive. Documentele personale rămân private și legate de profil prin `subject_membership_id`; Casă păstrează accesul adulților, Amintiri accesul familiei. Asocierea Auto folosește autorizarea documentelor existente. Mașina utilizatorului își păstrează numele, datele și fotografia; primește numai înregistrări demo separate.
+- Patru utilitare locale ignorate în `.runtime/populate-{family,kitchen,memory-calendar,vehicles}-demo.php`, cu verificări pentru mediul local, familia exactă și identitatea actorului. Serviciile/controlerele existente sunt refolosite pentru operațiile de domeniu; PDF-urile și unele fotografii folosesc modelul fixture-urilor locale de încredere. Nu s-a rulat seederul general.
+- Verificate: sintaxa PHP și formatarea utilitarelor, contoarele și relațiile salvate, fișierele media și starea ready; a doua rulare nu adaugă duplicate. Proiecția amintirilor include sursele noi. Comanda de livrare outbox pentru familia Popescu a raportat 0 eșecuri și 0 elemente rămase în lot. Nu sunt probe noi de livrare efectivă a reminderelor.
+- Browser Mihai/Popescu: Auto afișează cele 4 opțiuni de mașină, 3 programări și 3 costuri istorice în sumar; Acasă afișează 5 evenimente apropiate, 4 remindere programate, albumul cu fotografie și noile amintiri. Aplicația rămâne pe Acasă. Fără build sau suite repetate, fiind numai date locale; verificările FW1/PB1 rămân valabile.
+
+
+## PB1 — Fotografii în antete, 23 octombrie 2026
+
+- Cerere explicită ulterioară: fiecare pagină să aibă o imagine estompată pentru o atmosferă caldă. `shared/PageBackdrop.tsx` și `pageBackdrop.css` centralizează imaginea decorativă, estomparea spre crem și cadrul de 130 px desktop / 120 px mobil. Titlurile, acțiunile și filele rămân cele existente. Nu reprezintă redesignul corpurilor celorlalte module.
+- Acasă păstrează peisajul în acuarelă H4; Familia mea și Documentele comune folosesc livingul cald existent; Amintiri folosește albumul, Calendar agenda de pe masă. Bucătărie și Auto folosesc fotografii tematice generate cu skillul ImageGen, built-in, salvate în `assets/headers/`, cu prompturi/proveniență în JSON-urile alăturate. Nu sunt fotografii ale membrilor, rețetelor sau mașinilor reale ale familiei.
+- Profilul membrului primește același decor în cardul de identitate existent, cu variantă fără înălțime/padding suplimentar. Documentele din profil nu au un al doilea antet. Auto păstrează antetul și când deschide un profil. Membri/Documente folosesc aceeași imagine și aceleași dimensiuni, fără deplasarea filelor.
+- Fără backend, requesturi API noi, date demo sau funcții fictive. Imaginile locale au `alt=""`, `aria-hidden`, nu preiau clickul/focusul și nu adaugă stări sau mesaje. Stilurile vechi exclusive Home pentru peisaj au fost eliminate, fără clase orfane.
+- TypeScript/Vite build, 20 teste frontend existente, Prettier și `git diff --check` trecute. Browser desktop 1280 × 960: toate cele șase pagini principale au antet de 130 px, fără overflow; fotografiile Bucătărie/Auto încărcate complet la 2172 × 724, fotografiile existente Familie/Amintiri/Calendar la 768 × 512. În Rețete/Mese, filele rămân la y=240. Mobil 390 × 844 și 360 × 800: antete de 120 px, fără overflow în paginile parcurse; Membri/Documente păstrează filele la y=217. Profilul Mihai are decor încărcat și wrapper de 132 px, exact cât cardul de identitate, fără spațiu suplimentar. Nu sunt refăcute layouturile Bucătărie/Amintiri/Calendar/Auto/Documente.
+- Capturi ignorate `.runtime/pb1-kitchen-desktop.png`, `.runtime/pb1-auto-desktop.png`, `.runtime/pb1-kitchen-mobile.png`, `.runtime/pb1-auto-mobile.png` și `.runtime/pb1-calendar-mobile.png`. Fotografii Bucătărie/Auto confirmate încărcate complet și la 360 px, fără overflow. Fără probă nouă de dispozitiv fizic, eroare de imagine sau schimbare familie; nu au fost salvate date în probele UI.
+- Corpul Familiei și probele sale sunt în [FW1](families.md#fw1--familia-mea-caldă-23-octombrie-2026). Acceptarea vizuală a acestui pas așteaptă feedback.
+
+## H4 — Acasă cald, 23 octombrie 2026
+
+- Acceptat explicit ulterior de utilizator: „Așa da, mult mai cald”. Antetul este refolosit prin PB1; compoziția și funcțiile H4 rămân cele verificate mai jos.
+- Referință nouă explicită: `artifacts/design-reference-home-warm.png`, copia imaginii desktop furnizate de utilizator. Atmosfera crem/salvie, fotografiile, iconițele prietenoase și fontul cald se adaptează și pe mobil. Cererea înlocuiește regula veche Helvetica/Arial, păstrând textele directe, navigația confirmată și funcțiile reale.
+- Tipografie comună: Nunito variabil pentru corp și controale, Fraunces variabil pentru titluri și brand. Fișierele originale sunt în `frontend/src/assets/fonts/`, cu licențele SIL OFL 1.1 și sursele în README; diacriticele românești sunt verificate în cmap. Tokenuri `--font-body`/`--font-display`, fără servicii externe la rulare. Culori comune crem/ivoire, verde salvie, text secundar cu contrast ajustat; sidebar cu recipiente mici pentru iconițe și brand casă/inimă. Bara mobilă și Mai multe păstrează ordinea și destinațiile.
+- `Home.tsx`/`home.css`: antet Acasă cu data reală, inimă decorativă și peisaj discret în acuarelă. Agenda ocupă toată lățimea: evenimente și remindere alăturate desktop, suprapuse mobil. Acces rapid pe trei coloane compacte; dedesubt fotografia amintirii și calendarul alăturate pe desktop, suprapuse sub 900 px. Zilele evenimentelor sunt etichete compacte cu lună și nume accesibil complet; orele, accesul și statusurile reminderelor sunt păstrate.
+- Peisaj generat cu skillul ImageGen, built-in, numai decorativ: `frontend/src/assets/home/warm-countryside.png`, cu prompt/proveniență în fișierul alăturat. Fotografia amintirii rămâne cea privată existentă, cu stări vizibile pentru verificare/respingere/eroare. Nu sunt adăugate persoane sau fotografii de familie fictive.
+- Fără schimbări backend, date demo noi, requesturi suplimentare, documente pe Acasă, căutare globală fictivă, contoare ori module neimplementate din referință. Peisajul are `alt=""`, iconițele decorative sunt ascunse cititorului de ecran. Calendarul are ajustări locale, fără schimbarea ecranului Calendar.
+- **Verificări automate:** TypeScript/Vite build, cele 20 teste frontend existente și Prettier trecute. Primul check a identificat lipsa declarațiilor pentru import PNG; folosită convenția existentă `new URL(..., import.meta.url)`. Buildul Vite a necesitat execuție cu acces la configurație în afara sandboxului. Revizuirea punctuală a corectat specificitatea zilei din etichetă, contrastul textului secundar și lățimea calendarului la 360 px. Fără suite backend reluate pentru acest layout.
+- **Browser:** Mihai/Popescu, 1440 × 1100 și 1280 × 960: agenda pe două coloane egale, acces rapid dedesubt, apoi fotografie/calendar alăturate. La 1280 px: panouri de circa 469 px, la aceeași înălțime de 377 px; accesul rapid de 64 px. Mobil 390 × 844 și 360 × 800: panouri suprapuse, scurtături de 79 px, fără overflow orizontal; zilele calendarului au circa 45,3/44,4 × 44 px, iar azi 44 × 44 px. Fotografia privată este încărcată complet, 768 × 512. Fonturile calculate sunt Nunito/Fraunces; cifra datei are 22 px.
+- Evenimentul și fotografia amintirii demo deschid detaliile canonice și se închid cu Escape, fără salvări. Mai multe păstrează Amintiri/Auto/Contul meu și readuce focusul la închidere. Capturi ignorate `.runtime/h4-home-desktop.png`, `.runtime/h4-home-desktop-1280.png`, `.runtime/h4-home-mobile.png`, `.runtime/h4-home-360.png`. Viewportul temporar resetat, Acasă deschisă. Fără dispozitiv fizic, probe noi cu rol limitat, familie alternativă sau eroare de rețea. Acceptarea vizuală așteaptă feedback înaintea următorului layout.
+
+## AR1 — Creare cont, 23 octombrie 2026
+
+- Cerere explicită: pagina publică scurtă, direct în formular, fără sloganuri, landing promoțional sau confirmare email. Formularul folosește cardul neutru și stilurile comune de autentificare, cu acțiunea verde închis; tipografia inițială Helvetica a fost înlocuită ulterior de H4. Un singur layout nou; celelalte ecrane se păstrează.
+- `app/AuthEntry.tsx` extrage autentificarea din App și adaugă nume, email, parolă și numele familiei; filele comune oferă Familie nouă / Am un cod. Codul este cerut numai în a doua variantă. Limita reală de 12 caractere este lângă parolă, fără repetarea parolei sau alte câmpuri. Linkul de autentificare rămâne la final; conturile demo apar numai la login în mediul local.
+- Vizitatorul intră pe Creează cont; logoutul și expirarea sesiunii duc la Autentificare. Înscrierea reușită intră direct pe Acasă. Contractele și testele sunt în [Autentificare AR1](identity.md#ar1--creare-cont-23-octombrie-2026); codurile administratorului sunt în [Familie F3b](families.md#f3b--coduri-de-invitație-23-octombrie-2026).
+- TypeScript/Vite build, 20 teste frontend existente și Prettier trecute. Browser 390 × 844 și 1280 × 960: fără overflow orizontal, câmpuri 47 px și butoane/file minimum 44 px pe mobil; ambele moduri păstrează cadrul formularului. Capturi ignorate `.runtime/registration-mobile.png`, `.runtime/registration-code-mobile.png` și `.runtime/registration-desktop.png`. Formularul curat rămâne deschis, viewportul temporar resetat; acceptarea vizuală așteaptă feedback.
+
+## NM1 — Mai multe pe mobil, 23 octombrie 2026
+
+- Cerere explicită: Amintiri, Auto și Cont mutate într-un meniu Mai multe în dreapta jos pe mobil. Bara are Acasă → Familie → Bucătărie → Calendar → Mai multe, fără scroll orizontal. Desktop păstrează cele șase secțiuni și Cont separat; aceasta este excepția confirmată de la regula anterioară a ordinii identice.
+- `app/MobileNavigation.tsx` reutilizează Modal: foaie cu Amintiri/Auto/Contul meu, nume accesibile, selecție în meniu și Mai multe activ când pagina curentă este Amintiri/Auto. Alegerea închide foaia și deschide secțiunea; Escape o închide și readuce focusul pe Mai multe. Trecerea la desktop închide meniul mobil. Reguli în `styles.css`, fără teme suprapuse.
+- Verificat la 390 × 844: cinci butoane de aproximativ 70 × 55 px, fără overflow, acces funcțional la toate cele trei destinații și revenirea focusului prin Escape. Desktop 1280 × 960: bara mobilă ascunsă, sidebarul în ordinea existentă. Build/Prettier și cele 20 teste frontend existente trecute. Captură ignorată `.runtime/mobile-more-menu.png`. Editorul contului și verificările lui sunt în A1b; fără redesenarea altor pagini.
+
+## H3 — Organizarea zilei, 23 octombrie 2026
+
+- Cerere explicită: Acasă axată pe organizare, evenimente/remindere sus, acces rapid compact și amintiri dedesubt; documentele nu apar pe pagina principală. Această decizie înlocuiește propunerea inițială de mai jos și partea documentelor din layouturile H1/H2.
+- `Home.tsx` afișează întâi Evenimente apropiate și Reminderele mele, apoi acces rapid Calendar/Bucătărie/Amintiri și secțiunea Amintiri. Calendarul lunar este în dreapta pe desktop și după amintiri pe mobil. Evenimentele păstrează fereastra reală de 30 de zile; titlul nu pretinde că toate sunt de azi. Acțiunea principală este Adaugă eveniment, cu data de azi și restricția existentă pentru rol limitat.
+- Eliminate din Acasă: documente recente, categorii, acces rapid Documente și încărcarea documentelor. Eliminată și propagarea exclusivă a vechilor cereri Home → documente prin App/Familie/profil/Documente, inclusiv tipul `DocumentRequest`; deschiderea documentelor și uploadul în dosarele canonice rămân locale modulelor. Nicio schimbare de layout în aceste module.
+- `home.css` definește compoziția și controale de acces rapid de 48 px desktop / 64 px mobil. Stările goale sunt compacte, iar fotografia privată și deschiderea canonică a amintirilor rămân existente. Selectorii și importurile Home pentru documente au fost eliminați, fără referințe rămase în `frontend/src`.
+- Fără backend/migrații sau schimbări de permisiuni: endpointul H1/H2 este păstrat, inclusiv câmpul istoric `documents`, pe care Home nu îl mai consumă. Fără evenimente, remindere, amintiri ori documente demo noi.
+- **Verificat:** TypeScript/Vite build, Prettier, 20 teste frontend existente și `git diff --check`. Prima compilare a prins un setter orfan, eliminat înaintea buildului final; Vite a necesitat rulare cu acces la configurație în afara restricțiilor sandboxului. Inspecția diff a păstrat inițializarea categoriei de upload existentă.
+- **Browser:** sesiune Mihai / Popescu, viewport 390 × 844 și 1280 × 960: evenimente/remindere înaintea accesului rapid și amintirilor, calendar lateral pe desktop, fără documente în pagina Acasă și fără overflow orizontal în verificarea DOM. Acces rapid mobil de 64 px. Adaugă eveniment deschide formularul Calendar cu 23 octombrie 2026; închis fără salvare. Dosarul comun și profilul Mihai deschid încă formularele de documente cu Casă, respectiv Personale și regulile lor de acces. Pagina a revenit pe Acasă și viewportul temporar a fost resetat. Capturi locale ignorate: `.runtime/h3-home-desktop.png`, `.runtime/h3-home-mobile.png`.
+- **Limite:** datele autorizate ale sesiunii au liste goale pentru evenimente/remindere/amintiri; rândurile populate și fotografia nu au o probă vizuală nouă. Fără dispozitiv fizic, probă nouă de rol limitat/revocare/familie alternativă ori suite backend. Fără publicare sau commit. Următorul pas este feedbackul pentru acest singur layout.
+
+### H3 — Date demo, 23 octombrie 2026
+
+Adăugate ulterior, la cererea explicită a utilizatorului, prin formularele Calendar din aplicația locală. Autor: Mihai Popescu, familia Popescu. Titlurile au sufixul `· demo`, iar notițele identifică scopul de previzualizare. Nu recrea aceste evenimente la reluare.
+
+| Eveniment | Data și ora României | Acces | Reminder pentru Mihai |
+| --- | --- | --- | --- |
+| Cumpărături pentru weekend · demo | 23 octombrie 2026, toată ziua | Familia mea | Fără |
+| Plimbare în parc · demo | 24 octombrie 2026, 11:00 | Familia mea | 24 octombrie, 10:00 |
+| Prânz în familie · demo | 25 octombrie 2026, toată ziua | Familia mea | 24 octombrie, 09:00 |
+| Programare la service · demo | 26 octombrie 2026, 10:00 | Doar eu | 25 octombrie, 10:00 |
+
+- Confirmate pe Acasă: 4 evenimente, 3 remindere programate și marcaje calendar pe 23–26 octombrie. Reminderele au numai Mihai selectat; Ana nu primește remindere noi. Programarea la service este un eveniment manual, fără integrare nouă cu Auto.
+- Layoutul populat verificat desktop 1280 × 1100 și mobil 390 × 844; capturi ignorate `.runtime/h3-home-demo-desktop.png`, `.runtime/h3-home-demo-mobile.png`. Viewportul temporar este resetat la încheiere. Amintirile rămân goale în această sesiune.
+- Fără schimbări de cod, build, migrații sau suite repetate pentru introducerea datelor. Verificările H3 anterioare rămân cele consemnate mai sus; limita listelor de evenimente/remindere goale este înlocuită de această probă. Livrarea efectivă a reminderelor, dispozitivul fizic și fotografia nu sunt reverificate. Acceptarea layoutului așteaptă feedback.
+
+### H3 — Liste alăturate pe desktop, 23 octombrie 2026
+
+- La cererea utilizatorului, `.home-agenda` folosește două coloane egale peste 700 px și o singură coloană la maximum 700 px. Evenimentele și reminderele sunt alăturate pe desktop, cu înălțime comună; pe mobil rămân unul sub altul. Calendarul, ordinea DOM și celelalte secțiuni se păstrează. Schimbare numai în `modules/home/home.css`, fără date noi sau modificări de comportament.
+- Build TypeScript/Vite și Prettier trecute. La 1280 × 960, cele două panouri au aceeași poziție verticală (178 px) și câte aproximativ 283 px lățime; accesul rapid începe la circa 606 px, față de circa 950 px în varianta demo anterioară. Captură ignorată `.runtime/h3-home-columns-desktop.png`. Acceptarea vizuală așteaptă feedback; fără alte layouturi începute.
+- Mobil 390 × 844: panouri pe o singură coloană, aceeași margine stângă și lățime de 335 px, al doilea începe după primul și spațiul de 12 px. Fără overflow orizontal. Captură ignorată `.runtime/h3-home-columns-mobile.png`; viewportul de test resetat. `git diff --check` trecut. Fără suite repetate pentru cele două declarații CSS.
+
+### H3 — Amintire demo cu fotografie, 23 octombrie 2026
+
+- La cererea utilizatorului, creată prin UI o singură amintire `Albumul de familie · demo`, tip Moment, 23 octombrie 2026, autor Mihai Popescu, familia Popescu, acces Familia mea, fără persoane menționate. Textul identifică explicit exemplul pentru Acasă. Nu o recrea la reluare.
+- Fotografie demonstrativă existentă în proiect: `frontend/src/assets/categories/memories.webp` (album de fotografii pe masă). Încărcată prin formularul canonic; detaliul salvat afișează fotografia, fără carantină sau respingere. Nu s-au folosit fotografii personale și nu s-a creat un asset nou.
+- Pe Acasă sunt confirmate 4 evenimente, 3 remindere și cardul noii amintiri, inclusiv după Actualizează. Imaginea privată este încărcată complet (768 × 512). Verificare vizuală desktop 1280 × 1150 și mobil 390 × 844, fără schimbare de layout; viewportul temporar resetat. Capturi ignorate `.runtime/h3-home-complete-desktop.png`, `.runtime/h3-home-complete-mobile.png`. `git diff --check` trecut.
+- Fără schimbări de cod, layout, migrații sau seedere; buildul H3 și probele anterioare rămân valabile. Următorul pas rămâne feedbackul pentru Acasă completat cu date demo.
+
+## Acasă — analiză, 23 octombrie 2026
+
+- Cerere: pornire locală și explorarea îmbunătățirilor pentru Home. Citite contractul H2, `Home.tsx`, `home.css`, categoriile comune și navigarea din `app/App.tsx`.
+- Observat în browserul integrat, panou îngust, sesiune Mihai / familia Popescu: amintiri fără rezultate, patru documente recente și stări goale pentru evenimente/remindere. Starea goală a amintirilor ocupă mult spațiu înaintea documentelor; calendarul urmează secțiunilor principale pe mobil.
+- Propunere pentru feedback, **neimplementată și neacceptată**: acces rapid compact, evenimente/remindere mai vizibile, amintiri cu fotografie mare când există și stare goală compactă, apoi documente recente. Reordonarea și eventuala eliminare a categoriilor se decid cu utilizatorul.
+- Verificat acum: scriptul local de pornire încheiat cu succes; HTTP 200 pentru `/app/`, `/up`, `/api/v1/session`; Acasă încărcată în browser. Fără build nou, teste, migrații sau date salvate; acestea nu sunt necesare unei inspecții fără schimbări de cod. Fără probă desktop nouă sau reverificare ClamAV în acest pas.
+- Următorul pas: feedback pentru direcția Acasă, apoi un singur layout implementat și verificat înaintea altui ecran.
 
 ## UT3 — Navigarea categoriilor ascunse, 23 octombrie 2026
 
@@ -45,13 +147,13 @@ Următorul pas: feedback pentru schimbarea Rețete/Mese și cadrul comun al file
 
 ## Referință pe pagini — 22 octombrie 2026
 
-Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helvetica, paleta caldă și regulile de text direct; preluăm compoziția și ritmul din imagine. Nu introducem sloganul, statistici, ratinguri, favorite, planificare/cumpărături ori căutare globală fără funcționalitate reală. Navigația existentă și pagina implicită rămân cele stabilite.
+Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm paleta caldă, tipografia comună actualizată în H4 și regulile de text direct; preluăm compoziția și ritmul din imagine. Nu introducem sloganul, statistici, ratinguri, favorite, planificare/cumpărături ori căutare globală fără funcționalitate reală. Navigația existentă și pagina implicită rămân cele stabilite.
 
 **Ritm explicit:** un singur layout, apoi feedback înainte de pasul următor. UT1 este ajustarea comună a filelor cerută explicit în toate secțiunile, fără redesenarea conținutului fiecăreia. Preferința de verificări restrânse, fără probe vizuale, se păstrează; acestea nu sunt declarate trecute.
 
 | Pagină                              | Adaptare                                                                                                                                                                        | Stare                                                                                                                                                                                           |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Acasă — H2                          | Acces rapid la module reale; amintire cu fotografie și dată; note compacte; documente/categorii existente; evenimente și remindere reale; calendar în coloana laterală desktop. | Implementat, probe locale mai jos; feedback pozitiv primit.                                                                                                                                     |
+| Acasă — H3                          | Evenimente/remindere sus, acces rapid compact, amintiri dedesubt; calendar lateral desktop. Fără documente pe Acasă. | Implementat și verificat local; așteaptă feedback vizual. Vezi H3. |
 | Bucătărie — KH1                     | Rețete cu fotografii în rând derulabil pe mobil, căutare în antet, listă completă cu filtre și rânduri compacte pentru mesele zilei; versiuni și voturi existente.              | Implementat, build/probe vizuale locale trecute. Vezi [fișa Bucătărie](kitchen.md#kh1--layout-bucătărie-22-octombrie-2026).                                                                     |
 | Amintiri — MH1                      | Fotografii pe lățimea cardului, note compacte, căutare în antet și panou pentru acces/arhivă; momente/note și cronologia rămân funcționale.                                     | Implementat, build și verificare mobilă scurtă trecute. Vezi [Amintiri](memory.md#mh1--layout-mobil-amintiri-22-octombrie-2026).                                                                |
 | Familia mea — FD2, pas curent / FP1 | Dosarul comun conține doar documentele partajate familiei; Documente este filă în profilul persoanei. Data/părinții sunt separate de datele private și de rolul familiei.       | FD2: build/Pint și 1 test API punctual trecute, fără probe vizuale; vezi [Familie FD2](families.md#fd2--dosarul-comun-și-documentele-din-profil-23-octombrie-2026). Probele FP1 rămân istorice. |
@@ -76,7 +178,7 @@ Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm Helve
 
 ## Referință secundară pe ecrane — 21 octombrie 2026
 
-Decizie de design salvată, nu funcționalitate deja implementată. Numerotare de la stânga la dreapta: 1–4 sus, 5–8 jos. Se aplică incremental când lucrăm la ecranul respectiv, păstrând Helvetica, crem, verde închis și iconurile semantice existente. Nu se copiază accentul albastru al aplicației imobiliare.
+Decizie de design salvată, nu funcționalitate deja implementată. Numerotare de la stânga la dreapta: 1–4 sus, 5–8 jos. Se aplică incremental când lucrăm la ecranul respectiv, păstrând tipografia comună actualizată în H4, crem, verde închis și iconurile semantice existente. Nu se copiază accentul albastru al aplicației imobiliare.
 
 | Ecran din referință     | Structură preluată                                                                                              | Aplicare în Memoria Familiei                                                                                                                                                                                              |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -101,7 +203,7 @@ Decizie de design salvată, nu funcționalitate deja implementată. Numerotare d
 ## Verificare pentru fiecare flux modificat
 
 - [ ] Titlurile și butoanele numesc obiectul sau acțiunea; etichetele câmpurilor rămân prezente. Textul ajutător apare numai pentru restricții, erori și consecințe necesare.
-- [ ] Paleta caldă, Helvetica cu fallback, iconurile semantice și dimensiunile cardurilor respectă AGENTS; stilurile comune sunt modificate în locul existent.
+- [ ] Paleta caldă, Nunito/Fraunces cu licențe locale, iconurile semantice și dimensiunile cardurilor respectă AGENTS; stilurile comune sunt modificate în locul existent.
 - [ ] Pe mobil și desktop nu există overflow, titluri inaccesibile sau controale sub 44 px. Verifică cel puțin un viewport îngust de 360 px și unul desktop.
 - [ ] Tastatura poate parcurge fluxul; focusul este vizibil. Dialogul captează/restabilește focusul, Escape funcționează, iar fundalul nu se derulează.
 - [ ] Încărcarea, lipsa datelor, lipsa rezultatelor, eroarea și retry au comportament real. Previne dublul submit și gestionează răspunsurile întârziate după schimbarea familiei.

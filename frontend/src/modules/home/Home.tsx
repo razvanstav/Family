@@ -1,33 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowRight,
   Bell,
   CalendarDays,
   Clock3,
+  Heart,
   LockKeyhole,
   Plus,
   RefreshCw,
   Users,
   BookHeart,
   UtensilsCrossed,
-  FolderHeart,
   ChevronRight,
   StickyNote,
+  Sun,
 } from "lucide-react";
 import {
   api,
   ApiError,
   visibilityLabel,
   type CalendarRequest,
-  type DocumentRequest,
-  type DocumentSummary,
-  personalDocumentCategories,
   type Family,
 } from "../../shared/api";
-import { DocumentCard, DocumentCategories } from "../../shared/DocumentCard";
 import { CalendarMonth } from "../../shared/CalendarMonth";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto, type PhotoStatus } from "../../shared/PrivatePhoto";
+import { PageBackdrop } from "../../shared/PageBackdrop";
 import "./home.css";
 
 type EventSummary = {
@@ -49,7 +46,6 @@ type Overview = {
   today: string;
   month: string;
   days: string[];
-  documents: DocumentSummary[];
   memories: MemorySummary[];
   events: EventSummary[];
   reminders: ReminderSummary[];
@@ -68,14 +64,12 @@ type MemorySummary = {
 export function Home({
   family,
   onExpired,
-  onDocuments,
   onCalendar,
   onMemories,
   onKitchen,
 }: {
   family: Family;
   onExpired: () => void;
-  onDocuments: (request: DocumentRequest) => void;
   onCalendar: (target: CalendarRequest) => void;
   onMemories: (id?: string) => void;
   onKitchen: () => void;
@@ -132,28 +126,44 @@ export function Home({
   };
   return (
     <div className="home-page">
-      <section className="page-heading">
-        <h1>Acasă</h1>
-        <div className="page-heading-actions">
-          <button
-            className="icon-button"
-            aria-label="Actualizează Acasă"
-            disabled={loading}
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            <RefreshCw size={18} />
-          </button>
-          <button
-            className="button primary"
-            aria-label="Adaugă document"
-            disabled={family.role === "limited"}
-            onClick={() => onDocuments({ upload: true })}
-          >
-            <Plus size={18} />
-            <span>Adaugă document</span>
-          </button>
-        </div>
-      </section>
+      <PageBackdrop image="home">
+        <section className="page-heading">
+          <div className="home-title">
+            <h1>
+              Acasă <Heart size={23} aria-hidden="true" />
+            </h1>
+            <p className="home-date">
+              <Sun size={17} aria-hidden="true" />
+              <time dateTime={today}>
+                {dateLabel(today, {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
+              </time>
+            </p>
+          </div>
+          <div className="page-heading-actions">
+            <button
+              className="icon-button"
+              aria-label="Actualizează Acasă"
+              disabled={loading}
+              onClick={() => setRevision((value) => value + 1)}
+            >
+              <RefreshCw size={18} />
+            </button>
+            <button
+              className="button primary"
+              aria-label="Adaugă eveniment"
+              disabled={family.role === "limited"}
+              onClick={() => onCalendar({ id: "new", date: today })}
+            >
+              <Plus size={18} />
+              <span>Adaugă eveniment</span>
+            </button>
+          </div>
+        </section>
+      </PageBackdrop>
       {error && (
         <div className="home-error">
           <p className="error" role="alert">
@@ -173,196 +183,22 @@ export function Home({
           Se încarcă pagina Acasă…
         </p>
       )}
-      <nav className="home-shortcuts" aria-label="Acces rapid">
-        <button onClick={() => onMemories()}>
-          <BookHeart size={24} aria-hidden="true" />
-          <span>Amintiri</span>
-        </button>
-        <button onClick={onKitchen}>
-          <UtensilsCrossed size={24} aria-hidden="true" />
-          <span>Bucătărie</span>
-        </button>
-        <button onClick={() => onDocuments({})}>
-          <FolderHeart size={24} aria-hidden="true" />
-          <span>Documente</span>
-        </button>
-        <button onClick={() => onCalendar({ date: today, monthOnly: true })}>
-          <CalendarDays size={24} aria-hidden="true" />
-          <span>Calendar</span>
-        </button>
-      </nav>
       <div className="home-layout">
-        <div className="home-main">
-          <section
-            className="home-section home-memories"
-            aria-labelledby="home-memories"
-          >
+        <div className="home-agenda">
+          <section className="home-section" aria-labelledby="home-events">
             <div className="section-header">
-              <h2 id="home-memories">
-                <BookHeart size={20} aria-hidden="true" /> Din amintirile
-                noastre
+              <h2 id="home-events">
+                <span className="home-section-icon home-icon--calendar">
+                  <CalendarDays size={20} aria-hidden="true" />
+                </span>
+                Evenimente apropiate
               </h2>
               <button
                 className="text-button"
-                onClick={() => onMemories()}
-                aria-label="Vezi toate amintirile"
+                aria-label="Deschide Calendar"
+                onClick={() => onCalendar({ date: today, monthOnly: true })}
               >
-                <span>Vezi toate</span>
-                <ChevronRight size={17} />
-              </button>
-            </div>
-            {featured ? (
-              <>
-                <button
-                  className="home-memory-feature"
-                  aria-label={`Deschide amintirea ${featured.title}`}
-                  onClick={() => onMemories(featured.id)}
-                >
-                  {featured.photo_status !== null && (
-                    <PrivatePhoto
-                      src={`/api/v1/families/${family.id}/moments/${featured.id}/photo`}
-                      status={featured.photo_status}
-                      className="home-memory-photo"
-                      placeholder={<BookHeart size={28} />}
-                    />
-                  )}
-                  <div className="home-memory-copy">
-                    <div className="home-memory-meta">
-                      <time dateTime={featured.occurred_on}>
-                        {dateLabel(featured.occurred_on, {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                      </time>
-                      <span>{visibilityLabel[featured.visibility]}</span>
-                    </div>
-                    <h3>{featured.title}</h3>
-                    {featured.excerpt && <p>{featured.excerpt}</p>}
-                  </div>
-                </button>
-                <ul className="home-rows home-memory-notes">
-                  {data?.memories
-                    .filter((moment) => moment.id !== featured.id)
-                    .map((moment) => (
-                      <li key={moment.id}>
-                        <button
-                          className="home-row"
-                          onClick={() => onMemories(moment.id)}
-                        >
-                          {moment.kind === "note" ? (
-                            <StickyNote size={21} aria-hidden="true" />
-                          ) : (
-                            <BookHeart size={21} aria-hidden="true" />
-                          )}
-                          <span>
-                            <strong>{moment.title}</strong>
-                            <small>
-                              {dateLabel(moment.occurred_on, dateOptions)}
-                            </small>
-                          </span>
-                          <ChevronRight size={17} aria-hidden="true" />
-                        </button>
-                      </li>
-                    ))}
-                </ul>
-              </>
-            ) : data ? (
-              <div className="home-memory-empty">
-                <BookHeart size={28} aria-hidden="true" />
-                <p>Nicio amintire disponibilă.</p>
-                <button className="text-button" onClick={() => onMemories()}>
-                  Deschide Amintiri <ArrowRight size={16} />
-                </button>
-              </div>
-            ) : (
-              !error && (
-                <div
-                  className="home-memory-skeleton skeleton"
-                  aria-label="Se încarcă amintirile"
-                />
-              )
-            )}
-          </section>
-          <section className="home-section" aria-labelledby="home-categories">
-            <div className="section-header">
-              <h2 id="home-categories">Categorii de documente</h2>
-              <button
-                className="text-button"
-                aria-label="Deschide Documente"
-                onClick={() => onDocuments({})}
-              >
-                <ArrowRight size={18} />
-              </button>
-            </div>
-            <DocumentCategories
-              onSelect={(category) => onDocuments({ category })}
-            />
-          </section>
-          <section className="home-section" aria-labelledby="home-documents">
-            <div className="section-header">
-              <h2 id="home-documents">Documente recente</h2>
-              <button
-                className="text-button"
-                aria-label="Vezi toate documentele"
-                onClick={() => onDocuments({})}
-              >
-                <span>Vezi toate</span>
-                <ChevronRight size={17} />
-              </button>
-            </div>
-            {data ? (
-              data.documents.length ? (
-                <div className="document-grid home-document-grid">
-                  {data.documents.map((document) => (
-                    <DocumentCard
-                      key={document.id}
-                      document={document}
-                      onOpen={(id) =>
-                        onDocuments({
-                          id,
-                          ...(personalDocumentCategories.includes(
-                            document.category,
-                          )
-                            ? {
-                                memberId:
-                                  document.subject_membership_id ?? undefined,
-                                ownerId: document.owner_id,
-                              }
-                            : {}),
-                        })
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="home-empty">Niciun document disponibil.</p>
-              )
-            ) : (
-              !error && (
-                <div
-                  className="document-grid home-document-grid"
-                  aria-hidden="true"
-                >
-                  {[0, 1, 2, 3].map((index) => (
-                    <div className="skeleton" key={index} />
-                  ))}
-                </div>
-              )
-            )}
-          </section>
-        </div>
-        <aside className="home-side" aria-label="Calendar și remindere">
-          <section className="home-section" aria-labelledby="home-events">
-            <div className="section-header">
-              <h2 id="home-events">Evenimente apropiate</h2>
-              <button
-                className="icon-button"
-                aria-label="Adaugă eveniment"
-                disabled={family.role === "limited"}
-                onClick={() => onCalendar({ id: "new", date: today })}
-              >
-                <Plus size={18} />
+                <ChevronRight size={18} aria-hidden="true" />
               </button>
             </div>
             {data &&
@@ -376,13 +212,21 @@ export function Home({
                           onCalendar({ id: event.id, date: event.event_date })
                         }
                       >
-                        <span className="home-event-icon">
-                          <CalendarDays size={20} aria-hidden="true" />
-                        </span>
+                        <time
+                          className="home-event-date"
+                          dateTime={event.event_date}
+                          aria-label={dateLabel(event.event_date, dateOptions)}
+                        >
+                          <strong>{Number(event.event_date.slice(-2))}</strong>
+                          <span>
+                            {dateLabel(event.event_date, {
+                              month: "short",
+                            }).replace(".", "")}
+                          </span>
+                        </time>
                         <span>
                           <strong>{event.title}</strong>
                           <small>
-                            {dateLabel(event.event_date, dateOptions)} ·{" "}
                             {event.all_day ? "Toată ziua" : event.time}
                           </small>
                         </span>
@@ -408,8 +252,12 @@ export function Home({
           </section>
           <section className="home-section" aria-labelledby="home-reminders">
             <div className="section-header">
-              <h2 id="home-reminders">Reminderele mele</h2>
-              <Bell size={18} aria-hidden="true" />
+              <h2 id="home-reminders">
+                <span className="home-section-icon home-icon--reminder">
+                  <Bell size={20} aria-hidden="true" />
+                </span>
+                Reminderele mele
+              </h2>
             </div>
             {data &&
               (data.reminders.length ? (
@@ -425,7 +273,9 @@ export function Home({
                           })
                         }
                       >
-                        <Clock3 size={19} />
+                        <span className="home-reminder-icon home-icon--reminder">
+                          <Clock3 size={21} aria-hidden="true" />
+                        </span>
                         <span>
                           <strong>{reminder.title}</strong>
                           <small>
@@ -451,6 +301,120 @@ export function Home({
                 <p className="home-empty">Niciun reminder programat.</p>
               ))}
           </section>
+        </div>
+        <nav className="home-shortcuts" aria-label="Acces rapid">
+          <button onClick={() => onCalendar({ date: today, monthOnly: true })}>
+            <span className="home-shortcut-icon home-icon--calendar">
+              <CalendarDays size={22} aria-hidden="true" />
+            </span>
+            <span>Calendar</span>
+            <ChevronRight size={17} aria-hidden="true" />
+          </button>
+          <button onClick={onKitchen}>
+            <span className="home-shortcut-icon home-icon--kitchen">
+              <UtensilsCrossed size={22} aria-hidden="true" />
+            </span>
+            <span>Bucătărie</span>
+            <ChevronRight size={17} aria-hidden="true" />
+          </button>
+          <button onClick={() => onMemories()}>
+            <span className="home-shortcut-icon home-icon--memory">
+              <BookHeart size={22} aria-hidden="true" />
+            </span>
+            <span>Amintiri</span>
+            <ChevronRight size={17} aria-hidden="true" />
+          </button>
+        </nav>
+        <section
+          className="home-section home-memories"
+          aria-labelledby="home-memories"
+        >
+          <div className="section-header">
+            <h2 id="home-memories">
+              <span className="home-section-icon home-icon--memory">
+                <BookHeart size={20} aria-hidden="true" />
+              </span>{" "}
+              Amintiri
+            </h2>
+            <button
+              className="text-button"
+              onClick={() => onMemories()}
+              aria-label="Vezi toate amintirile"
+            >
+              <span>Vezi toate</span>
+              <ChevronRight size={17} />
+            </button>
+          </div>
+          {featured ? (
+            <>
+              <button
+                className="home-memory-feature"
+                aria-label={`Deschide amintirea ${featured.title}`}
+                onClick={() => onMemories(featured.id)}
+              >
+                {featured.photo_status !== null && (
+                  <PrivatePhoto
+                    src={`/api/v1/families/${family.id}/moments/${featured.id}/photo`}
+                    status={featured.photo_status}
+                    className="home-memory-photo"
+                    placeholder={<BookHeart size={28} />}
+                  />
+                )}
+                <div className="home-memory-copy">
+                  <h3>{featured.title}</h3>
+                  <div className="home-memory-meta">
+                    <time dateTime={featured.occurred_on}>
+                      {dateLabel(featured.occurred_on, {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </time>
+                    <span>{visibilityLabel[featured.visibility]}</span>
+                  </div>
+                  {featured.excerpt && <p>{featured.excerpt}</p>}
+                </div>
+              </button>
+              <ul className="home-rows home-memory-notes">
+                {data?.memories
+                  .filter((moment) => moment.id !== featured.id)
+                  .map((moment) => (
+                    <li key={moment.id}>
+                      <button
+                        className="home-row"
+                        onClick={() => onMemories(moment.id)}
+                      >
+                        {moment.kind === "note" ? (
+                          <StickyNote size={21} aria-hidden="true" />
+                        ) : (
+                          <BookHeart size={21} aria-hidden="true" />
+                        )}
+                        <span>
+                          <strong>{moment.title}</strong>
+                          <small>
+                            {dateLabel(moment.occurred_on, dateOptions)}
+                          </small>
+                        </span>
+                        <ChevronRight size={17} aria-hidden="true" />
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            </>
+          ) : data ? (
+            <div className="home-memory-empty">
+              <p>Nicio amintire disponibilă.</p>
+            </div>
+          ) : (
+            !error && (
+              <div
+                className="home-memory-skeleton skeleton"
+                aria-label="Se încarcă amintirile"
+              />
+            )
+          )}
+        </section>
+        <aside className="home-calendar" aria-label="Calendar">
           <CalendarMonth
             month={month}
             day={null}

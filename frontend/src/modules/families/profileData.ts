@@ -46,5 +46,4 @@ export type Entry = {
   can_manage: boolean;
 };
 export type EntryList = { items: Entry[]; page: number; has_more: boolean };
-export const message = (e: unknown) =>
-  e instanceof Error ? e.message : "Nu am putut salva. Reîncearcă.";
+export { errorMessage as message } from "../../shared/api";
