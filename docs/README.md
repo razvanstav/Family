@@ -6,10 +6,10 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 
 | Modul | Situație la planificare | Fișă |
 | --- | --- | --- |
-| Familie | FW1: Familia mea în stilul cald, cu membri și administrare existente; antet comun Membri/Documente, profil și coduri de invitație păstrate | [Familie](modules/families.md) |
+| Familie | FS1: profil cu cronologie, realizări și arbore genealogic cu rude fără cont, verificat local; așteaptă feedback | [Familie](modules/families.md) |
 | Documente | În Familia mea → Documente; dosare pe persoană și comune, cu upload/acces/descărcare existente | [Documente](modules/documents.md) |
 | Bucătărie | Rețete, versiuni, mese, vot și acces implementate; KH1 mobil pregătit pentru feedback | [Bucătărie](modules/kitchen.md) |
-| Amintiri | MH1 mobil pregătit pentru feedback; AM1–AM3 implementate, acceptarea completă a fluxurilor rămâne deschisă | [Amintiri](modules/memory.md) |
+| Amintiri | MH2 album pe ani și În ziua asta implementat și verificat local, așteaptă feedback; acceptarea AM1–AM3 rămâne deschisă | [Amintiri](modules/memory.md) |
 | Calendar | C1/C3 in-app existente; CH1 mobil implementat, cu Lună/Săptămână/Agendă; așteaptă feedback | [Calendar](modules/calendar.md) |
 | Animale | Planificat; fără implementare de produs | [Animale](modules/pets.md) |
 | Vehicule | Planificat; fără implementare de produs | [Vehicule](modules/vehicles.md) |

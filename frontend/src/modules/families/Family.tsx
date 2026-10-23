@@ -355,11 +355,13 @@ export function FamilyPage({
   userId,
   onExpired,
   navigation,
+  onMemory,
 }: {
   family: Family;
   userId: number;
   onExpired: () => void;
   navigation: ReactNode;
+  onMemory: (id: string) => void;
 }) {
   const familyId = family.id;
   const isOwner = family.role === "owner";
@@ -487,6 +489,11 @@ export function FamilyPage({
         userId={userId}
         member={profileMember}
         members={members}
+        onMember={(id) => {
+          const relative = members.find((member) => member.id === id);
+          if (relative) setProfileMember(relative);
+        }}
+        onMemory={onMemory}
         onBack={() => {
           setProfileMember(null);
           void load();

@@ -1,26 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import {
   BookHeart,
-  Image,
-  LockKeyhole,
+  History,
   Plus,
   RefreshCw,
   Search,
-  StickyNote,
-  Users,
   X,
   SlidersHorizontal,
 } from "lucide-react";
-import { api, ApiError, visibilityLabel, type Family } from "../../shared/api";
-import { dateLabel } from "../../shared/calendarDates";
-import { PrivatePhoto } from "../../shared/PrivatePhoto";
+import { api, ApiError, type Family } from "../../shared/api";
+import { bucharestToday, dateLabel } from "../../shared/calendarDates";
+import { MomentCard } from "./MomentCard";
 import { MomentDetail } from "./MomentDetail";
 import { MomentForm } from "./MomentForm";
 import { Timeline } from "./Timeline";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { MealViewer } from "../kitchen/MealViewer";
-import { momentKinds, type Moment, type MomentList } from "./memoryTypes";
+import { type Moment, type MomentList } from "./memoryTypes";
 import "./memory.css";
 
 type View =
@@ -45,6 +42,10 @@ export function Memories({
   const base = `/families/${family.id}/moments`;
   const [section, setSection] = useState<"moments" | "timeline">("moments");
   const [items, setItems] = useState<Moment[]>([]);
+  const [years, setYears] = useState<number[]>([]);
+  const [year, setYear] = useState("");
+  const [onThisDay, setOnThisDay] = useState<Moment[]>([]);
+  const [today, setToday] = useState(bucharestToday);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
   const [kind, setKind] = useState("");
@@ -97,6 +98,7 @@ export function Memories({
     if (search) params.set("q", search);
     if (kind) params.set("kind", kind);
     if (visibility) params.set("visibility", visibility);
+    if (year) params.set("year", year);
     if (archived) params.set("archived", "1");
     const position = `${base}?${params}`;
     if (loadedPosition.current !== position) setItems([]);
@@ -108,10 +110,15 @@ export function Memories({
         loadedPosition.current = position;
         setItems(data.items);
         setHasMore(data.has_more);
+        setYears(data.years);
+        setOnThisDay(data.on_this_day);
+        setToday(data.today);
       })
       .catch((e: unknown) => {
         if (controller.signal.aborted) return;
         setItems([]);
+        setOnThisDay([]);
+        setYears([]);
         if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status)) {
           setView(null);
           onExpired();
@@ -121,7 +128,7 @@ export function Memories({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [base, search, kind, visibility, archived, page, revision, section]);
+  }, [base, search, kind, visibility, year, archived, page, revision, section]);
   useEffect(() => {
     if (section !== "moments") return;
     const timer = window.setInterval(() => {
@@ -134,6 +141,8 @@ export function Memories({
   function unavailable() {
     setView(null);
     setItems([]);
+    setOnThisDay([]);
+    setYears([]);
     setNotice("Accesul s-a schimbat. Lista va fi actualizată.");
     setRevision((value) => value + 1);
     onExpired();
@@ -143,9 +152,18 @@ export function Memories({
     setSearch("");
     setKind("");
     setVisibility("");
+    setYear("");
     setPage(1);
   }
-  const filtered = Boolean(search || kind || visibility);
+  const filtered = Boolean(search || kind || visibility || year);
+  const showOnThisDay = !filtered && !query && !archived && page === 1;
+  const groups = new Map<string, Moment[]>();
+  for (const moment of items) {
+    const momentYear = moment.occurred_on.slice(0, 4);
+    const group = groups.get(momentYear) ?? [];
+    group.push(moment);
+    groups.set(momentYear, group);
+  }
 
   return (
     <div className="memories-page">
@@ -198,6 +216,39 @@ export function Memories({
       )}
       {section === "moments" && (
         <>
+          {showOnThisDay && !error && (!loading || items.length > 0) && (
+            <section className="memory-on-day" aria-labelledby="on-this-day">
+              <div className="memory-on-day-heading">
+                <span className="memory-on-day-icon">
+                  <History size={23} aria-hidden="true" />
+                </span>
+                <h2 id="on-this-day">În ziua asta</h2>
+                <time dateTime={today}>
+                  {dateLabel(today, { day: "numeric", month: "long" })}
+                </time>
+              </div>
+              {onThisDay.length > 0 ? (
+                <div className="moment-grid">
+                  {onThisDay.map((moment) => (
+                    <MomentCard
+                      key={moment.id}
+                      base={base}
+                      moment={moment}
+                      anniversary={
+                        Number(today.slice(0, 4)) -
+                        Number(moment.occurred_on.slice(0, 4))
+                      }
+                      onOpen={(moment) => setView({ mode: "detail", moment })}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="memory-on-day-empty">
+                  Nicio amintire din anii trecuți pentru această zi.
+                </p>
+              )}
+            </section>
+          )}
           {(searchOpen || query) && (
             <label className="search memory-search">
               <Search size={18} aria-hidden="true" />
@@ -242,15 +293,37 @@ export function Memories({
                 </button>
               ))}
             </div>
-            <button
-              className={`icon-button memory-filter-toggle${visibility || archived ? " active" : ""}`}
-              aria-label="Filtre pentru amintiri"
-              aria-expanded={filtersOpen}
-              aria-controls="memory-filters"
-              onClick={() => setFiltersOpen((value) => !value)}
-            >
-              <SlidersHorizontal size={19} aria-hidden="true" />
-            </button>
+            <div className="memory-filter-actions">
+              <label className="memory-year-filter">
+                <span>An</span>
+                <select
+                  value={year}
+                  onChange={(event) => {
+                    setYear(event.target.value);
+                    setPage(1);
+                  }}
+                >
+                  <option value="">Toți anii</option>
+                  {year && !years.includes(Number(year)) && (
+                    <option value={year}>{year}</option>
+                  )}
+                  {years.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className={`icon-button memory-filter-toggle${visibility || archived ? " active" : ""}`}
+                aria-label="Filtre pentru amintiri"
+                aria-expanded={filtersOpen}
+                aria-controls="memory-filters"
+                onClick={() => setFiltersOpen((value) => !value)}
+              >
+                <SlidersHorizontal size={19} aria-hidden="true" />
+              </button>
+            </div>
           </div>
           {filtersOpen && (
             <div className="memory-options" id="memory-filters">
@@ -344,60 +417,45 @@ export function Memories({
                 )}
               </div>
             ) : (
-              <div className="moment-grid">
-                {items.map((moment) => (
-                  <button
-                    className="moment-card"
-                    key={moment.id}
-                    aria-label={`Deschide amintirea ${moment.title}`}
-                    onClick={() => setView({ mode: "detail", moment })}
-                  >
-                    {moment.photo_status && (
-                      <PrivatePhoto
-                        src={`/api/v1${base}/${moment.id}/photo?v=${moment.version}`}
-                        status={moment.photo_status}
-                        className="moment-photo"
-                        placeholder={<Image size={28} aria-hidden="true" />}
-                      />
-                    )}
-                    <div className="moment-card-content">
-                      <span className="moment-card-top">
-                        <span className="moment-kind">
-                          {moment.kind === "moment" ? (
-                            <BookHeart size={20} />
-                          ) : (
-                            <StickyNote size={20} />
-                          )}
-                          {momentKinds[moment.kind]}
-                        </span>
-                        <time dateTime={moment.occurred_on}>
-                          {dateLabel(moment.occurred_on, {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </time>
-                      </span>
-                      <strong>{moment.title}</strong>
-                      {moment.body && (
-                        <span className="moment-excerpt">{moment.body}</span>
-                      )}
-                      <span className="moment-card-bottom">
-                        <span>
-                          {moment.visibility !== "family" ? (
-                            <LockKeyhole size={15} />
-                          ) : (
-                            <Users size={15} />
-                          )}
-                          {visibilityLabel[moment.visibility]}
-                        </span>
-                        <span className="moment-card-author">
-                          {moment.owner_name}
-                        </span>
-                      </span>
-                    </div>
-                  </button>
-                ))}
+              <div className="memory-years">
+                {Array.from(groups, ([groupYear, moments]) => {
+                  const cover = moments.find(
+                    (moment) => moment.photo_status === "ready",
+                  );
+                  const album = cover
+                    ? [
+                        cover,
+                        ...moments.filter((moment) => moment.id !== cover.id),
+                      ]
+                    : moments;
+                  return (
+                    <section
+                      className="memory-year-group"
+                      key={groupYear}
+                      aria-labelledby={`memory-year-${groupYear}`}
+                    >
+                      <h2
+                        id={`memory-year-${groupYear}`}
+                        className="memory-year-heading"
+                      >
+                        {groupYear}
+                      </h2>
+                      <div className="moment-grid">
+                        {album.map((moment, index) => (
+                          <MomentCard
+                            key={moment.id}
+                            base={base}
+                            moment={moment}
+                            lead={index === 0 && moment === cover}
+                            onOpen={(moment) =>
+                              setView({ mode: "detail", moment })
+                            }
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })}
               </div>
             )}
             {!loading && !error && (page > 1 || hasMore) && (

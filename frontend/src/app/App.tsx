@@ -520,6 +520,10 @@ export default function App() {
                 onExpired={() => void refresh()}
                 userId={session.user.id}
                 navigation={familyNavigation}
+                onMemory={(id) => {
+                  setMemoryTarget(id);
+                  setPage("memory");
+                }}
               />
             )
           ) : (

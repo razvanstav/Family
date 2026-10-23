@@ -2,12 +2,16 @@
 
 namespace App\Platform\Families;
 
+use App\Modules\Memory\Application\RecentMoments;
 use App\Platform\Audit\Audit;
 use App\Platform\Contracts\PrivateMedia;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -15,7 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class MemberProfileController
 {
-    private const KINDS = ['visit' => 'health', 'medication' => 'health', 'book' => 'learning', 'culture' => 'learning', 'activity' => 'activities'];
+    private const KINDS = ['visit' => 'health', 'medication' => 'health', 'book' => 'learning', 'culture' => 'learning', 'activity' => 'activities', 'achievement' => 'activities'];
 
     public function __construct(private MemberProfileAccess $access, private PrivateMedia $media) {}
 
@@ -140,6 +144,43 @@ final class MemberProfileController
         return ['id' => $entry->id, 'kind' => $entry->kind, 'category' => self::KINDS[$entry->kind], 'title' => $entry->title, 'notes' => $entry->notes,
             'occurred_on' => $entry->occurred_on, 'visibility' => $entry->visibility, 'version' => $entry->version, 'archived_at' => $entry->archived_at,
             'author_name' => $entry->author_name, 'can_manage' => $canWrite && (int) $entry->author_id === $request->user()->id];
+    }
+
+    public function story(Request $request, string $family, string $member, RecentMoments $memories): JsonResponse
+    {
+        $subject = $this->access->subject($family, $member);
+        $data = $request->validate(['cursor' => 'sometimes|nullable|string|max:2048']);
+        $position = null;
+        if (isset($data['cursor'])) {
+            try {
+                $position = json_decode(Crypt::decryptString($data['cursor']), true, flags: JSON_THROW_ON_ERROR);
+            } catch (DecryptException|\JsonException) {
+                abort(422, 'Pagina nu mai este validă. Actualizează cronologia.');
+            }
+            $position = Validator::make(['position' => $position], ['position' => 'required|array|size:5',
+                'position.0' => 'required|date_format:Y-m-d', 'position.1' => 'required|in:entry,moment', 'position.2' => 'required|uuid',
+                'position.3' => 'required|in:'.$family, 'position.4' => 'required|in:'.$member])->validate()['position'];
+        }
+        $query = $this->visibleEntries($request, $family, $member)->whereNull('e.archived_at');
+        if ($position !== null) {
+            $query->where(function (Builder $after) use ($position): void {
+                $after->where('e.occurred_on', '<', $position[0]);
+                if ($position[1] === 'entry') {
+                    $after->orWhere(fn (Builder $same) => $same->where('e.occurred_on', $position[0])->where('e.id', '<', $position[2]));
+                }
+            });
+        }
+        $canWrite = $this->access->canWrite($request, $family, $subject);
+        $entries = $query->orderByDesc('e.occurred_on')->orderByDesc('e.id')->limit(13)->get()
+            ->map(fn (object $entry): array => ['source' => 'entry'] + $this->entryPayload($request, $entry, $canWrite));
+        $combined = $entries->concat($memories->forMember($family, $request->user()->id, $member, $position))
+            ->sort(fn (array $left, array $right): int => strcmp($right['occurred_on'], $left['occurred_on']) ?: strcmp($left['source'], $right['source']) ?: strcmp($right['id'], $left['id']))->values();
+        $items = $combined->take(12)->values();
+        $last = $items->last();
+        $hasMore = $combined->count() > 12;
+
+        return response()->json(['items' => $items, 'has_more' => $hasMore, 'next_cursor' => $hasMore
+            ? Crypt::encryptString(json_encode([$last['occurred_on'], $last['source'], $last['id'], $family, $member], JSON_THROW_ON_ERROR)) : null]);
     }
 
     private function content(Request $request): array

@@ -1,4 +1,11 @@
-import { BookOpen, Activity, Stethoscope, Pill, Landmark } from "lucide-react";
+import {
+  BookOpen,
+  Activity,
+  Stethoscope,
+  Pill,
+  Landmark,
+  Award,
+} from "lucide-react";
 import type { PhotoStatus } from "../../shared/PrivatePhoto";
 
 export type Category = "health" | "learning" | "activities";
@@ -18,6 +25,7 @@ export const kinds = {
     icon: Landmark,
   },
   activity: { label: "Activitate", category: "activities", icon: Activity },
+  achievement: { label: "Realizare", category: "activities", icon: Award },
 } as const;
 export type Kind = keyof typeof kinds;
 export type Profile = {
@@ -46,4 +54,18 @@ export type Entry = {
   can_manage: boolean;
 };
 export type EntryList = { items: Entry[]; page: number; has_more: boolean };
+export type StoryItem =
+  | (Entry & { source: "entry" })
+  | {
+      source: "moment";
+      id: string;
+      kind: "moment" | "note";
+      title: string;
+      excerpt: string | null;
+      occurred_on: string;
+      visibility: "private" | "family" | "selected";
+      photo_status: PhotoStatus;
+      version: number;
+      owner_name: string;
+    };
 export { errorMessage as message } from "../../shared/api";

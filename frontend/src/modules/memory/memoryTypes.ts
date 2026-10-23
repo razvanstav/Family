@@ -24,5 +24,8 @@ export type MomentList = {
   items: Moment[];
   page: number;
   has_more: boolean;
+  years: number[];
+  today: string;
+  on_this_day: Moment[];
 };
 import type { PhotoStatus } from "../../shared/PrivatePhoto";

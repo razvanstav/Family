@@ -109,6 +109,282 @@
 .member-profile-tabs {
   margin-top: 18px;
 }
+.profile-overview-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.profile-story,
+.profile-tree {
+  min-width: 0;
+}
+.profile-story-year > h3 {
+  margin: 8px 0 18px;
+  font-size: 28px;
+  font-weight: 450;
+}
+.profile-story-year + .profile-story-year {
+  margin-top: 28px;
+}
+.profile-story-items {
+  display: grid;
+  gap: 18px;
+  margin-left: 17px;
+  padding-left: 25px;
+  border-left: 1px solid var(--line);
+}
+.profile-story-item {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+.profile-story-item:hover {
+  border-color: #b7c2b0;
+}
+.profile-story-dot {
+  position: absolute;
+  top: 18px;
+  left: -44px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 3px solid #f6f3ec;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--profile-color);
+}
+.profile-story-dot svg {
+  color: inherit;
+}
+.profile-entry--memory {
+  --profile-color: #8c657d;
+}
+.profile-story-photo {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
+  background: var(--panel);
+}
+.profile-story-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-story-photo-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  height: 100%;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 18px;
+}
+.profile-story-copy {
+  display: grid;
+  gap: 10px;
+  padding: 20px;
+}
+.profile-story-copy > strong {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 450;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.profile-story-meta,
+.profile-story-footer,
+.profile-story-footer > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.profile-story-meta,
+.profile-story-footer {
+  flex-wrap: wrap;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--muted);
+}
+.profile-story-meta > span {
+  color: var(--profile-color);
+}
+.profile-story-footer > span:nth-child(2) {
+  margin-left: auto;
+}
+.profile-story-excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.profile-tree {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.profile-tree .section-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.profile-tree .section-header h2 > svg {
+  color: var(--icon-family);
+  flex-shrink: 0;
+}
+.genealogy-generation {
+  margin: 18px 0;
+}
+.genealogy-generation > h3 {
+  margin-bottom: 10px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: center;
+}
+.genealogy-nodes {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.genealogy-person {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 68px;
+  max-width: 120px;
+  padding: 8px;
+  border-radius: 13px;
+  background: transparent;
+  font-size: 12px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.genealogy-person:hover {
+  background: var(--panel);
+}
+.genealogy-avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #edf0f7;
+  color: var(--icon-family);
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+.genealogy-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.genealogy-avatar--focus {
+  width: 80px;
+  height: 80px;
+  font-size: 28px;
+  background: #e9eedf;
+  color: var(--accent);
+}
+.genealogy-focus {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0;
+  text-align: center;
+}
+.genealogy-focus > strong {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 450;
+  overflow-wrap: anywhere;
+}
+.genealogy-focus > span:not(.genealogy-avatar) {
+  color: var(--muted);
+  font-size: 12px;
+}
+.genealogy-focus--parents::before,
+.genealogy-focus--children::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 1px;
+  height: 18px;
+  background: #c2cbb9;
+}
+.genealogy-focus--parents::before {
+  top: -10px;
+}
+.genealogy-focus--children::after {
+  bottom: -10px;
+}
+.genealogy-back {
+  font-size: 12px;
+}
+.genealogy-empty,
+.genealogy-hint {
+  margin: 16px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  text-align: center;
+}
+.genealogy-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.genealogy-actions > .text-button {
+  flex: 1;
+}
+.genealogy-permission {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.genealogy-link-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+@media (max-width: 900px) {
+  .profile-overview-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .profile-entry--health {
   --profile-color: var(--icon-health);
 }

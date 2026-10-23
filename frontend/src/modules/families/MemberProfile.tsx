@@ -35,6 +35,8 @@ import {
   type EntryList,
 } from "./profileData";
 import { ProfileSettings, ProfileEntryModal } from "./ProfileForms";
+import { ProfileStory } from "./ProfileStory";
+import { FamilyTree } from "./FamilyTree";
 import "./memberProfile.css";
 
 export function MemberProfile({
@@ -44,6 +46,8 @@ export function MemberProfile({
   members,
   onBack,
   onExpired,
+  onMember,
+  onMemory,
 }: {
   family: Family;
   userId: number;
@@ -51,6 +55,8 @@ export function MemberProfile({
   members: Member[];
   onBack: () => void;
   onExpired: () => void;
+  onMember: (id: string) => void;
+  onMemory: (id: string) => void;
 }) {
   const base = `/families/${family.id}/members/${member.id}/profile`;
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -62,6 +68,7 @@ export function MemberProfile({
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const [metadataRevision, setMetadataRevision] = useState(0);
+  const [storyReset, setStoryReset] = useState(0);
   const loadedPosition = useRef("");
   const [dialog, setDialog] = useState<
     "configure" | "photo" | "new" | Entry | null
@@ -82,14 +89,14 @@ export function MemberProfile({
     return () => controller.abort();
   }, [base, metadataRevision]);
   useEffect(() => {
-    if (tab === "documents") return;
+    if (tab === "documents" || tab === "overview") return;
     const controller = new AbortController();
     setLoading(true);
     setError("");
     const params = new URLSearchParams({
       page: String(page),
     });
-    if (tab !== "overview") params.set("category", tab);
+    params.set("category", tab);
     const position = `${base}/entries?${params}`;
     if (loadedPosition.current !== position) setItems([]);
     api<EntryList>(position, { signal: controller.signal })
@@ -144,6 +151,13 @@ export function MemberProfile({
   function selectTab(value: Tab) {
     setTab(value);
     setPage(1);
+  }
+  function unavailable() {
+    setProfile(null);
+    setItems([]);
+    setDialog(null);
+    setError("Profilul nu mai este disponibil sau accesul s-a schimbat.");
+    onExpired();
   }
   return (
     <div className="member-profile-page">
@@ -271,14 +285,52 @@ export function MemberProfile({
               canCreate={profile.can_write}
               onExpired={onExpired}
             />
+          ) : tab === "overview" ? (
+            <div className="profile-overview-layout">
+              <ProfileStory
+                key={storyReset}
+                base={base}
+                familyId={family.id}
+                revision={revision}
+                canWrite={profile.can_write}
+                onEntry={setDialog}
+                onMoment={onMemory}
+                onAdd={() => setDialog("new")}
+                onRefresh={refresh}
+                onUnavailable={unavailable}
+                onEntries={(entries) =>
+                  setDialog((current) =>
+                    current &&
+                    typeof current === "object" &&
+                    !current.can_manage
+                      ? (entries.find((entry) => entry.id === current.id) ??
+                        null)
+                      : current,
+                  )
+                }
+              />
+              <FamilyTree
+                base={base}
+                familyId={family.id}
+                memberId={member.id}
+                members={members.map((relative) =>
+                  relative.id === profile.id
+                    ? {
+                        ...relative,
+                        photo_status: profile.photo_status,
+                        photo_version: profile.version,
+                      }
+                    : relative,
+                )}
+                revision={metadataRevision}
+                onMember={onMember}
+                onUnavailable={unavailable}
+              />
+            </div>
           ) : (
             <section aria-labelledby="profile-entries-title">
               <div className="section-header">
-                <h2 id="profile-entries-title">
-                  {tab === "overview"
-                    ? "Însemnări recente"
-                    : categories[tab].label}
-                </h2>
+                <h2 id="profile-entries-title">{categories[tab].label}</h2>
                 <div className="member-profile-actions">
                   <button
                     className="icon-button"
@@ -424,6 +476,7 @@ export function MemberProfile({
               onSaved={(saved) => {
                 setDialog(null);
                 setPage(1);
+                setStoryReset((value) => value + 1);
                 if (tab !== "overview") setTab(saved.category);
                 setRevision((v) => v + 1);
               }}

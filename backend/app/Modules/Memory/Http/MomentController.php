@@ -63,6 +63,7 @@ final class MomentController
             'kind' => ['sometimes', Rule::in(['moment', 'note'])],
             'visibility' => ['sometimes', Rule::in(['private', 'family', 'selected'])],
             'archived' => 'sometimes|boolean',
+            'year' => 'sometimes|integer|between:1900,2100',
             'page' => 'sometimes|integer|min:1|max:10000',
         ]);
         $query = $this->visible($request, $family);
@@ -77,12 +78,26 @@ final class MomentController
                 $query->where('memory_moments.'.$filter, $filters[$filter]);
             }
         }
+        $years = (clone $query)->select([])->selectRaw('DISTINCT EXTRACT(YEAR FROM memory_moments.occurred_on)::int AS year')->orderByDesc('year')->pluck('year');
+        if (isset($filters['year'])) {
+            $query->whereBetween('memory_moments.occurred_on', [$filters['year'].'-01-01', $filters['year'].'-12-31']);
+        }
         $page = (int) ($filters['page'] ?? 1);
         $items = $query->orderByDesc('memory_moments.occurred_on')->orderByDesc('memory_moments.id')->offset(($page - 1) * 12)->limit(13)->get();
+        $today = now('Europe/Bucharest');
+        $onThisDay = collect();
+        if ($page === 1 && $search === '' && ! isset($filters['kind']) && ! isset($filters['visibility']) && ! isset($filters['year']) && ! ($filters['archived'] ?? false)) {
+            $onThisDay = $this->visible($request, $family)->whereNull('memory_moments.archived_at')
+                ->where('memory_moments.occurred_on', '<', $today->format('Y').'-01-01')
+                ->whereRaw("to_char(memory_moments.occurred_on, 'MM-DD') = ?", [$today->format('m-d')])
+                ->orderByDesc('memory_moments.occurred_on')->orderByDesc('memory_moments.id')->limit(6)->get();
+        }
 
         return response()->json([
             'items' => $items->take(12)->map(fn (object $moment): array => $this->payload($request, $moment))->values(),
             'page' => $page, 'has_more' => $items->count() > 12,
+            'years' => $years, 'today' => $today->toDateString(),
+            'on_this_day' => $onThisDay->map(fn (object $moment): array => $this->payload($request, $moment))->values(),
         ]);
     }
 

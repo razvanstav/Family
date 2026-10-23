@@ -2,6 +2,18 @@
 
 Stare la 22 octombrie 2026: **AM1–AM3 implementate**, cu fluxurile principale demonstrate local pe Windows, desktop și mobil. Acceptarea completă rămâne deschisă pentru scenariile neexercitate de mai jos. Se păstrează prioritatea funcțiilor, fără suite de teste, înaintea instalării Linux.
 
+## MH2 — Album pe ani și În ziua asta, 23 octombrie 2026
+
+**Implementat și verificat local; acceptarea vizuală așteaptă feedback.** Cerere explicită: un singur ecran Amintiri, cu fotografii mari, grupare pe ani și „În ziua asta”. Antetul, filele comune și corpul Cronologie rămân existente.
+
+- Momente și note grupează pagina curentă pe ani descrescător. Prima fotografie disponibilă din fiecare grup este coperta: fotografie mare și text alăturat desktop, fotografie deasupra textului mobil. Coperta apare prima în grup, iar restul păstrează ordinea după dată. Cardurile următoare folosesc două coloane desktop și una sub 700 px; notele nu primesc imagini fictive. Tipul, data completă, autorul, accesul, numele accesibil și stările foto se păstrează prin `MomentCard`/`PrivatePhoto`.
+- Selectorul An filtrează în backend între 1900 și 2100, cu resetarea paginii. Anii disponibili provin din toate amintirile autorizate care corespund căutării/tipului/accesului/arhivei, independent de anul selectat și de pagina curentă. Paginarea de 12 și payloadul complet pentru detaliu/editare sunt păstrate; deschiderea cardului nu adaugă GET pentru detaliu.
+- `GET /moments` adaugă `year`, `years`, `today` și `on_this_day`, fără rută sau migrație nouă. În vizualizarea nefiltrată, activă, pe prima pagină, aniversările sunt maximum șase amintiri din anii anteriori, cu aceeași lună și zi ca astăzi în România, găsite în întregul istoric autorizat. Se refolosește `MomentAccess`, inclusiv pentru ani; fotografiile rămân pe ruta privată existentă. Fără N+1: query-uri agregate/JOIN și payload existent. Filtrele și arhiva ascund secțiunea aniversărilor.
+- Dacă nu există aniversări, secțiunea spune concret că nu sunt amintiri din anii trecuți pentru această zi. Nu se completează cu alte date și nu se modifică baza aplicației pentru prezentare. 29 februarie are numai potrivire exactă; nu se mută pe 28 februarie/1 martie.
+- **Verificări automate:** build TypeScript/Vite, Prettier, Pint, lint PHP și `git diff --check` trecute. `MemoryAlbumTest`: 7 teste/60 aserțiuni trecute, serial pe `memoria_test`: ziua în România la limita UTC, istoric dincolo de prima pagină, paginare/an, ani fără acces privat sau cross-family, grant retras, arhivă, rol limitat/revocare, 29 februarie și ani invalizi. Numai fișierul nou de teste, fără reluarea suitei generale.
+- **Browser:** Ana/Popescu, desktop: coperta foto, grupa 2026, selectorul 2026/resetare, detaliu complet și închidere cu Escape verificate. Previzualizare mobilă existentă de 390 px: fotografie pe lățime, text/acces/autor vizibile, fără overflow orizontal observat; căutare bunici → o notă, închidere → album, Cronologie → sursele existente, revenire → album. Filele și antetul rămân în cadrul comun. Capturi ignorate: `.runtime/mh2-desktop.png`, `.runtime/mh2-mobile.png`; ecranul desktop Amintiri rămâne deschis, tabul temporar de verificare închis.
+- **Limite:** baza locală are numai amintiri din 2026 și nicio aniversare pentru 23 octombrie; gruparea multianuală și aniversările populate sunt probate prin API în baza de test, fără probă vizuală populată. Fără dispozitiv fizic, upload/salvări noi, scenarii foto carantină/respingere provocate, alte pagini redesenate, commit/push sau deploy. AM1–AM3 nu sunt declarate integral acceptate.
+
 ## MH1 — Layout mobil Amintiri, 22 octombrie 2026
 
 **Implementat și verificat local**, ales explicit după FD1. Numai pagina Amintiri, în stilul Acasă/Bucătărie; așteaptă feedbackul utilizatorului înainte de alt layout.
@@ -126,6 +138,8 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 
 `Application/RecentMoments::forHome` expune maximum trei rezumate active prin politica `MomentAccess`, cu titlu, tip, extras de 200 de caractere, dată, acces și starea fotografiei. Un singur query cu join media; fără granturi, people, versiuni sau chei media în rezumat. Home nu citește tabelele Memory. La deschiderea din Acasă, App transmite ID-ul către Amintiri, care citește detaliul canonic complet; fotografia folosește ruta privată existentă. Modelul AM1–AM3 și indexul cronologiei rămân neschimbate. Probe H2 și limite: [Interfață](interface.md#verificare-h2--22-octombrie-2026).
 
+Din [FS1](families.md#fs1--povestea-profilului-și-arbore-genealogic-23-octombrie-2026), `RecentMoments::forMember` expune maximum 13 rezumate active autorizate, numai pentru momente cu menționare explicită a profilului. Acceptă poziția validată a cursorului comun cu însemnările; query unic cu JOIN autor/media și EXISTS pentru menționare, fără duplicarea momentelor sau N+1. Fotografia și deschiderea detaliului folosesc rutele canonice existente. Acest consum nu schimbă accesul, asocierea persoanelor ori cronologia AM3.
+
 ## Următorul pas
 
-Închide verificările restante AM3 înainte de a marca acceptarea integrală: sursă eliminată, eșec de reconciliere/rebuild, pagini rare și acces retras înaintea livrării. Păstrează prioritatea demonstrației MVP și acceptarea restantă AM1/AM2; nu începe automat alt modul și nu modifica versiunile istorice din Bucătărie.
+Așteaptă feedbackul utilizatorului pentru ecranul MH2 înainte de alt layout. Verificările restante AM3 rămân deschise înaintea acceptării integrale: sursă eliminată, eșec de reconciliere/rebuild, pagini rare și acces retras înaintea livrării. Păstrează acceptarea restantă AM1/AM2; nu începe automat alt modul și nu modifica versiunile istorice din Bucătărie.

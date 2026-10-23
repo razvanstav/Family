@@ -1,6 +1,93 @@
 .memory-search {
   margin-bottom: 16px;
 }
+.memory-on-day {
+  padding: 20px 22px;
+  margin-bottom: 24px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+.memory-on-day-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.memory-on-day-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: #f3edf2;
+  color: #8c657d;
+}
+.memory-on-day-heading h2 {
+  font-size: 22px;
+  font-weight: 500;
+}
+.memory-on-day-heading time {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+.memory-on-day-empty {
+  margin: 2px 0 0 56px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.memory-on-day .moment-grid {
+  margin-top: 18px;
+}
+.moment-anniversary {
+  justify-self: start;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #edf1e8;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+}
+.memory-filter-actions,
+.memory-year-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.memory-year-filter > span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.memory-year-filter select {
+  min-height: 44px;
+  padding: 8px 30px 8px 12px;
+  max-width: 150px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13px;
+}
+.memory-years {
+  display: grid;
+  gap: 34px;
+}
+.memory-year-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 16px;
+  font-size: 32px;
+  font-weight: 450;
+  letter-spacing: -1px;
+}
+.memory-year-heading::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
 .memory-options {
   padding: 14px;
   margin-bottom: 20px;
@@ -65,8 +152,8 @@
 .moment-grid {
   display: grid;
   align-items: start;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
 }
 .moment-card {
   min-width: 0;
@@ -83,16 +170,17 @@
 }
 .moment-card:hover {
   border-color: #bcc7b8;
+  box-shadow: 0 8px 28px #6555370e;
 }
 .moment-card-content {
   display: grid;
   gap: 10px;
-  padding: 18px;
+  padding: 22px;
   min-width: 0;
 }
 .moment-card > .moment-photo {
   border-radius: 0;
-  aspect-ratio: 1.65;
+  aspect-ratio: 4 / 3;
 }
 .moment-photo {
   overflow: hidden;
@@ -149,8 +237,9 @@
   font-size: 12px;
 }
 .moment-card-content > strong {
-  font-size: 18px;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 450;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -180,6 +269,39 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.moment-card--lead {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+}
+.moment-card--lead > .moment-photo {
+  aspect-ratio: auto;
+  min-height: 350px;
+  height: 100%;
+}
+.moment-card--lead > .moment-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: 32px;
+}
+.moment-card--lead .moment-card-top {
+  align-items: flex-start;
+  flex-direction: column;
+}
+.moment-card--lead .moment-card-content > strong {
+  font-size: 31px;
+  -webkit-line-clamp: 3;
+}
+.moment-card--lead .moment-excerpt {
+  -webkit-line-clamp: 4;
+}
+.moment-card--lead .moment-card-bottom {
+  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .moment-meta {
   flex-wrap: wrap;
@@ -389,12 +511,43 @@
 .timeline-meta svg {
   flex-shrink: 0;
 }
-@media (max-width: 1150px) {
-  .moment-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 @media (max-width: 700px) {
+  .memory-on-day {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .memory-on-day-heading {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .memory-on-day-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+  }
+  .memory-on-day-heading h2 {
+    font-size: 20px;
+  }
+  .memory-on-day-heading time {
+    font-size: 12px;
+  }
+  .memory-on-day-empty {
+    margin: 8px 0 0;
+  }
+  .memory-filter-row {
+    flex-wrap: wrap;
+  }
+  .memory-filter-actions {
+    justify-content: space-between;
+    width: 100%;
+  }
+  .memory-year-filter select {
+    font-size: 16px;
+  }
+  .memory-year-heading {
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
   .timeline-row {
     padding: 12px;
     gap: 12px;
@@ -427,7 +580,29 @@
     gap: 12px;
   }
   .moment-card-content {
-    padding: 16px;
+    padding: 20px;
+  }
+  .moment-card--lead {
+    display: flex;
+  }
+  .moment-card--lead > .moment-photo {
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+    height: auto;
+  }
+  .moment-card--lead > .moment-card-content {
+    padding: 20px;
+    gap: 12px;
+  }
+  .moment-card--lead .moment-card-top {
+    flex-direction: row;
+    align-items: center;
+  }
+  .moment-card--lead .moment-card-content > strong {
+    font-size: 25px;
+  }
+  .moment-card--lead .moment-card-bottom {
+    margin-top: 0;
   }
   .moment-actions > .button {
     flex: 1 1 auto;
