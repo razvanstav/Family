@@ -44,7 +44,6 @@ export type Entry = {
   version: number;
   author_name: string;
   can_manage: boolean;
-  archived_at: string | null;
 };
 export type EntryList = { items: Entry[]; page: number; has_more: boolean };
 export const message = (e: unknown) =>

@@ -486,6 +486,12 @@ main {
   border-radius: 16px;
   background: #eeece580;
 }
+.section-tabs-rail {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
 .section-tabs button {
   flex: 1;
   min-width: 0;
@@ -506,16 +512,33 @@ main {
 }
 .section-tabs.section-tabs--scroll {
   max-width: none;
+  align-items: center;
+  padding: 0 4px;
+}
+.section-tabs--scroll .section-tabs-rail {
   overflow-x: auto;
+  padding: 4px;
   scrollbar-width: none;
   scroll-padding-inline: 4px;
 }
-.section-tabs.section-tabs--scroll button {
+.section-tabs--scroll .section-tabs-rail > button {
   flex: 1 0 auto;
   white-space: nowrap;
 }
-.section-tabs.section-tabs--scroll::-webkit-scrollbar {
+.section-tabs--scroll .section-tabs-rail::-webkit-scrollbar {
   display: none;
+}
+.section-tabs .section-tabs-arrow {
+  display: flex;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--accent);
 }
 .search {
   display: flex;

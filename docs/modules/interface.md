@@ -1,6 +1,14 @@
 # Interfață comună
 
-Stare: **UT2 — subcategorii profil** și [Auto V1a](vehicles.md#v1a--ecranul-auto-23-octombrie-2026), implementate la 23 octombrie 2026 la cererea utilizatorului. UT1 și layouturile existente se păstrează; planificatorul rămâne schiță.
+Stare: **UT3 — navigarea categoriilor ascunse**, implementat și verificat local la 23 octombrie 2026 după feedbackul pentru filele profilului. UT1/UT2, [Auto V1a](vehicles.md#v1a--ecranul-auto-23-octombrie-2026) și layouturile existente se păstrează; planificatorul rămâne schiță.
+
+## UT3 — Navigarea categoriilor ascunse, 23 octombrie 2026
+
+- Feedback: rândul derulabil UT2 nu indica suficient de clar pe mobil că există și alte categorii. `SectionTabs.tsx` afișează acum săgeți funcționale înainte/după file când varianta `section-tabs--scroll` depășește lățimea disponibilă. Săgețile rămân la capete, au 44 × 44 px, nume accesibile și se dezactivează la limita corespunzătoare.
+- O apăsare aduce următoarea filă ascunsă în zona vizibilă, fără schimbarea selecției sau a conținutului. Derularea directă rămâne disponibilă; selectarea unei file o aduce în vedere. La `prefers-reduced-motion` derularea prin săgeți este instantanee. ResizeObserver recalculează necesitatea controalelor; acestea lipsesc când toate etichetele încap.
+- Structura și stilurile sunt comune, în `shared/SectionTabs.tsx` și `styles.css`; fără stiluri suplimentare în module. Varianta derulabilă este folosită deja de profil și Auto. Barele fără această variantă păstrează distribuția existentă. Fără schimbări de API, date sau ordine a categoriilor.
+- **Verificat:** TypeScript/Vite build, Prettier și `git diff --check`. Browser: previzualizare mobilă de 390 px, profil Mihai, parcurgere până la Documente și înapoi cu săgețile, dezactivare la ambele capete, activare cu Enter, derulare orizontală directă și readucerea Prezentare în vedere la selectare. Prima probă a identificat un prag prea strict la pozițiile fracționare, care bloca o apăsare repetată; corectat cu toleranță de 1 px și reluată parcurgerea completă. Desktop 1280 px: toate cele cinci file vizibile, fără săgeți, bara de 54 px. Familia mea păstrează filele obișnuite. Captură locală ignorată: `.runtime/member-tabs-arrows-mobile.png`.
+- **Limite:** fără dispozitiv fizic, probă dedicată a preferinței de mișcare redusă ori redimensionare continuă în această sesiune. Fără date noi salvate sau suite backend. Aspectul este acceptat de utilizator la 23 octombrie 2026, cu cerere explicită de commit și push; nu începe alt layout automat.
 
 ## UT2 — Subcategorii profil, 23 octombrie 2026
 

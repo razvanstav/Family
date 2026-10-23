@@ -67,7 +67,6 @@ export function MemberProfile({
   const [items, setItems] = useState<Entry[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
-  const [archived, setArchived] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
@@ -101,7 +100,6 @@ export function MemberProfile({
     setError("");
     const params = new URLSearchParams({
       page: String(page),
-      archived: archived ? "1" : "0",
     });
     if (tab !== "overview") params.set("category", tab);
     const position = `${base}/entries?${params}`;
@@ -137,7 +135,7 @@ export function MemberProfile({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [base, tab, page, archived, revision]);
+  }, [base, tab, page, revision]);
   useEffect(() => {
     if (tab === "documents") return;
     const timer = window.setInterval(() => {
@@ -158,7 +156,6 @@ export function MemberProfile({
   function selectTab(value: Tab) {
     setTab(value);
     setPage(1);
-    setArchived(false);
   }
   return (
     <div className="member-profile-page">
@@ -314,17 +311,6 @@ export function MemberProfile({
                   )}
                 </div>
               </div>
-              <label className="member-profile-archive">
-                <input
-                  type="checkbox"
-                  checked={archived}
-                  onChange={(e) => {
-                    setArchived(e.target.checked);
-                    setPage(1);
-                  }}
-                />
-                Arhivate
-              </label>
               {loading && !items.length ? (
                 <p role="status" className="member-profile-empty">
                   Se încarcă însemnările…
@@ -332,12 +318,8 @@ export function MemberProfile({
               ) : !error && !items.length ? (
                 <div className="member-profile-empty">
                   <FolderHeart size={28} />
-                  <p>
-                    {archived
-                      ? "Nicio însemnare arhivată."
-                      : "Nicio însemnare."}
-                  </p>
-                  {profile.can_write && !archived && (
+                  <p>Nicio însemnare.</p>
+                  {profile.can_write && (
                     <button
                       className="button secondary"
                       onClick={() => setDialog("new")}
@@ -455,7 +437,6 @@ export function MemberProfile({
                 setDialog(null);
                 setPage(1);
                 if (tab !== "overview") setTab(saved.category);
-                if (!saved.archived_at) setArchived(false);
                 setRevision((v) => v + 1);
               }}
               onReload={() => {

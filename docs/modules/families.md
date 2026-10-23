@@ -4,6 +4,17 @@ Stare: **F4a/FD3 — copii fără cont și dosare pe categorii**, implementat la
 
 Corecție ulterioară cerută la 23 octombrie: [UT2 — subcategorii profil](interface.md#ut2--subcategorii-profil-23-octombrie-2026) înlocuiește distribuția 3+2 a filelor mobile cu un rând derulabil, fără etichete suprapuse. Verificată în browser; fără schimbarea contractelor F4a/FD3 sau redesenarea altor ecrane Familie.
 
+Feedback ulterior: [UT3 — navigarea categoriilor ascunse](interface.md#ut3--navigarea-categoriilor-ascunse-23-octombrie-2026) adaugă săgeți funcționale când filele nu încap. Profilul păstrează rândul unic și selecția; verificat mobil/desktop, fără modificarea datelor sau permisiunilor.
+
+## FP2 — Eliminarea arhivării din profil, 23 octombrie 2026
+
+**Implementat și verificat local.** La cererea utilizatorului, profilurile persoanelor nu mai afișează filtrul Arhivate în Prezentare, Sănătate, Școală și cultură sau Activități. Detaliul însemnării nu mai oferă Arhivează/Restaurează; păstrează editarea pentru autorul autorizat. Crearea și accesul privat/de familie rămân disponibile.
+
+- `MemberProfile.tsx` nu mai păstrează starea arhivei și folosește lista activă implicită. `ProfileForms.tsx` salvează numai prin POST/PATCH, fără cereri de arhivare. Eliminate confirmarea, iconurile, proprietatea frontend `archived_at` și selectorii CSS fără utilizare; stilurile `profile-checkbox` necesare părinților sunt păstrate.
+- Schimbare de interfață, fără modificări ale API-ului, schemei sau datelor. Endpointul backend existent de arhivare/restaurare rămâne compatibil; eventualele însemnări arhivate anterior nu sunt restaurate sau șterse automat. Documente și celelalte module nu sunt modificate.
+- Verificat: TypeScript/Vite build, Prettier și `git diff --check`; fără referințe rămase la selectorii eliminați în `frontend/src`. Browser mobil: profilul propriu al lui Mihai, Prezentare/Sănătate/Școală și cultură/Activități fără opțiunea Arhivate, stare goală și adăugare păstrate. Captură locală ignorată: `.runtime/profile-without-archive.png`.
+- Limite: fără date noi salvate, test al editării unei însemnări existente sau verificare desktop în această sesiune; fără suită backend, deoarece contractul său nu s-a schimbat. Acceptarea vizuală rămâne pentru feedback.
+
 ## F4a și FD3 — Copii fără cont și dosare pe categorii, 23 octombrie 2026
 
 **Implementat; verificat prin build/API, acceptarea vizuală rămâne pentru feedback.** Prioritatea a fost schimbată explicit după KH2. Reguli confirmate: Casă pentru adulți, inclusiv cei cu acces limitat; Familie → Documente are numai Casă/Amintiri, iar profil → Documente numai Personale/Sănătate. Utilizatorul a cerut explicit partajarea documentelor Casă/Amintiri existente după noua regulă.

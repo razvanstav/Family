@@ -114,7 +114,6 @@
   display: flex;
   gap: 8px;
 }
-.member-profile-archive,
 .profile-checkbox {
   min-height: 44px;
   display: flex;
@@ -123,10 +122,6 @@
   font-size: 13px;
   color: var(--muted);
 }
-.member-profile-archive {
-  margin-bottom: 12px;
-}
-.member-profile-archive input,
 .profile-checkbox input {
   width: 18px;
   height: 18px;
@@ -254,20 +249,6 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.7;
-}
-.profile-entry-detail-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-.profile-archive-confirm {
-  border-top: 1px solid var(--line);
-  margin-top: 18px;
-  padding-top: 14px;
-  font-size: 13px;
-}
-.profile-archive-confirm p {
-  margin-bottom: 14px;
 }
 @media (max-width: 700px) {
   .member-profile-hero {

@@ -32,6 +32,13 @@ Decizie de găzduire la 22 octombrie 2026: utilizatorul predă instalarea pe ser
 
 ## Evidența verificărilor
 
+### Rulare locală Windows — 23 octombrie 2026
+
+- La cererea utilizatorului, aplicația a fost pornită după pull cu `./ops/start-local.ps1 -PhpPath "$PWD/.tools/php84/php.exe"`. PHP portabil existent: 8.4.26. Buildul TypeScript/Vite a reușit; serverul ascultă la `http://127.0.0.1:8000/app/`.
+- Baza `memoria` avea șapte migrații restante, de la `create_memory_moments` până la `create_vehicles_tables`. Aplicate cu rolul administrativ, urmate de `ops/grant-runtime.sql` și `memory:rebuild-timeline` pentru cele două familii existente (zero referințe la această rulare). Fără reset sau seed. Workerii opriți înainte de migrare și reporniți după granturi, cu rolul runtime.
+- Verificat: toate migrațiile apar aplicate pe `memoria`; HTTP 200 pentru `/app/`, `/up` și `/api/v1/session`; PostgreSQL acceptă conexiuni pe 55432, ClamAV răspunde PONG pe 3310. Logurile de erori ale reminderelor, outbox și ClamAV sunt goale după repornire. Buildul și pornirea au necesitat execuție în afara sandboxului din cauza permisiunilor Windows.
+- Limite: fără teste noi sau suită rulată, fără actualizarea/verificarea bazei `memoria_test`, fără verificare vizuală ori flux autentificat în această sesiune. Acceptarea vizuală Auto/UT2 rămâne pentru feedback; fără publicare în producție.
+
 ### O2a — 22 octombrie 2026
 
 - Intrări: [ops/linux](../../ops/linux/) și [procedura de predare](../../ops/SETUP.md#o2a--configurații-pentru-instalator). Nu se schimbă aplicația, schema sau dependențele.

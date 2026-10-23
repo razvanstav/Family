@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { LockKeyhole, Users, Archive, RotateCcw, Pencil } from "lucide-react";
+import { LockKeyhole, Users, Pencil } from "lucide-react";
 import { api, ApiError, visibilityLabel, type Member } from "../../shared/api";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
@@ -256,27 +256,22 @@ export function ProfileEntryModal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [stale, setStale] = useState(false);
-  const [confirm, setConfirm] = useState(false);
-  async function mutate(archive = false) {
+  async function save() {
     setBusy(true);
     setError("");
     try {
       const saved = await api<Entry>(
-        `${base}/entries${entry ? `/${entry.id}` : ""}${archive ? "/archive" : ""}`,
+        `${base}/entries${entry ? `/${entry.id}` : ""}`,
         {
-          method: archive || !entry ? "POST" : "PATCH",
+          method: entry ? "PATCH" : "POST",
           headers: entry ? { "If-Match": `"${entry.version}"` } : {},
-          body: JSON.stringify(
-            archive
-              ? { archived: !entry?.archived_at }
-              : {
-                  kind,
-                  title,
-                  notes: notes || null,
-                  occurred_on: date,
-                  visibility,
-                },
-          ),
+          body: JSON.stringify({
+            kind,
+            title,
+            notes: notes || null,
+            occurred_on: date,
+            visibility,
+          }),
         },
       );
       onSaved(saved);
@@ -299,7 +294,7 @@ export function ProfileEntryModal({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            void mutate();
+            void save();
           }}
         >
           <fieldset className="profile-form-fields" disabled={busy || stale}>
@@ -388,46 +383,14 @@ export function ProfileEntryModal({
             )}
             <p>Adăugat de {entry.author_name}</p>
             {entry.can_manage && (
-              <div className="profile-entry-detail-actions">
-                {!entry.archived_at && (
-                  <button
-                    className="button secondary"
-                    disabled={busy || stale}
-                    onClick={() => setEditing(true)}
-                  >
-                    <Pencil size={17} />
-                    Editează
-                  </button>
-                )}
-                <button
-                  className="button secondary"
-                  disabled={busy || stale}
-                  onClick={() => setConfirm(true)}
-                >
-                  {entry.archived_at ? (
-                    <RotateCcw size={17} />
-                  ) : (
-                    <Archive size={17} />
-                  )}{" "}
-                  {entry.archived_at ? "Restaurează" : "Arhivează"}
-                </button>
-              </div>
-            )}
-            {confirm && (
-              <div className="profile-archive-confirm">
-                <p>
-                  {entry.archived_at
-                    ? "Însemnarea va rămâne privată după restaurare."
-                    : "Arhivarea retrage accesul familiei. Însemnarea rămâne privată în Arhivate."}
-                </p>
-                <button
-                  className="button primary"
-                  disabled={busy || stale}
-                  onClick={() => void mutate(true)}
-                >
-                  {entry.archived_at ? "Restaurează" : "Arhivează"}
-                </button>
-              </div>
+              <button
+                className="button secondary"
+                disabled={busy || stale}
+                onClick={() => setEditing(true)}
+              >
+                <Pencil size={17} />
+                Editează
+              </button>
             )}
           </div>
         )
