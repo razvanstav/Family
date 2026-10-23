@@ -1,6 +1,14 @@
 # Bucătărie
 
-Stare: **KH2 — cardurile Mese aliniate cu Rețete**, implementat la 23 octombrie 2026, cu build și verificări statice trecute. K1, K2, K3a și K4a–K4b rămân implementate și verificate anterior. Preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
+Stare: **KH3 — Mesele de azi înaintea rețetelor**, implementat și verificat local la 23 octombrie 2026. KH2, K1, K2, K3a și K4a–K4b rămân implementate și verificate anterior. Preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
+
+## KH3 — Mesele de azi primele, 23 octombrie 2026
+
+- Cerere explicită: în Bucătărie, Mesele de azi apar înaintea rețetelor. `KitchenToday` este mutat înainte de secțiunea Rețete în compoziția inițială, în aceeași ordine DOM pe desktop și mobil. Lista completă de rețete și fila Mese păstrează comportamentul existent.
+- Schimbare numai de ordine JSX în `Kitchen.tsx`, fără CSS, requesturi noi, date sau modificări de API. Titlurile, cardurile, deschiderea meselor și filtrele existente sunt păstrate.
+- Verificate: TypeScript/Vite build și Prettier trecute; Vite a necesitat acces în afara sandboxului din cauza permisiunilor Windows. Browser Mihai/Popescu, desktop 1395 px și mobil 390 × 844: Mesele de azi sunt prima secțiune de conținut, cu 3 mese demo încărcate și Rețete dedesubt, fără overflow orizontal. Viewportul temporar resetat, Bucătărie lăsată deschisă. Fără teste noi sau suite repetate pentru mutarea secțiunii.
+- Utilizatorul a corectat cererea de deploy: dorește numai commit și push pe Git. Fără publicare pe server sau transfer al bazei locale.
+
 
 ## KH2 — Carduri Mese, 23 octombrie 2026
 

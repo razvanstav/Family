@@ -250,6 +250,15 @@ export function Kitchen({
               {notice}
             </p>
           )}
+          {!browsing && (
+            <KitchenToday
+              family={family}
+              actorId={userId}
+              revision={revision}
+              onAll={() => setSection("meals")}
+              onExpired={onExpired}
+            />
+          )}
           <section aria-labelledby="recipes-title" aria-busy={loading}>
             <div className="section-header">
               <h2 id="recipes-title">
@@ -374,15 +383,6 @@ export function Kitchen({
               </>
             )}
           </section>
-          {!browsing && (
-            <KitchenToday
-              family={family}
-              actorId={userId}
-              revision={revision}
-              onAll={() => setSection("meals")}
-              onExpired={onExpired}
-            />
-          )}
         </>
       )}
       <div hidden={section !== "meals"}>
