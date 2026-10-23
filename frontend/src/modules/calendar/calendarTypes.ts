@@ -12,6 +12,13 @@ export type CalendarItem = {
   can_edit: boolean;
   version: number;
   archived_at: string | null;
+  source: {
+    type: "vehicle_entry" | "birthday" | "task";
+    id: string;
+    parent_id: string;
+  } | null;
+  my_reminder_offset_minutes: number | null;
+  my_reminder_version: number;
   reminder: {
     offset_minutes: number;
     recipients: string[];

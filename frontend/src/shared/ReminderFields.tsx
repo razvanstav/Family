@@ -1,5 +1,6 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
-import { api, ApiError, shareableMembers, type Member } from "../../shared/api";
+import { api, ApiError, shareableMembers, type Member } from "./api";
+import "./reminderFields.css";
 
 export function ReminderFields({
   familyId,
@@ -10,6 +11,7 @@ export function ReminderFields({
   recipients,
   onOffset,
   onRecipients,
+  advanceDays = [1],
 }: {
   familyId: string;
   userId: number;
@@ -19,6 +21,7 @@ export function ReminderFields({
   recipients: string[];
   onOffset: (offset: number | null) => void;
   onRecipients: Dispatch<SetStateAction<string[]>>;
+  advanceDays?: readonly number[];
 }) {
   const [members, setMembers] = useState<Member[] | null>(null);
   const [error, setError] = useState("");
@@ -59,7 +62,7 @@ export function ReminderFields({
     (m) => visibility === "family" || m.user_id === userId,
   );
   return (
-    <div className="calendar-reminder-fields">
+    <div className="reminder-fields">
       <label className="field">
         Reminder în aplicație
         <select
@@ -85,9 +88,17 @@ export function ReminderFields({
               <option value="60">Cu o oră înainte</option>
             </>
           )}
-          <option value="1440">
-            {allDay ? "În ziua precedentă, la 09:00" : "Cu 24 de ore înainte"}
-          </option>
+          {allDay ? (
+            advanceDays.map((days) => (
+              <option key={days} value={days * 1440}>
+                {days === 1
+                  ? "În ziua precedentă, la 09:00"
+                  : `Cu ${days}${days >= 20 ? " de" : ""} zile înainte, la 09:00`}
+              </option>
+            ))
+          ) : (
+            <option value="1440">Cu 24 de ore înainte</option>
+          )}
         </select>
         {offset !== null && (
           <small>
@@ -97,11 +108,11 @@ export function ReminderFields({
         )}
       </label>
       {offset !== null && (
-        <fieldset className="calendar-recipients">
+        <fieldset className="reminder-recipients">
           <legend>Destinatari</legend>
           {!members && !error && <p role="status">Se încarcă membrii…</p>}
           {available?.map((member) => (
-            <label className="calendar-check" key={member.id}>
+            <label className="reminder-check" key={member.id}>
               <input
                 type="checkbox"
                 checked={recipients.includes(member.id)}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   FolderHeart,
@@ -19,7 +19,6 @@ import {
   type Family,
 } from "../../shared/api";
 import { ProfilePhotoEditor } from "../../shared/ProfilePhotoEditor";
-import { Documents } from "../documents/Documents";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { dateLabel } from "../../shared/calendarDates";
@@ -39,28 +38,45 @@ import { ProfileStory } from "./ProfileStory";
 import { FamilyTree } from "./FamilyTree";
 import "./memberProfile.css";
 
+export type ProfileDocumentsSlot = (props: {
+  member: Member;
+  canCreate: boolean;
+  requestedDocument: string | null;
+  onDocumentOpened: () => void;
+  onExpired: () => void;
+}) => ReactNode;
+
 export function MemberProfile({
   family,
-  userId,
   member,
   members,
   onBack,
   onExpired,
   onMember,
   onMemory,
+  requestedDocument,
+  onDocumentOpened,
+  renderDocuments,
 }: {
   family: Family;
-  userId: number;
   member: Member;
   members: Member[];
   onBack: () => void;
   onExpired: () => void;
   onMember: (id: string) => void;
   onMemory: (id: string) => void;
+  requestedDocument: string | null;
+  onDocumentOpened: () => void;
+  renderDocuments: ProfileDocumentsSlot;
 }) {
   const base = `/families/${family.id}/members/${member.id}/profile`;
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(
+    requestedDocument ? "documents" : "overview",
+  );
+  useEffect(() => {
+    if (requestedDocument) setTab("documents");
+  }, [requestedDocument]);
   const [items, setItems] = useState<Entry[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -277,14 +293,13 @@ export function MemberProfile({
             onChange={selectTab}
           />
           {tab === "documents" ? (
-            <Documents
-              key={`${userId}:${family.id}:${member.id}`}
-              family={family}
-              userId={userId}
-              member={member}
-              canCreate={profile.can_write}
-              onExpired={onExpired}
-            />
+            renderDocuments({
+              member,
+              canCreate: profile.can_write,
+              requestedDocument,
+              onDocumentOpened,
+              onExpired,
+            })
           ) : tab === "overview" ? (
             <div className="profile-overview-layout">
               <ProfileStory

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   BookHeart,
   CalendarDays,
+  ListTodo,
   CarFront,
   ChevronRight,
   House,
@@ -9,10 +10,19 @@ import {
   UserRound,
   Users,
   UtensilsCrossed,
+  Wallet,
 } from "lucide-react";
 import { Modal } from "../shared/Modal";
 
-type Page = "home" | "family" | "kitchen" | "memory" | "calendar" | "vehicles";
+type Page =
+  | "home"
+  | "family"
+  | "kitchen"
+  | "expenses"
+  | "memory"
+  | "calendar"
+  | "tasks"
+  | "vehicles";
 
 export function MobileNavigation({
   page,
@@ -40,7 +50,7 @@ export function MobileNavigation({
             ["home", "Acasă", "Acasă", House],
             ["family", "Familia mea", "Familie", Users],
             ["kitchen", "Bucătărie", "Bucătărie", UtensilsCrossed],
-            ["calendar", "Calendar", "Calendar", CalendarDays],
+            ["expenses", "Cheltuieli", "Cheltuieli", Wallet],
           ] as const
         ).map(([value, label, text, Icon]) => (
           <button
@@ -56,9 +66,23 @@ export function MobileNavigation({
         ))}
         <button
           className={
-            more || page === "memory" || page === "vehicles" ? "active" : ""
+            more ||
+            page === "calendar" ||
+            page === "tasks" ||
+            page === "memory" ||
+            page === "vehicles"
+              ? "active"
+              : ""
           }
           aria-label="Mai multe"
+          aria-current={
+            page === "calendar" ||
+            page === "tasks" ||
+            page === "memory" ||
+            page === "vehicles"
+              ? "page"
+              : undefined
+          }
           aria-haspopup="dialog"
           aria-expanded={more}
           onClick={() => setMore(true)}
@@ -69,7 +93,29 @@ export function MobileNavigation({
       </nav>
       {more && (
         <Modal title="Mai multe" onClose={() => setMore(false)}>
-          <nav className="mobile-more-menu" aria-label="Mai multe secțiuni">
+          <nav className="more-menu" aria-label="Mai multe secțiuni">
+            <button
+              aria-current={page === "calendar" ? "page" : undefined}
+              onClick={() => {
+                setMore(false);
+                onPage("calendar");
+              }}
+            >
+              <CalendarDays size={22} />
+              <span>Calendar</span>
+              <ChevronRight size={18} />
+            </button>
+            <button
+              aria-current={page === "tasks" ? "page" : undefined}
+              onClick={() => {
+                setMore(false);
+                onPage("tasks");
+              }}
+            >
+              <ListTodo size={22} />
+              <span>Sarcini</span>
+              <ChevronRight size={18} />
+            </button>
             <button
               aria-current={page === "memory" ? "page" : undefined}
               onClick={() => {

@@ -2,13 +2,25 @@
 
 namespace App\Modules\Documents\Application;
 
+use App\Modules\Documents\Contracts\DocumentLinks;
+use App\Modules\Documents\Contracts\DocumentSummaries;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-final class DocumentAccess
+final class DocumentAccess implements DocumentLinks, DocumentSummaries
 {
+    public function assertVisible(string $family, int $actor, string $membership, string $id): void
+    {
+        $this->find($family, $actor, $membership, $id);
+    }
+
+    public function revokeMembership(string $family, string $membership): void
+    {
+        DB::table('document_grants')->where('family_id', $family)->where('membership_id', $membership)->delete();
+    }
+
     /** Authorized metadata for associations; access is evaluated on every read. */
     public function references(string $family, int $actor, string $membership): Builder
     {

@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Platform\Contracts\PrivateMedia;
+use App\Platform\Families\MembershipRevoked;
 use App\Platform\Media\ClamAvScanner;
 use App\Platform\Media\Scanner;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -199,6 +201,47 @@ final class DocumentSecurityTest extends TestCase
         $this->actingAs($this->mihai)->getJson($this->path())->assertNotFound();
         $this->getJson($this->path('/'.$doc->id.'/content'))->assertNotFound();
         $this->getJson('/api/v1/session')->assertJsonCount(0, 'families');
+    }
+
+    public function test_document_grants_are_removed_by_revocation_and_do_not_return_on_readmission(): void
+    {
+        $id = $this->actingAs($this->ana)->upload()->assertCreated()->json('id');
+        $member = DB::table('family_memberships')->where('family_id', $this->family)->where('user_id', $this->mihai->id)->value('id');
+        $this->withHeader('If-Match', '"1"')->putJson($this->path('/'.$id.'/sharing'), [
+            'visibility' => 'selected', 'membership_ids' => [$member],
+        ])->assertOk();
+        $this->actingAs($this->mihai)->getJson($this->path('/'.$id))->assertOk();
+        $this->actingAs($this->ana)->deleteJson('/api/v1/families/'.$this->family.'/members/'.$member)->assertNoContent();
+        $this->assertSame(0, DB::connection('admin')->table('document_grants')->where('membership_id', $member)->count());
+        DB::connection('admin')->table('family_memberships')->where('id', $member)->update(['revoked_at' => null]);
+        $this->actingAs($this->mihai)->getJson($this->path())->assertOk()->assertJsonMissing(['id' => $id]);
+        $this->getJson($this->path('/'.$id))->assertNotFound();
+        $this->getJson($this->path('/'.$id.'/content'))->assertNotFound();
+        $this->actingAs($this->ana)->getJson($this->path('/'.$id))->assertOk();
+    }
+
+    public function test_revocation_rolls_back_membership_and_document_grants_when_an_event_consumer_fails(): void
+    {
+        $id = $this->actingAs($this->ana)->upload()->assertCreated()->json('id');
+        $member = DB::table('family_memberships')->where('family_id', $this->family)->where('user_id', $this->mihai->id)->value('id');
+        $this->withHeader('If-Match', '"1"')->putJson($this->path('/'.$id.'/sharing'), [
+            'visibility' => 'selected', 'membership_ids' => [$member],
+        ])->assertOk();
+        $revision = DB::connection('admin')->table('families')->where('id', $this->family)->value('authz_revision');
+        Event::listen(MembershipRevoked::class, function (): void {
+            throw new \RuntimeException('Simulated consumer failure');
+        });
+        $this->withoutExceptionHandling();
+        try {
+            $this->deleteJson('/api/v1/families/'.$this->family.'/members/'.$member);
+            $this->fail('Revocation must propagate the consumer failure.');
+        } catch (\RuntimeException $error) {
+            $this->assertSame('Simulated consumer failure', $error->getMessage());
+        }
+        $this->assertNull(DB::connection('admin')->table('family_memberships')->where('id', $member)->value('revoked_at'));
+        $this->assertSame($revision, DB::connection('admin')->table('families')->where('id', $this->family)->value('authz_revision'));
+        $this->assertSame(1, DB::connection('admin')->table('document_grants')->where('document_id', $id)->where('membership_id', $member)->count());
+        $this->actingAs($this->mihai)->getJson($this->path('/'.$id))->assertOk();
     }
 
     public function test_adult_cannot_revoke_members_or_change_someone_elses_sharing(): void

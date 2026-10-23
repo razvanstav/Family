@@ -25,10 +25,14 @@ export function Kitchen({
   family,
   userId,
   onExpired,
+  requestedRecipe,
+  onRecipeOpened,
 }: {
   family: Family;
   userId: number;
   onExpired: () => void;
+  requestedRecipe: string | null;
+  onRecipeOpened: () => void;
 }) {
   const base = `/families/${family.id}/recipes`;
   const [section, setSection] = useState<"recipes" | "meals">("recipes");
@@ -50,6 +54,37 @@ export function Kitchen({
   const [browsing, setBrowsing] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
   const loadedPosition = useRef("");
+  useEffect(() => {
+    if (!requestedRecipe) return;
+    if (section !== "recipes") {
+      showRecipes();
+      return;
+    }
+    if (loading) return;
+    const existing = items.find((item) => item.id === requestedRecipe);
+    if (existing) {
+      setSelected(existing);
+      onRecipeOpened();
+      return;
+    }
+    const controller = new AbortController();
+    api<Recipe>(`${base}/${requestedRecipe}`, { signal: controller.signal })
+      .then((recipe) => {
+        if (!controller.signal.aborted) {
+          setSelected(recipe);
+          onRecipeOpened();
+        }
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) {
+          setNotice(
+            e instanceof Error ? e.message : "Rețeta nu mai este disponibilă.",
+          );
+          onRecipeOpened();
+        }
+      });
+    return () => controller.abort();
+  }, [requestedRecipe, section, loading, items, base]);
 
   function showRecipes() {
     setSection("recipes");

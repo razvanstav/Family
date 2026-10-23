@@ -2,19 +2,22 @@
 
 namespace App\Modules\Calendar\Application;
 
+use App\Modules\Calendar\Contracts\Overview;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 
-final class CalendarOverview
+final class CalendarOverview implements Overview
 {
-    public function __construct(private readonly CalendarAccess $access, private readonly CalendarReminders $reminders) {}
+    public function __construct(private readonly CalendarAccess $access, private readonly CalendarReminders $reminders, private readonly BirthdayCalendar $birthdays) {}
 
     public function home(string $family, int $actor, string $month): array
     {
+        $this->birthdays->syncFamily($family, (int) substr($month, 0, 4));
         $now = CarbonImmutable::now();
         $today = $now->setTimezone('Europe/Bucharest')->startOfDay();
         $first = CarbonImmutable::createFromFormat('!Y-m', $month, 'Europe/Bucharest');
-        $visible = $this->access->visible($family, $actor)->whereNull('calendar_items.archived_at');
+        $visible = $this->access->visible($family, $actor)->whereNull('calendar_items.archived_at')
+            ->where(fn (Builder $query) => $query->whereNull('calendar_items.source_type')->orWhere('calendar_items.source_type', '!=', 'task'));
         $days = (clone $visible)->whereBetween('event_date', [$first->toDateString(), $first->endOfMonth()->toDateString()])
             ->distinct()->orderBy('event_date')->pluck('event_date');
         $events = $visible->whereBetween('event_date', [$today->toDateString(), $today->addDays(29)->toDateString()])

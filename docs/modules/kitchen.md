@@ -1,5 +1,7 @@
 # Bucătărie
 
+**P1a.1, 24 octombrie 2026:** App compune `MealViewer` și transmite `mealTypes` către Amintiri prin punctele de extensie ale acestuia. Bucătărie nu a fost mutată în shared și nu este importată de alt modul; componentele mesei/rețetei și endpointurile rămân existente. [Probe P1a](platform.md#p1a--eliminarea-cuplărilor-24-octombrie-2026).
+
 Stare: **KH3 — Mesele de azi înaintea rețetelor**, implementat și verificat local la 23 octombrie 2026. KH2, K1, K2, K3a și K4a–K4b rămân implementate și verificate anterior. Preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
 
 ## KH3 — Mesele de azi primele, 23 octombrie 2026

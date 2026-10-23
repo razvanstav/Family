@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   BookHeart,
   History,
@@ -16,7 +16,6 @@ import { MomentForm } from "./MomentForm";
 import { Timeline } from "./Timeline";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
-import { MealViewer } from "../kitchen/MealViewer";
 import { type Moment, type MomentList } from "./memoryTypes";
 import "./memory.css";
 
@@ -32,12 +31,20 @@ export function Memories({
   requestedMoment,
   onMomentOpened,
   onExpired,
+  mealTypeLabels,
+  renderMeal,
 }: {
   family: Family;
   actorId: number;
   requestedMoment: string | null;
   onMomentOpened: () => void;
   onExpired: () => void;
+  mealTypeLabels: Readonly<Record<string, string>>;
+  renderMeal: (props: {
+    mealId: string;
+    onClose: () => void;
+    onUnavailable: () => void;
+  }) => ReactNode;
 }) {
   const base = `/families/${family.id}/moments`;
   const [section, setSection] = useState<"moments" | "timeline">("moments");
@@ -65,6 +72,12 @@ export function Memories({
 
   useEffect(() => {
     if (!requestedMoment) return;
+    const existing = items.find((item) => item.id === requestedMoment);
+    if (existing) {
+      setView({ mode: "detail", moment: existing });
+      onMomentOpened();
+      return;
+    }
     const controller = new AbortController();
     api<Moment>(`${base}/${requestedMoment}`, { signal: controller.signal })
       .then((moment) => {
@@ -208,6 +221,7 @@ export function Memories({
       {section === "timeline" && (
         <Timeline
           familyId={family.id}
+          mealTypeLabels={mealTypeLabels}
           revision={revision}
           onMoment={(moment) => setView({ mode: "detail", moment })}
           onMeal={(id) => setView({ mode: "meal", id })}
@@ -480,16 +494,12 @@ export function Memories({
           </section>
         </>
       )}
-      {view?.mode === "meal" && (
-        <MealViewer
-          key={view.id}
-          familyId={family.id}
-          actorId={actorId}
-          mealId={view.id}
-          onClose={() => setView(null)}
-          onUnavailable={unavailable}
-        />
-      )}
+      {view?.mode === "meal" &&
+        renderMeal({
+          mealId: view.id,
+          onClose: () => setView(null),
+          onUnavailable: unavailable,
+        })}
       {view?.mode === "detail" && (
         <MomentDetail
           key={view.moment.id}

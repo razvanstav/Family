@@ -17,6 +17,7 @@ import {
   ApiError,
   type Family,
   type CalendarRequest,
+  type VehicleRequest,
   visibilityLabel,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
@@ -26,7 +27,7 @@ import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import type { CalendarItem } from "./calendarTypes";
 import { CalendarMonth } from "../../shared/CalendarMonth";
 import "./calendar.css";
-import { ReminderFields } from "./ReminderFields";
+import { ReminderFields } from "../../shared/ReminderFields";
 import {
   CalendarEvents,
   CalendarWeek,
@@ -40,6 +41,8 @@ export function CalendarPage({
   requestedEvent,
   onEventOpened,
   onChanged,
+  onVehicle,
+  onTask,
   onExpired,
 }: {
   family: Family;
@@ -47,6 +50,8 @@ export function CalendarPage({
   requestedEvent: CalendarRequest | null;
   onEventOpened: () => void;
   onChanged: () => void;
+  onVehicle: (target: VehicleRequest) => void;
+  onTask: (id: string) => void;
   onExpired: () => void;
 }) {
   const today = bucharestToday();
@@ -192,6 +197,11 @@ export function CalendarPage({
           : "Eveniment salvat.",
     );
     setRevision((value) => value + 1);
+  }
+  function openItem(id: string) {
+    const item = items.find((event) => event.id === id);
+    if (item?.source?.type === "task") onTask(item.source.id);
+    else setEditor(id);
   }
   return (
     <div className="calendar-page">
@@ -420,7 +430,7 @@ export function CalendarPage({
                     <CalendarEvents
                       items={visible.filter((item) => item.event_date === date)}
                       timeline
-                      onOpen={setEditor}
+                      onOpen={openItem}
                     />
                   </section>
                 ))}
@@ -429,7 +439,7 @@ export function CalendarPage({
             <CalendarEvents
               items={visible}
               timeline={view === "agenda" || Boolean(day)}
-              onOpen={setEditor}
+              onOpen={openItem}
             />
           )}
         </section>
@@ -447,6 +457,8 @@ export function CalendarPage({
           }
           onClose={() => setEditor(null)}
           onSaved={saved}
+          onVehicle={onVehicle}
+          onTask={onTask}
           onUnavailable={() => {
             setEditor(null);
             setRevision((value) => value + 1);
@@ -467,6 +479,8 @@ function EventEditor({
   onClose,
   onSaved,
   onUnavailable,
+  onVehicle,
+  onTask,
 }: {
   familyId: string;
   userId: number;
@@ -477,6 +491,8 @@ function EventEditor({
   onClose: () => void;
   onSaved: (item: CalendarItem, action: string) => void;
   onUnavailable: () => void;
+  onVehicle: (target: VehicleRequest) => void;
+  onTask: (id: string) => void;
 }) {
   const [item, setItem] = useState<CalendarItem | null>(initialItem);
   const [loading, setLoading] = useState(id !== "new" && !initialItem);
@@ -491,6 +507,9 @@ function EventEditor({
   const [allDay, setAllDay] = useState(initialItem?.all_day ?? true);
   const [time, setTime] = useState(initialItem?.time ?? "10:00");
   const [notes, setNotes] = useState(initialItem?.notes ?? "");
+  const [birthdayOffset, setBirthdayOffset] = useState<number | null>(
+    initialItem?.my_reminder_offset_minutes ?? null,
+  );
   const [reminderOffset, setReminderOffset] = useState<number | null>(
     initialItem?.reminder?.offset_minutes ?? null,
   );
@@ -501,6 +520,10 @@ function EventEditor({
     initialItem?.visibility ?? "private",
   );
   useEffect(() => {
+    if (initialItem?.source?.type === "task") {
+      onTask(initialItem.source.id);
+      return;
+    }
     if (id === "new" || (initialItem && attempt === 0)) return;
     let active = true;
     setLoading(true);
@@ -510,12 +533,17 @@ function EventEditor({
     api<CalendarItem>(`${endpoint}/${id}`)
       .then((data) => {
         if (!active) return;
+        if (data.source?.type === "task") {
+          onTask(data.source.id);
+          return;
+        }
         setItem(data);
         setTitle(data.title);
         setDate(data.event_date);
         setAllDay(data.all_day);
         setTime(data.time ?? "10:00");
         setNotes(data.notes ?? "");
+        setBirthdayOffset(data.my_reminder_offset_minutes);
         setVisibility(data.visibility);
         setReminderOffset(data.reminder?.offset_minutes ?? null);
         setRecipients(data.reminder?.recipients ?? []);
@@ -588,6 +616,29 @@ function EventEditor({
           headers: { "If-Match": `"${item.version}"` },
         }),
         action,
+      );
+    } catch (e) {
+      handleError(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function saveBirthday(event: FormEvent) {
+    event.preventDefault();
+    if (!item || busy || stale || unavailable) return;
+    setBusy(true);
+    setError("");
+    try {
+      onSaved(
+        await api<CalendarItem>(`${endpoint}/${id}/birthday-reminder`, {
+          method: "PATCH",
+          headers: { "If-Match": `"${item.my_reminder_version}"` },
+          body: JSON.stringify({
+            offset_minutes: birthdayOffset,
+            source_version: item.version,
+          }),
+        }),
+        "save",
       );
     } catch (e) {
       handleError(e);
@@ -748,11 +799,72 @@ function EventEditor({
                   {item.all_day ? "Toată ziua" : item.time}
                 </p>
                 <p>
-                  {visibilityLabel[item.visibility]} · {item.owner_name}
+                  {visibilityLabel[item.visibility]}
+                  {item.source?.type === "vehicle_entry"
+                    ? " · Auto"
+                    : item.source?.type === "birthday"
+                      ? " · Zi de naștere"
+                      : item.source?.type === "task"
+                        ? " · Sarcină"
+                        : ` · ${item.owner_name}`}
                 </p>
                 {item.notes && <p className="calendar-notes">{item.notes}</p>}
                 {item.archived_at && (
                   <p className="notice">Eveniment arhivat.</p>
+                )}
+                {item.source?.type === "vehicle_entry" && (
+                  <button
+                    className="button primary full"
+                    onClick={() =>
+                      onVehicle({
+                        vehicleId: item.source!.parent_id,
+                        entryId: item.source!.id,
+                      })
+                    }
+                  >
+                    Deschide în Auto
+                  </button>
+                )}
+                {item.source?.type === "birthday" && (
+                  <form onSubmit={saveBirthday}>
+                    <fieldset
+                      className="calendar-fields"
+                      disabled={busy || stale}
+                    >
+                      <label className="field">
+                        Reminder pentru mine
+                        <select
+                          aria-label="Reminder pentru mine"
+                          value={
+                            birthdayOffset === null ? "off" : birthdayOffset
+                          }
+                          onChange={(e) =>
+                            setBirthdayOffset(
+                              e.target.value === "off"
+                                ? null
+                                : Number(e.target.value),
+                            )
+                          }
+                        >
+                          <option value="off">Fără reminder</option>
+                          <option value="0">În aceeași zi, la 09:00</option>
+                          <option value="1440">
+                            În ziua precedentă, la 09:00
+                          </option>
+                          <option value="10080">
+                            Cu 7 zile înainte, la 09:00
+                          </option>
+                        </select>
+                        <small>
+                          Ora României. Alegerea se păstrează anual. Dacă
+                          momentul a trecut, reminderul nu se trimite.
+                        </small>
+                      </label>
+                      <button type="submit" className="button primary full">
+                        {busy ? "Se salvează…" : "Salvează"}
+                      </button>
+                    </fieldset>
+                  </form>
                 )}
               </div>
             )

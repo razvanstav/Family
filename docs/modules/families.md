@@ -1,14 +1,22 @@
 # Familie
 
+**Integrare CH2, 24 octombrie:** [Cheltuieli](expenses.md#ch2--navigație-principală-și-etichete-24-octombrie-2026) este acum pagină principală, la cererea utilizatorului. Familia mea are numai Membri și Documente; fila Cheltuieli a fost eliminată. Modulele, datele și accesul sunt păstrate.
+
 Stare: **FS1 — Povestea profilului și arbore genealogic**, implementat și verificat local la 23 octombrie 2026; acceptarea vizuală așteaptă feedback. FW1, F3b și F4a/FD3 rămân existente. F4a închide numai adăugarea copilului sub 14 ani fără email; persoanele genealogice fără cont din FS1 sunt un registru separat, fără apartenență sau autentificare. Legarea ulterioară la cont și restul F4 rămân separate.
 
 ## FS1 — Povestea profilului și arbore genealogic, 23 octombrie 2026
+
+**P1a.2, 24 octombrie:** Documentele din profil sunt compuse în App prin `ProfileDocumentsSlot`, fără import Familie → Documente. Sunt păstrate subiectul, permisiunile, cheia de remontare și deschiderea directă din căutare. 23 teste frontend și build trecute; [detalii P1a](platform.md#p1a2--familie-ui-verificat-la-24-octombrie-2026).
+
+**P1a.3/3b:** backendul profilului consumă `MomentSummaries` și `Birthdays`; `FamilyBirthdaySource` implementează `BirthdaySource`. Revocarea emite evenimentul existent, iar fiecare modul își curăță propriile date. Familia nu mai șterge granturi Documente. Accesul și rollbackul sunt verificate în [P1a](platform.md#p1a3--contracte-backend-și-ownership-verificat-la-24-octombrie-2026).
+
+**Dependență BC1, 23 octombrie:** configurarea existentă Data nașterii și părinți include opțiunea explicită Ziua de naștere în Calendarul familiei, oprită implicit. Data completă își păstrează politica persoană/administrator; Calendar primește numai aniversarea, fără anul nașterii/vârstă. `birthday_version` este separat de versiunea fotografiei/profilului. [Contractul și probele sunt în Calendar](calendar.md#bc1--zile-de-naștere-23-octombrie-2026); drepturile de configurare și regulile părinților nu sunt lărgite.
 
 Cerere explicită: profil cu fotografie, relații și cronologie de momente, activități și realizări. Utilizatorul a ales și bunici/rude fără cont. Un singur ecran redesenat: **Prezentare** din profil, cu cronologie și arbore alăturate desktop, suprapuse sub 900 px. Identitatea/fotografia, cadrul filelor, documentele și celelalte categorii de profil rămân existente.
 
 ### Comportament și contracte
 
-- `GET /members/{member}/profile/story` reunește însemnările active autorizate și momentele active în care profilul este menționat explicit. Un moment adăugat de persoană nu este asociat automat profilului dacă nu are menționare. Fiecare sursă își păstrează politica: numai autorul vede însemnarea privată; Memory folosește `MomentAccess`, inclusiv granturile selective. Menționarea ori genealogia nu acordă acces. Nicio copiere în proiecții sau interogare directă din Familie a tabelelor Memory: `RecentMoments::forMember` este citirea publică folosită.
+- `GET /members/{member}/profile/story` reunește însemnările active autorizate și momentele active în care profilul este menționat explicit. Un moment adăugat de persoană nu este asociat automat profilului dacă nu are menționare. Fiecare sursă își păstrează politica: numai autorul vede însemnarea privată; Memory folosește `MomentAccess`, inclusiv granturile selective. Menționarea ori genealogia nu acordă acces. Nicio copiere în proiecții sau interogare directă din Familie a tabelelor Memory: `Contracts/MomentSummaries::forMember` este citirea publică folosită.
 - Cronologia are grupare pe ani, iconițe pe tip, fotografii private și metadate de dată/autor/acces. Paginare comună de 12, cu maximum 13 candidați per sursă și cursor criptat legat de familie/profil; ordine dată descrescător, sursă crescător, UUID descrescător. Fără N+1 sau citire integrală a istoricului. Însemnarea deschide detaliul din payloadul complet; momentul deschide sursa canonică din Amintiri, cu GET justificat pentru detaliul absent din rezumat.
 - Tipul nou **Realizare** (`achievement`) aparține Activităților și se creează din formularul existent, cu aceleași reguli de autor/vârstă, acces privat implicit și versiuni. Nu se inventează realizări din titlurile altor activități.
 - Arborele este navigabil prin selectarea unei persoane: părinți, copii, parteneri, frați/surori. Bunicii se adaugă ca părinți ai unui părinte selectat, fără persoane intermediare fictive. Pentru un membru există acces la profilul canonic; persoana fără cont are nume și legături genealogice, fără email, user, sesiune, dosar de profil sau destinatar de reminder. Fotografiile membrilor folosesc avatarul autorizat existent; rudele fără fotografie au inițiale.

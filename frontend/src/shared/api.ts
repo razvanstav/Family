@@ -63,6 +63,8 @@ export type CalendarRequest = {
   date: string;
   monthOnly?: boolean;
 };
+export type VehicleRequest = { vehicleId: string; entryId: string };
+export type DocumentRequest = { id: string; memberId: string | null };
 let csrf = "";
 const sessionListeners = new Set<() => void>();
 export function onSessionInvalidated(listener: () => void) {

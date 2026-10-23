@@ -2,12 +2,13 @@
 
 namespace App\Modules\Memory\Application;
 
+use App\Modules\Memory\Contracts\MomentSummaries;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-final class RecentMoments
+final class RecentMoments implements MomentSummaries
 {
     public function __construct(private readonly MomentAccess $access) {}
 

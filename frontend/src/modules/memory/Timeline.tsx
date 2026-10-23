@@ -12,7 +12,6 @@ import {
 import { api, ApiError, visibilityLabel } from "../../shared/api";
 import { dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto, type PhotoStatus } from "../../shared/PrivatePhoto";
-import { mealTypes } from "../kitchen/mealTypes";
 import { momentKinds, type Moment } from "./memoryTypes";
 
 type TimelineCard = {
@@ -26,7 +25,7 @@ type TimelineCard = {
   photo_status: PhotoStatus;
   photo_is_example: boolean;
   moment_kind?: keyof typeof momentKinds;
-  meal_type?: keyof typeof mealTypes;
+  meal_type?: string;
   excerpt?: string | null;
 };
 type TimelinePage = {
@@ -41,12 +40,14 @@ export function Timeline({
   onMoment,
   onMeal,
   onUnavailable,
+  mealTypeLabels,
 }: {
   familyId: string;
   revision: number;
   onMoment: (moment: Moment) => void;
   onMeal: (id: string) => void;
   onUnavailable: () => void;
+  mealTypeLabels: Readonly<Record<string, string>>;
 }) {
   const base = `/families/${familyId}`;
   const [data, setData] = useState<TimelinePage | null>(null);
@@ -249,7 +250,7 @@ export function Timeline({
                         <span className="timeline-kind">
                           <Icon size={14} aria-hidden="true" />
                           {isMeal && card.meal_type
-                            ? mealTypes[card.meal_type]
+                            ? mealTypeLabels[card.meal_type]
                             : momentKinds[card.moment_kind ?? "moment"]}
                         </span>
                         <strong>{card.title}</strong>

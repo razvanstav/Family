@@ -18,13 +18,13 @@ Decizie la 22 octombrie 2026: instalare pe serverul Linux dedicat al utilizatoru
 
 Acest pas pregătește un singur mediu staging, fără acces la server. Nu instalează pachete, certificate, conturi sau date. Înlocuiește domeniul `family.example.com`, căile certificatelor și utilizatorul/grupul Nginx din exemple după confirmarea serverului. Calea PHP presupusă este `/usr/bin/php` cu versiunea 8.4 și extensiile de la secțiunea 1, atât în CLI, cât și în FPM. Folosește pachetele de securitate curente ale distribuției, fără a copia runtime-ul Windows.
 
-| Fișier | Destinație/rol |
-| --- | --- |
-| [linux/.env.example](linux/.env.example) | Model pentru `/srv/memoria/shared/.env`; cheia și parola DB sunt necompletate |
-| [linux/nginx.conf](linux/nginx.conf) | Virtual host dedicat HTTPS, rădăcină `current/backend/public` |
-| [linux/php-fpm.conf](linux/php-fpm.conf) | Pool PHP-FPM `memoria`, socket `/run/php/memoria.sock` |
-| [linux/memoria-outbox.service](linux/memoria-outbox.service), [timer](linux/memoria-outbox.timer) | O trecere outbox per activare |
-| [linux/memoria-reminders.service](linux/memoria-reminders.service), [timer](linux/memoria-reminders.timer) | O trecere a reminderelor in-app per activare |
+| Fișier                                                                                                     | Destinație/rol                                                                |
+| ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [linux/.env.example](linux/.env.example)                                                                   | Model pentru `/srv/memoria/shared/.env`; cheia și parola DB sunt necompletate |
+| [linux/nginx.conf](linux/nginx.conf)                                                                       | Virtual host dedicat HTTPS, rădăcină `current/backend/public`                 |
+| [linux/php-fpm.conf](linux/php-fpm.conf)                                                                   | Pool PHP-FPM `memoria`, socket `/run/php/memoria.sock`                        |
+| [linux/memoria-outbox.service](linux/memoria-outbox.service), [timer](linux/memoria-outbox.timer)          | O trecere outbox per activare                                                 |
+| [linux/memoria-reminders.service](linux/memoria-reminders.service), [timer](linux/memoria-reminders.timer) | O trecere a reminderelor in-app per activare                                  |
 
 Structura de instalare:
 
@@ -240,6 +240,8 @@ php -d upload_max_filesize=10M -d post_max_size=12M -S 127.0.0.1:8000 -t backend
 ```
 
 Deschide [aplicația](http://127.0.0.1:8000/app/) sau [previzualizarea mobilă](http://127.0.0.1:8000/preview/mobile). Apasă Ana, apoi „Intră în cont”. Serverul din terminal se oprește cu Ctrl+C. PostgreSQL și ClamAV se opresc separat, prin mecanismul instalării lor.
+
+La instalarea SC1 (Sarcini în Calendar), aplică migrațiile, inclusiv `2026_10_23_232810_allow_private_task_calendar_sources.php`, apoi rulează `php -d extension=pdo_pgsql backend/artisan tasks:sync-calendar` pentru sarcinile existente, înaintea deschiderii noului build. Comanda păstrează sarcinile și se poate repeta fără duplicarea proiecțiilor; nu configurează remindere. Nu folosi seederul pentru această actualizare.
 
 ## 5. Verificare și continuare
 

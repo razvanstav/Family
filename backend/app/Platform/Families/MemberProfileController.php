@@ -2,7 +2,8 @@
 
 namespace App\Platform\Families;
 
-use App\Modules\Memory\Application\RecentMoments;
+use App\Modules\Calendar\Contracts\Birthdays;
+use App\Modules\Memory\Contracts\MomentSummaries;
 use App\Platform\Audit\Audit;
 use App\Platform\Contracts\PrivateMedia;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -34,13 +35,14 @@ final class MemberProfileController
             'id' => $subject->id, 'user_id' => $subject->user_id, 'name' => $subject->name, 'role' => $subject->role,
             'age' => $this->access->age($subject->birth_date),
             'birth_date' => $request->attributes->get('membership')->role === 'owner' || (int) $subject->user_id === $request->user()->id ? $subject->birth_date : null,
+            'birthday_shared' => (bool) $subject->birthday_shared,
             'parents' => $parents, 'version' => (int) $subject->version, 'photo_status' => $subject->photo_status,
             'can_write' => $this->access->canWrite($request, $family, $subject),
             'can_configure' => $request->attributes->get('membership')->role === 'owner',
         ])->header('ETag', '"'.$subject->version.'"');
     }
 
-    public function configure(Request $request, string $family, string $member): JsonResponse
+    public function configure(Request $request, string $family, string $member, Birthdays $birthdays): JsonResponse
     {
         abort_unless($request->attributes->get('membership')->role === 'owner', 403);
         $subject = $this->access->subject($family, $member);
@@ -49,6 +51,7 @@ final class MemberProfileController
             'birth_date' => 'present|nullable|date_format:Y-m-d|after_or_equal:1900-01-01|before_or_equal:'.now('Europe/Bucharest')->toDateString(),
             'parent_ids' => 'present|array|max:2', 'parent_ids.*' => 'required|uuid|distinct',
             'name' => $subject->user_id === null ? 'sometimes|required|string|max:100' : 'prohibited',
+            'birthday_shared' => 'sometimes|boolean',
         ]);
         if ($subject->user_id === null && $data['birth_date'] === null) {
             throw ValidationException::withMessages(['birth_date' => 'Data nașterii este necesară pentru profilul copilului.']);
@@ -63,18 +66,28 @@ final class MemberProfileController
             throw ValidationException::withMessages(['parent_ids' => 'Părinții desemnați se configurează numai pentru minori.']);
         }
         $this->access->validateParents($family, $member, $parents);
-        if (isset($data['name'])) {
-            DB::table('family_memberships')->where('family_id', $family)->where('id', $member)->update(['child_name' => $data['name']]);
-        }
-        $this->saveProfile($family, $member, (int) $subject->version, ['birth_date' => $data['birth_date']]);
-        DB::table('member_profile_parents')->where('family_id', $family)->where('membership_id', $member)->delete();
-        if ($parents !== []) {
-            DB::table('member_profile_parents')->insert(array_map(fn (string $parent) => ['family_id' => $family, 'membership_id' => $member, 'parent_membership_id' => $parent], $parents));
-        }
-        DB::table('families')->where('id', $family)->increment('authz_revision');
-        Audit::record($family, $request->user()->id, 'profile.configured', $member);
 
-        return $this->show($request, $family, $member);
+        return DB::transaction(function () use ($request, $family, $member, $subject, $data, $parents, $birthdays): JsonResponse {
+            if (isset($data['name'])) {
+                DB::table('family_memberships')->where('family_id', $family)->where('id', $member)->update(['child_name' => $data['name']]);
+            }
+            $shared = $data['birth_date'] !== null && ($data['birthday_shared'] ?? $subject->birthday_shared ?? false);
+            $birthdayChanged = substr($subject->birth_date ?? '', 5) !== substr($data['birth_date'] ?? '', 5) || (bool) $subject->birthday_shared !== $shared;
+            $this->saveProfile($family, $member, (int) $subject->version, ['birth_date' => $data['birth_date'], 'birthday_shared' => $shared,
+                'birthday_version' => $birthdayChanged ? (int) ($subject->birthday_version ?? 0) + 1 : (int) ($subject->birthday_version ?? 1)]);
+            if (! $shared) {
+                $birthdays->unshare($family, $member);
+            }
+            $birthdays->syncFamily($family);
+            DB::table('member_profile_parents')->where('family_id', $family)->where('membership_id', $member)->delete();
+            if ($parents !== []) {
+                DB::table('member_profile_parents')->insert(array_map(fn (string $parent) => ['family_id' => $family, 'membership_id' => $member, 'parent_membership_id' => $parent], $parents));
+            }
+            DB::table('families')->where('id', $family)->increment('authz_revision');
+            Audit::record($family, $request->user()->id, 'profile.configured', $member);
+
+            return $this->show($request, $family, $member);
+        });
     }
 
     private function saveProfile(string $family, string $member, int $version, array $data): void
@@ -146,7 +159,7 @@ final class MemberProfileController
             'author_name' => $entry->author_name, 'can_manage' => $canWrite && (int) $entry->author_id === $request->user()->id];
     }
 
-    public function story(Request $request, string $family, string $member, RecentMoments $memories): JsonResponse
+    public function story(Request $request, string $family, string $member, MomentSummaries $memories): JsonResponse
     {
         $subject = $this->access->subject($family, $member);
         $data = $request->validate(['cursor' => 'sometimes|nullable|string|max:2048']);

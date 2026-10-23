@@ -29,9 +29,10 @@ import {
   type Member,
   type Invitation,
   type Family,
+  type DocumentRequest,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
-import { MemberProfile } from "./MemberProfile";
+import { MemberProfile, type ProfileDocumentsSlot } from "./MemberProfile";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
@@ -356,12 +357,18 @@ export function FamilyPage({
   onExpired,
   navigation,
   onMemory,
+  requestedDocument,
+  onDocumentOpened,
+  renderDocuments,
 }: {
   family: Family;
   userId: number;
   onExpired: () => void;
   navigation: ReactNode;
   onMemory: (id: string) => void;
+  requestedDocument: DocumentRequest | null;
+  onDocumentOpened: () => void;
+  renderDocuments: ProfileDocumentsSlot;
 }) {
   const familyId = family.id;
   const isOwner = family.role === "owner";
@@ -424,6 +431,17 @@ export function FamilyPage({
       sequence.current++;
     };
   }, [familyId]);
+  useEffect(() => {
+    if (!requestedDocument?.memberId || loading) return;
+    const target = members.find(
+      (member) => member.id === requestedDocument.memberId,
+    );
+    if (target) setProfileMember(target);
+    else {
+      setError("Profilul documentului nu mai este disponibil.");
+      onDocumentOpened();
+    }
+  }, [requestedDocument, members, loading]);
 
   async function revoke() {
     if (!target || busy) return;
@@ -486,7 +504,6 @@ export function FamilyPage({
       <MemberProfile
         key={profileMember.id}
         family={family}
-        userId={userId}
         member={profileMember}
         members={members}
         onMember={(id) => {
@@ -494,6 +511,13 @@ export function FamilyPage({
           if (relative) setProfileMember(relative);
         }}
         onMemory={onMemory}
+        requestedDocument={
+          requestedDocument?.memberId === profileMember.id
+            ? requestedDocument.id
+            : null
+        }
+        onDocumentOpened={onDocumentOpened}
+        renderDocuments={renderDocuments}
         onBack={() => {
           setProfileMember(null);
           void load();

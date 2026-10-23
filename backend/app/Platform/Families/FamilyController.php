@@ -53,7 +53,6 @@ final class FamilyController
         abort_unless($target, 404);
         abort_if($target->user_id === $request->user()->id || $target->role === 'owner', 422, 'Proprietarul familiei nu poate fi revocat din acest ecran.');
         DB::table('family_memberships')->where('id', $member)->update(['revoked_at' => now()]);
-        DB::table('document_grants')->where('family_id', $family)->where('membership_id', $member)->delete();
         DB::table('families')->where('id', $family)->increment('authz_revision');
         event(new MembershipRevoked($family, $member));
         Audit::record($family, $request->user()->id, 'membership.revoked', $member);

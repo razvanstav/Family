@@ -405,9 +405,9 @@ input[type="radio"] {
 .nav-symbol-memory {
   background: #f4eaf0;
 }
-.nav-symbol-calendar {
-  background: #f8eadd;
-  color: #b8753e;
+.nav-symbol-expenses {
+  background: #edf1e7;
+  color: var(--accent);
 }
 .nav-symbol-vehicles {
   background: #e9eef3;
@@ -480,6 +480,7 @@ input[type="radio"] {
 }
 .topbar-actions {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 15px;
 }
@@ -1120,10 +1121,10 @@ button.avatar > .avatar {
 .account-info ~ form {
   margin-bottom: 20px;
 }
-.mobile-more-menu {
+.more-menu {
   display: grid;
 }
-.mobile-more-menu button {
+.more-menu button {
   display: grid;
   grid-template-columns: 24px 1fr 18px;
   align-items: center;
@@ -1134,15 +1135,21 @@ button.avatar > .avatar {
   text-align: left;
   font-size: 16px;
 }
-.mobile-more-menu button + button {
+.more-menu button + button {
   border-top: 1px solid var(--line);
 }
-.mobile-more-menu button:hover,
-.mobile-more-menu button[aria-current="page"] {
+.more-menu button:hover,
+.more-menu button[aria-current="page"] {
   background: var(--panel);
 }
-.mobile-more-menu .lucide-user-round {
+.more-menu .lucide-user-round {
   color: var(--icon-home);
+}
+.more-menu .lucide-calendar-days {
+  color: #b8753e;
+}
+.more-menu .lucide-list-todo {
+  color: var(--accent);
 }
 .demo-note {
   background: #f7f7f8;
@@ -1202,12 +1209,21 @@ button.avatar > .avatar {
   .family-selector {
     font-size: 13px;
     box-shadow: none;
+    min-width: 0;
+    flex: 1;
+    max-width: 250px;
+  }
+  .topbar-actions {
+    flex: 1;
+    gap: 8px;
   }
   .family-selector > svg:first-child {
     display: none;
   }
   .family-selector select {
     max-width: 190px;
+    min-width: 0;
+    width: 100%;
     min-height: 44px;
   }
   main {
@@ -1277,8 +1293,8 @@ button.avatar > .avatar {
   .mobile-nav .lucide-utensils-crossed {
     color: #58795a;
   }
-  .mobile-nav .lucide-calendar-days {
-    color: #b8753e;
+  .mobile-nav .lucide-wallet {
+    color: var(--accent);
   }
   .mobile-nav button.active {
     color: #34543d;

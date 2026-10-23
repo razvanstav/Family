@@ -1,0 +1,33 @@
+.reminder-fields {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.reminder-recipients {
+  padding: 0;
+  margin: 0 0 16px;
+  border: 0;
+  min-width: 0;
+}
+.reminder-recipients legend {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.reminder-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 14px;
+}
+.reminder-check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
+.reminder-fields small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.5;
+}

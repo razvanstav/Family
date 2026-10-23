@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError, type Document } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { bucharestToday } from "../../shared/calendarDates";
+import { ReminderFields } from "../../shared/ReminderFields";
 import {
   entryKinds,
   type EntryKind,
@@ -304,6 +305,8 @@ export function VehiclePhotoForm({
 export function VehicleEntryForm({
   entry,
   base,
+  familyId,
+  userId,
   canManage,
   defaultState,
   onClose,
@@ -311,6 +314,8 @@ export function VehicleEntryForm({
 }: {
   entry: VehicleEntry | null;
   base: string;
+  familyId: string;
+  userId: number;
   canManage: boolean;
   defaultState: "planned" | "completed";
   onClose: () => void;
@@ -323,6 +328,12 @@ export function VehicleEntryForm({
   const [cost, setCost] = useState(entry?.cost ?? "");
   const [km, setKm] = useState(String(entry?.odometer_km ?? ""));
   const [notes, setNotes] = useState(entry?.notes ?? "");
+  const [reminderOffset, setReminderOffset] = useState<number | null>(
+    entry?.reminder_offset_minutes ?? null,
+  );
+  const [recipients, setRecipients] = useState<string[]>(
+    entry?.reminder_recipients ?? [],
+  );
   const [confirm, setConfirm] = useState(false);
   const save = useSave();
   async function mutate(archive = false) {
@@ -347,6 +358,12 @@ export function VehicleEntryForm({
                   odometer_km:
                     state === "completed" && km !== "" ? Number(km) : null,
                   notes: notes || null,
+                  reminder_offset_minutes:
+                    state === "planned" ? reminderOffset : null,
+                  reminder_recipients:
+                    state === "planned" && reminderOffset !== null
+                      ? recipients
+                      : [],
                 },
           ),
         },
@@ -462,8 +479,29 @@ export function VehicleEntryForm({
               onChange={(e) => setNotes(e.target.value)}
             />
           </label>
+          {state === "planned" && (
+            <ReminderFields
+              familyId={familyId}
+              userId={userId}
+              allDay
+              visibility="family"
+              offset={reminderOffset}
+              recipients={recipients}
+              onOffset={setReminderOffset}
+              onRecipients={setRecipients}
+              advanceDays={[1, 7, 30]}
+            />
+          )}
           {canManage && !entry?.archived_at && (
-            <button type="submit" className="button primary full">
+            <button
+              type="submit"
+              className="button primary full"
+              disabled={
+                state === "planned" &&
+                reminderOffset !== null &&
+                !recipients.length
+              }
+            >
               {save.busy ? "Se salvează…" : "Salvează"}
             </button>
           )}

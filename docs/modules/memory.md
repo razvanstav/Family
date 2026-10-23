@@ -1,5 +1,9 @@
 # Amintiri
 
+**P1a.3, 24 octombrie 2026:** Home și profilul Familiei consumă `Contracts/MomentSummaries`, implementat de `RecentMoments`. Filtrele canonice, ordinea, paginarea și payloadurile rămân aceleași; [regresia este în Platformă](platform.md#p1a3--contracte-backend-și-ownership-verificat-la-24-octombrie-2026).
+
+**P1a.1, 24 octombrie 2026:** compoziția mesei din Cronologie este furnizată de App prin `renderMeal` și `mealTypeLabels`; nu există importuri din Bucătărie. Modalul, accesul, voturile și revenirea la Cronologie rămân în componentele existente. [Verificări și limite P1a](platform.md#p1a1--amintiri-ui-verificat-la-24-octombrie-2026).
+
 Stare la 22 octombrie 2026: **AM1–AM3 implementate**, cu fluxurile principale demonstrate local pe Windows, desktop și mobil. Acceptarea completă rămâne deschisă pentru scenariile neexercitate de mai jos. Se păstrează prioritatea funcțiilor, fără suite de teste, înaintea instalării Linux.
 
 ## MH2 — Album pe ani și În ziua asta, 23 octombrie 2026
@@ -136,9 +140,9 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 
 ## Consum Acasă — H2, 22 octombrie 2026
 
-`Application/RecentMoments::forHome` expune maximum trei rezumate active prin politica `MomentAccess`, cu titlu, tip, extras de 200 de caractere, dată, acces și starea fotografiei. Un singur query cu join media; fără granturi, people, versiuni sau chei media în rezumat. Home nu citește tabelele Memory. La deschiderea din Acasă, App transmite ID-ul către Amintiri, care citește detaliul canonic complet; fotografia folosește ruta privată existentă. Modelul AM1–AM3 și indexul cronologiei rămân neschimbate. Probe H2 și limite: [Interfață](interface.md#verificare-h2--22-octombrie-2026).
+`Contracts/MomentSummaries::forHome` expune maximum trei rezumate active prin politica `MomentAccess`, cu titlu, tip, extras de 200 de caractere, dată, acces și starea fotografiei. Un singur query cu join media; fără granturi, people, versiuni sau chei media în rezumat. Home nu citește tabelele Memory. La deschiderea din Acasă, App transmite ID-ul către Amintiri, care citește detaliul canonic complet; fotografia folosește ruta privată existentă. Modelul AM1–AM3 și indexul cronologiei rămân neschimbate. Probe H2 și limite: [Interfață](interface.md#verificare-h2--22-octombrie-2026).
 
-Din [FS1](families.md#fs1--povestea-profilului-și-arbore-genealogic-23-octombrie-2026), `RecentMoments::forMember` expune maximum 13 rezumate active autorizate, numai pentru momente cu menționare explicită a profilului. Acceptă poziția validată a cursorului comun cu însemnările; query unic cu JOIN autor/media și EXISTS pentru menționare, fără duplicarea momentelor sau N+1. Fotografia și deschiderea detaliului folosesc rutele canonice existente. Acest consum nu schimbă accesul, asocierea persoanelor ori cronologia AM3.
+Din [FS1](families.md#fs1--povestea-profilului-și-arbore-genealogic-23-octombrie-2026), `Contracts/MomentSummaries::forMember` expune maximum 13 rezumate active autorizate, numai pentru momente cu menționare explicită a profilului. Acceptă poziția validată a cursorului comun cu însemnările; query unic cu JOIN autor/media și EXISTS pentru menționare, fără duplicarea momentelor sau N+1. Fotografia și deschiderea detaliului folosesc rutele canonice existente. Acest consum nu schimbă accesul, asocierea persoanelor ori cronologia AM3.
 
 ## Următorul pas
 

@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  ClipboardList,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -125,7 +126,7 @@ export function CalendarEvents({
           key={item.id}
           className={`calendar-event calendar-event--${item.visibility}`}
           onClick={() => onOpen(item.id)}
-          aria-label={`${item.title} · ${dateLabel(item.event_date)} · ${item.all_day ? "Toată ziua" : item.time} · ${visibilityLabel[item.visibility]}`}
+          aria-label={`${item.title} · ${dateLabel(item.event_date)} · ${item.source?.type === "task" ? "Sarcină" : item.all_day ? "Toată ziua" : item.time} · ${visibilityLabel[item.visibility]}`}
         >
           {timeline ? (
             <span className="calendar-time">
@@ -147,7 +148,9 @@ export function CalendarEvents({
           )}
           <span className="calendar-event-card">
             <span className="calendar-event-symbol" aria-hidden="true">
-              {item.visibility === "family" ? (
+              {item.source?.type === "task" ? (
+                <ClipboardList size={21} />
+              ) : item.visibility === "family" ? (
                 <Users size={21} />
               ) : (
                 <CalendarDays size={21} />
@@ -157,8 +160,14 @@ export function CalendarEvents({
               <strong>{item.title}</strong>
               {!timeline && (
                 <span>
-                  <Clock3 size={13} aria-hidden="true" />
-                  {item.all_day ? "Toată ziua" : item.time}
+                  {item.source?.type !== "task" && (
+                    <Clock3 size={13} aria-hidden="true" />
+                  )}
+                  {item.source?.type === "task"
+                    ? "Sarcină"
+                    : item.all_day
+                      ? "Toată ziua"
+                      : item.time}
                 </span>
               )}
               <span className="calendar-event-meta">

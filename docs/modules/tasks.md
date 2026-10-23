@@ -1,0 +1,92 @@
+# Sarcini
+
+## SC1 — Sarcini în Calendar, 24 octombrie 2026
+
+**Implementat și verificat local**, la cererea utilizatorului, cu commit și push solicitate pe ramura curentă. Sarcinile nefinalizate cu termen apar în Calendar la data termenului și se deschid direct în Sarcini. Accesul Familie/Personal și drepturile autorului/responsabilului se păstrează; fără remindere sau recurențe în acest pas. Acceptarea vizuală așteaptă feedback.
+
+Integrarea folosește `Calendar/Contracts/SourceItems` și `DeadlineSource`, cu compoziția în `AppServiceProvider` și callbackuri tipizate în App. `TaskCalendar` sincronizează în tranzacția mutației; `TaskDeadlineSource` reverifică sursa și versiunea la citire. Migrația `2026_10_23_232810_allow_private_task_calendar_sources.php` extinde numai constrângerea proiecțiilor pentru sarcinile personale; `tasks:sync-calendar` reconstruiește proiecțiile din sarcinile existente, fără modificarea surselor.
+
+**Comportament:** eliminarea termenului, finalizarea sau ștergerea scoate sarcina din Calendar, inclusiv din Arhivate; redeschiderea cu termen o readuce cu aceeași identitate. Proiecția nu se editează separat. Acasă își păstrează agenda existentă. Autorul deschide formularul, ceilalți un detaliu de consultare; responsabilul poate finaliza din detaliu. Deschiderea reutilizează lista Sarcini sau citește elementul canonic dacă lipsește (inclusiv personale/finalizate/în afara primei pagini), apoi aliniază filtrele. Cererea se curăță la schimbarea familiei/contului.
+
+**Automat:** șapte teste SC1 noi incluse în **75 teste backend / 980 aserțiuni trecute**, serial numai pe `memoria_test`: Sarcini/Calendar, remindere existente, Auto, aniversări, Acasă și limite modulare. Acoperă mutații, Personal inclusiv față de proprietar, responsabil limitat, revocare/readmitere, două familii, versiuni canonice, rollback la eșecul proiecției, reconciliere idempotentă și query count constant. **23 teste frontend**, build TypeScript/Vite, Pint și diff check trecute. Build final `CVqwjEIA.js` / `CI18ciZ3.css`; avertismentul Vite existent pentru chunk peste 500 kB rămâne (503,98 kB).
+
+**Instalare:** migrația este aplicată aditiv în ambele baze; fără tabele, granturi sau rute noi. Reconcilierea repetată în `memoria` păstrează cele opt sarcini și cele opt cheltuieli; comparația integrală a surselor înainte/după este identică. Fără reset/seed al aplicației; rollbackul migrației nu a fost executat.
+
+**Browser:** 8000/Ana/Popescu fără scrieri: patru sarcini cu termen apar în Calendar; cea fără termen și cele trei finalizate lipsesc. Cumpărăturile deschid direct formularul. Pe 8001/`memoria_test`, o sarcină de probă: creare pentru Mihai/25 octombrie, mutare pe 26, detaliu fără editare ca Mihai, finalizare → Calendar gol, redeschidere din Finalizate, apoi ca Ana Personal/1 noiembrie. Luna veche este goală; intrarea privată din luna nouă deschide Sarcini/Personale. Deschiderea din Lună/Săptămână/Agendă, Escape cu focus în listă și Ionescu cu pagina Sarcini păstrată/listă comună goală verificate.
+
+**Layout și limite:** desktop 1280×900, mobil 390×844 și 320×800 fără overflow observat; controalele formularului măsurate la 390 au minimum 44 px. Fără erori/warninguri de consolă observate. Capturi ignorate `.runtime/sc1-calendar-{desktop,mobile}.jpg`, `sc1-task-mobile.jpg`, `sc1-assignee-mobile.jpg`, `sc1-personal-320.jpg` și `sc1-calendar-test-mobile.jpg`. Tabul/serverul 8001 sunt închise, viewportul resetat; Ana/Popescu → Calendar → 24 octombrie rămâne deschis fără dialog. Fără dispozitiv fizic, simulări UI noi de rețea/concurență sau deploy. Modificările locale anterioare sunt păstrate pentru commit/push; confirmarea Git urmează după verificarea remote-ului.
+
+## S2 — Filtru după responsabil, 24 octombrie 2026
+
+**Implementat și verificat local**, la cererea utilizatorului, după acceptarea vizuală a S1 și a listei populate („Arată bine”). Acceptarea ajustării filtrului așteaptă feedback.
+
+- Selectorul **Responsabil** oferă **Toți** implicit, **Ale mele** și ceilalți membri activi cu cont. Funcționează împreună cu De făcut/Finalizate și Familie/Personale, fără schimbarea accesului.
+- `GET /families/{family}/tasks` acceptă opțional `assignee_membership_id` UUID; filtrarea are loc pe server, înainte de paginare. Fără parametru se păstrează lista tuturor sarcinilor autorizate din accesul/starea selectate.
+- Schimbarea responsabilului schimbă scope-ul listei și resetează paginarea. Metadatele păstrează lista completă de responsabili activi; un responsabil deja selectat și ulterior revocat își păstrează eticheta cu „fost membru”.
+- După salvare, filtrul activ urmează responsabilul sarcinii salvate dacă ar ascunde rezultatul. Nu se adaugă requesturi de detaliu la deschiderea editării.
+- Fără date, migrații, rute sau dependențe noi. Cele opt sarcini demo Popescu rămân inventarul S1-demo de mai jos.
+
+**Automat:** 12 teste TaskTest + 3 gărzi backend, **15 teste / 244 aserțiuni trecute**, serial pe `memoria_test`; Pint, lint PHP și diff check trecute. TypeScript/Vite, cele 3 gărzi frontend și Prettier trecute. Buildul final `DR4urNdp.js` / `Dhjd3yNd.css` include ajustarea CSS mobilă; avertismentul Vite existent pentru pragul de 500 kB rămâne, cu chunk de 501,27 kB. Gărzile frontend sunt trecute după modificările TypeScript; CSS-ul ulterior nu schimbă dependențele. Revizuirea a corectat păstrarea numelui responsabilului selectat când datele listei sunt indisponibile la eroare; eticheta „fost membru” apare numai pe baza metadatelor. Acest caz a fost revizuit în cod, fără simularea erorii în browser.
+
+**Browser 8000, fără scrieri:** Toți arată cinci sarcini de făcut; Ale mele (Ana) arată două de făcut și două finalizate; Mihai arată trei de făcut și una finalizată. Responsabilul rămâne selectat la schimbarea stării/accesului. Personale + Mihai arată lista goală cu mesaj specific filtrului; revenirea la Familie păstrează Mihai și cele trei sarcini. Schimbarea familiei la Ionescu păstrează pagina Sarcini, resetează responsabilul la Toți și încarcă opțiunile Toți/Ale mele/Elena Ionescu; revenirea la Popescu arată cele cinci sarcini comune de făcut. Toate cele opt exemple sunt păstrate.
+
+**Layout:** desktop 1280×900, mobil 390×844 și 320×800 fără overflow. Desktopul aliniază selectorul cu filtrele de acces; pe mobil sunt două rânduri compacte, selectorul are înălțime 48 px și toate butoanele/selectoarele verificate au minimum 44 px. Fără erori/warninguri de consolă observate. Capturi ignorate `.runtime/s2-task-assignee-{desktop,mobile,320}.png`; viewport resetat, Popescu → Sarcini → De făcut/Familie/Ale mele rămâne deschis cu două rânduri, fără dialog. Fără date/migrații noi ori commit/push/deploy. Urmează feedback pentru ajustarea filtrului, cu S1 deja acceptat.
+
+Documentație: zece ținte locale de legături și titlul ancorei S2 verificate în cele două MD-uri modificate; Prettier și `git diff --check` trecute. Ancorele istorice nu au fost reverificate.
+
+## S1-demo — Exemple în Popescu, 24 octombrie 2026
+
+**Implementat și verificat local**, la cererea explicită a utilizatorului: opt sarcini demo salvate prin UI-ul aplicației reale 8000, ca Ana/Popescu, cu responsabili și termene diferite, dintre care trei finalizate. Toate au acces Familie și titlul terminat în „· demo”. Listele De făcut cu cinci rânduri și Finalizate cu trei rânduri, inclusiv persistența după reîncărcare, sunt verificate. Datele anterioare și celelalte familii sunt păstrate.
+
+| Sarcină                                  | Responsabil   | Termen            | Stare      |
+| ---------------------------------------- | ------------- | ----------------- | ---------- |
+| Ridicat coletul de la easybox · demo     | Mihai Popescu | 23 octombrie 2026 | De făcut   |
+| Cumpărături pentru weekend · demo        | Ana Popescu   | 24 octombrie 2026 | De făcut   |
+| Pregătit prânzul de duminică · demo      | Mihai Popescu | 25 octombrie 2026 | De făcut   |
+| Sortat hainele de toamnă · demo          | Ana Popescu   | 28 octombrie 2026 | De făcut   |
+| Organizat fotografiile de familie · demo | Mihai Popescu | Fără termen       | De făcut   |
+| Plătit factura la internet · demo        | Ana Popescu   | 22 octombrie 2026 | Finalizată |
+| Udat plantele · demo                     | Mihai Popescu | 23 octombrie 2026 | Finalizată |
+| Pregătit lista de cumpărături · demo     | Ana Popescu   | 24 octombrie 2026 | Finalizată |
+
+Lista De făcut ordonează termenele 23/24/25/28 octombrie și apoi sarcina fără termen. Lista Finalizate afișează cele trei bife, responsabilii și datele. După reload și redeschiderea Sarcini, cele opt titluri, responsabilii, termenele și stările sunt păstrate. Desktop 1280×900 și mobil 390×844 fără overflow orizontal; pe mobil sunt cinci rânduri, cu clientWidth și scrollWidth de 375 px. Fără erori/warninguri de consolă observate.
+
+Capturi ignorate `.runtime/s1-demo-tasks-desktop.png`, `s1-demo-tasks-mobile.png` și `s1-demo-completed-desktop.png`. Viewportul este resetat, iar 8000 rămâne deschis în Popescu → Sarcini → De făcut/Familie, fără dialog. Numai date demo și documentație; fără cod/layout, reset/seed general, migrații, repetarea suitelor/buildului, commit/push/deploy. S1 și lista populată au fost acceptate vizual de utilizator la 24 octombrie 2026 („Arată bine”).
+
+Documentație: nouă ținte locale de legături și titlul ancorei S1-demo verificate în cele două MD-uri modificate; Prettier și `git diff --check` trecute. Ancorele istorice nu au fost reverificate.
+
+## S1 — Responsabil, termen și finalizare, 24 octombrie 2026
+
+**Implementat și verificat local**, la cererea explicită a utilizatorului: Mai multe → Sarcini, pe desktop și mobil. Un singur layout nou, cu antetul comun și fotografia decorativă a agendei. S1 și lista populată au fost acceptate vizual de utilizator la 24 octombrie 2026 („Arată bine”).
+
+### Scop și acces
+
+- Titlu, responsabil dintre membrii activi cu cont, termen calendaristic opțional și bifă de finalizare/redeschidere. Responsabilul implicit este utilizatorul curent.
+- **Familie implicit** în formular, API și DB, inclusiv când formularul este deschis din filtrul Personale. Familia vede sarcina comună; autorul și responsabilul o pot finaliza/redeschide. Numai autorul o editează/șterge. Rolul limitat consultă și poate bifa numai sarcinile atribuite lui, fără creare/editare/ștergere; regula accesului Personal rămâne exclusivă autorului.
+- **Personal** este vizibil numai autorului, cu responsabilul fixat la sine. Proprietarul familiei nu primește acces suplimentar. Profilurile fără cont nu devin destinatari de autentificare sau notificări.
+- Filtre Familie / Personale și De făcut / Finalizate. Liste paginate cu 50 de rânduri, termenele apropiate primele și cele fără termen la urmă; finalizatele cele mai recente primele.
+- Editarea pornește din payloadul listei. Versiunea protejează mutațiile cu If-Match; conflictul cere reîncărcare explicită. Ștergere logică, fără restaurare în S1.
+- Fără recurențe, notificări sau proiecții în Calendar în acest pas.
+
+### Fișiere și contracte
+
+- Frontend separat în `frontend/src/modules/tasks/`; App compune pagina, MobileNavigation o include în Mai multe. Remontare la schimbarea familiei. Calendarul românesc este comun în shared și reutilizat de Cheltuieli.
+- Backend `Modules/Tasks/Http/TaskController.php`, tabela proprie `family_tasks`. Infrastructura comună oferă familiile/utilizatorii și TenantContext. Fără importuri sau acces la tabelele altor module.
+- `GET/POST /families/{family}/tasks`, `GET/PATCH/DELETE /tasks/{task}`, `PATCH /tasks/{task}/completion` cu boolean `completed`. Lista acceptă `status=open|completed`, `visibility=family|private`, `page`; returnează items, assignees și next_page. Datele sunt YYYY-MM-DD, fără oră.
+- FK compuse familie/autor/responsabil, RLS forțat pe familie, audit numai acțiuni/ID-uri, fără N+1. Garda de limite include tabela Tasks.
+
+### Verificări și pas rămas
+
+**Automat:** 10 teste API TaskTest + 3 gărzi backend, **13 teste / 199 aserțiuni trecute**, serial pe `memoria_test`. Acoperă Familia implicită, responsabilul implicit, termen opțional/sortare, Personal inclusiv față de proprietarul familiei, autor/responsabil/limited, versiuni 428/412, editare/ștergere logică, revocare/readmitere, RLS/două familii, rude fără cont, validări, 53 rânduri/paginare și număr constant de query-uri. Pint, lint PHP și inventarul celor șase rute trecute. Cele 6 teste frontend relevante (calendar și limite modulare), TypeScript/Vite, Prettier și diff check trecute. Revizuirea independentă a corectat filtrul după salvare; fără defect concret rămas în revizuire. Buildul final semnalează numai pragul Vite de 500 kB depășit cu circa 0,10 kB; fără pachete noi.
+
+**Instalare:** migrația `2026_10_23_224544_create_family_tasks_table.php` și granturile runtime sunt aplicate aditiv în `memoria_test` și `memoria`. Datele existente sunt păstrate. Fără reset/seed al bazei aplicației; rollbackul migrației nu a fost executat.
+
+**Browser, salvări exclusiv pe 8001/`memoria_test`:** creare sarcină Familie cu Mihai responsabil și termen 26 octombrie, finalizare → Finalizate, redeschidere → De făcut, editare cu eliminarea termenului; Personal fixează responsabilul la sine, salvare și ștergere confirmată; creare din Personale pornește Familie și deschide filtrul comun după salvare. Termen 23 octombrie afișează Depășit. Popescu → Ionescu păstrează Sarcini și arată lista goală, apoi revenire. Editarea folosește datele listei; reîncărcarea este rezervată conflictului. Concurența și accesul sunt verificate API; nu s-au simulat erori de rețea în UI.
+
+**Layout:** desktop 1280×900 și mobil 390×844/320×800, fără overflow orizontal. Controalele paginii și barei mobile au minimum 44 px în probe. Calendarul are lunile/zilele în română, focus și săgeți ±1/±7, Escape închide numai calendarul și readuce focusul la termen. Poziționarea folosește minimum dintre clientWidth și dreptunghiul HTML, inclusiv gutterul stabil când dialogul ascunde scrollbarul: la 390 popupul are 375 px, la 320 are 305 px cu zile de circa 43,3×44 px, fără margini tăiate. Meniul mobil afișează Sarcini selectat, Mai multe activ, iar Escape restabilește focusul. Fără erori/warninguri de consolă observate.
+
+**Aplicația reală 8000:** Sarcini cu stare goală și formular Familie/Ana/fără termen verificate, fără salvări de sarcini demo. Cheltuieli păstrează cele 8 exemple/762,80 lei și calendarul românesc după extragerea în shared. Capturi ignorate `.runtime/s1-tasks-test-{desktop,mobile,320}.png`, `s1-task-calendar-320.png`, `s1-task-form-desktop.png`. Tabul/serverul temporar sunt închise la final, viewportul resetat; Sarcini rămâne deschis în Popescu, fără dialog.
+
+**Acceptare:** S1 și lista populată acceptate vizual la 24 octombrie 2026 („Arată bine”). Fără dispozitiv fizic, recurențe/remindere, alte module, commit/push/deploy.
+
+Încheiere documentație: 71 de ținte locale de legături verificate în cele 7 MD-uri atinse de S1, Prettier și `git diff --check` trecute. Ancorele istorice ale celorlalte module nu au fost reverificate.

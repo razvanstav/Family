@@ -54,6 +54,8 @@ export function Documents({
   member,
   canCreate = member === undefined,
   navigation,
+  requestedDocument = null,
+  onDocumentOpened,
   onExpired,
 }: {
   family: Family;
@@ -61,6 +63,8 @@ export function Documents({
   member?: Member;
   canCreate?: boolean;
   navigation?: ReactNode;
+  requestedDocument?: string | null;
+  onDocumentOpened?: () => void;
   onExpired: () => void;
 }) {
   const categoryIds = member
@@ -75,6 +79,11 @@ export function Documents({
   const [filterOpen, setFilterOpen] = useState(false);
   const [upload, setUpload] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  useEffect(() => {
+    if (!requestedDocument) return;
+    setSelected(requestedDocument);
+    onDocumentOpened?.();
+  }, [requestedDocument]);
   const [notice, setNotice] = useState("");
   const endpoint = `/families/${family.id}`;
   const sequence = useRef(0);

@@ -1,6 +1,24 @@
 # Calendar
 
-Stare: C1 implementat și verificat local la 21 octombrie 2026. C3 in-app pentru evenimente manuale este implementat; verificările sunt mai jos. C2, emailul din C3 și reconcilierea extinsă C4 rămân planificate. Ordinea cerută este C1 → C3 in-app → dashboard; sursele derivate și emailul vin separat. Etapa M07 completă cere în continuare contractele de scadență, outbox generic și transportul de email.
+**SC1, 24 octombrie 2026:** [Sarcinile nefinalizate cu termen](tasks.md#sc1--sarcini-în-calendar-24-octombrie-2026) apar în Lună/Săptămână/Agendă și se deschid direct în Sarcini. Accesul personal rămâne exclusiv autorului; termenul/finalizarea/ștergerea sincronizează proiecția în aceeași tranzacție. Fără remindere noi sau schimbarea agendei Acasă. Implementat și verificat local; rezultatele și limitele sunt în fișa Sarcini.
+
+**P1a.3/3b, 24 octombrie 2026:** consumatorii externi folosesc `Contracts/Overview`, `SourceItems` și `Birthdays`; Calendar primește sursa Familiei prin `BirthdaySource extends DeadlineSource`. Implementările sunt legate în `AppServiceProvider`. Payloadurile, sursele, tranzacțiile și reminderele sunt păstrate. [Regresie și limite P1a](platform.md#p1a3--contracte-backend-și-ownership-verificat-la-24-octombrie-2026).
+
+Stare: C1/C3 in-app și CH1 existente; VC1 pentru Auto și BC1 pentru aniversări sunt implementate și verificate local la 23 octombrie 2026. Restul C2, emailul din C3 și reconcilierea extinsă C4 rămân planificate. Etapa M07 completă nu este închisă de aceste felii.
+
+**Extensie 23 octombrie — [VC1](vehicles.md#vc1--scadențe-auto-în-calendar-23-octombrie-2026):** sursa Auto folosește proiecții sincrone în tranzacție, verificare canonică prin `DeadlineSource`, detalii numai de consultare cu deschidere în Auto și livrările in-app. Offsetul de 30 de zile rămâne numai pentru Auto; BC1 are 0/1/7 zile, iar evenimentele manuale păstrează opțiunile și politica existente. Aceste felii nu închid C2 pentru Documente/alte surse sau reconcilierea C4 integrală.
+
+## BC1 — Zile de naștere, 23 octombrie 2026
+
+Implementat și verificat local, la alegerea explicită a utilizatorului după VC1. Data completă rămâne vizibilă numai conform politicii existente (persoană/administrator). În configurarea existentă a profilului, administratorul poate activa explicit ziua în Calendarul familiei; implicit este oprită pentru toate profilurile existente și noi. Se expun ziua/luna și numele, fără anul nașterii sau vârstă. Copiii fără cont pot fi subiecte, fără a deveni destinatari.
+
+Ocurențe anuale cu identitate stabilă; 29 februarie devine 28 februarie în anii nebisecți. Reminderul este personal, opțional (ziua / 1 zi / 7 zile înainte, 09:00 România), păstrat între ani și cu versiuni separate per persoană. Schimbarea unei preferințe nu anulează livrările altor membri. `birthday_version` se schimbă numai pentru zi/lună/partajare; schimbările de fotografie sau ale anului nașterii nu reprogramează reminderele. Redenumirea actualizează titlul fără retrimitere. Sursele și destinatarii sunt reverificați la citire și livrare; revocarea elimină preferințele relevante, fără reactivare la readmitere.
+
+- Intrări: `FamilyBirthdaySource` (contractul public `DeadlineSource`), `BirthdayCalendar`, extensia `SourceCalendarItems::syncMany` cu citiri în lot, `BirthdayReminderController` și `PATCH /calendar-items/{event}/birthday-reminder`. Preferințele sunt numai ale membrului autentificat, inclusiv cu rol limitat; nu modifică data/sursa. Profilul păstrează drepturile administrative existente. Workerul existent pregătește anul curent și următorul, inclusiv reminderele de la sfârșitul anului pentru începutul anului următor.
+- Migrația `2026_10_23_175147_add_family_birthdays.php` adaugă opțiunea/versionarea în profil, preferințe cu FK compuse și RLS forțat, offseturi per destinatar. Aplicată aditiv în ambele baze; rollback/reaplicare probate numai în test, cu granturi runtime. Modificările profilului și proiecției au tranzacție explicită.
+- **Verificat:** 9 teste noi / 130 aserțiuni; 44 teste / 461 aserțiuni Calendar/profil incluzând cele noi; VC1 reverificat în rularea de 20 teste / 284 aserțiuni. Numai `memoria_test`, serial. Build TypeScript/Vite, Prettier, Pint și diff check trecute. Browser Ana/Popescu, numai 8001/`memoria_test`: activare în profil, Calendar, salvare/redeschidere reminder, desktop și 390×844, fără overflow sau erori/warninguri în consolă. Capturi `.runtime/bc1-birthday-{desktop,mobile}.jpg`.
+- Ultima ajustare elimină sincronizarea dublă a aceluiași an din Acasă și salvarea preferințelor; cele 9 teste / 130 aserțiuni au fost reluate și trecute. Workerul local a fost repornit cu codul final, după o execuție fără erori pe baza aplicației.
+- Limite: fără probă de livrare nouă la ora reală 09:00, dispozitiv fizic sau email/push. Livrarea și recurența sunt probate cu ceas controlat în teste. Datele aplicației și opțiunile de partajare existente sunt păstrate.
 
 ## CH1 — Calendar mobil, 22 octombrie 2026
 

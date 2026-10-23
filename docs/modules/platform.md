@@ -1,6 +1,6 @@
 # Platformă
 
-Stare: izolare pe familie, stocare privată locală, scanare ClamAV și audit minimal există. **P3 este implementat și verificat local pentru K4b**, la 22 octombrie 2026: outbox tranzacțional, livrare per handler și primul consumator Kitchen. Restul M04 rămâne separat.
+Stare: izolare pe familie, stocare privată locală, scanare ClamAV și audit minimal există. **P3 este implementat și verificat local pentru K4b**, la 22 octombrie 2026. **P1a este implementat și verificat local la 24 octombrie:** compoziție UI, contracte backend și gărzi de arhitectură pentru cuplările existente. Registrul de subiecți, activarea modulelor și restul P1/P4 nu sunt închise de P1a.
 
 ## Fișiere existente
 
@@ -11,6 +11,8 @@ Stare: izolare pe familie, stocare privată locală, scanare ClamAV și audit mi
 - RLS, FK, audit și rollback: `backend/tests/Feature/DocumentSecurityTest.php`.
 
 ## Pași
+
+- [x] **P1a — Eliminarea cuplărilor existente (24 octombrie 2026).** Cerere explicită: păstrarea funcționalității, teste și actualizare MD după fiecare pas. Inventar rezolvat: UI Amintiri → `MealViewer`/`mealTypes`, Familie → `Documents`; backend Home/Auto/profil → implementări concrete Calendar/Documente/Amintiri; Familia → granturi Documente; Calendar → sursa concretă a aniversărilor. P1a.1–P1a.4 și subpasul P1a.3b sunt verificate mai jos. Integrările funcționale rămân prin compoziție/contracte publice; fără redesign, migrații, date noi în baza aplicației sau dependențe de pachete.
 
 - [ ] **P1 — Limite și contracte.** Definește explicit proprietarul fiecărui tabel/resursă, contractele publice și registrul minim de subiecți per familie. User, membru al familiei și subiect sunt identități distincte. Subiectul nu conține datele de domeniu și nu acordă acces. Verifică FK compuse, RLS cu rolul runtime și înregistrarea explicită a modulelor.
 - [ ] **P2 — Media și execuție în fundal.** Mută scanarea în worker cu stări explicite, rezervări atomice de cotă, retry și cleanup după crash. Media se revendică atomic de o singură resursă; downloadul îi folosește politica actuală. Adaugă storage privat înlocuibil și verifică DB+bytes, fără a expune obiecte publice. Închide fiecare subflux înainte de următorul.
@@ -40,6 +42,35 @@ Stare: izolare pe familie, stocare privată locală, scanare ClamAV și audit mi
 - Două procese PHP reale, pornite pe `memoria_test` după commitul sursei, livrează aceeași înregistrare: un receipt confirmat, o încercare reușită și o referință. Nu s-a provocat un kill OS în mijlocul tranzacției sau o cădere a serverului PostgreSQL; rollbackul dintre efect și receipt a fost provocat prin excepție controlată. Aceste limite nu sunt prezentate drept teste de crash fizic.
 - Regresie Kitchen + FamilyMembership + FamilyInvitation + CalendarReminder: **95 teste / 1.242 aserțiuni**, trecute pe `memoria_test`. Cele 15 teste K4b au fost reluate cu succes după legarea cititorului la contractul public `Activity`. Pint, sintaxa scripturilor PowerShell, rutele/ajutorul CLI, legăturile documentației și `git diff --check` au trecut.
 - Migrația a fost aplicată pe `memoria_test` și aditiv pe `memoria`, cu granturile runtime. Reconstruirea locală Popescu a găsit 0 surse; livrarea unică a raportat 0 livrate / 0 eșuate. Workerul local outbox pornește ascuns prin scriptul existent. Nu au fost create/resetate identități sau resurse demo în baza aplicației.
+
+## P1a — Eliminarea cuplărilor, 24 octombrie 2026
+
+### P1a.1 — Amintiri UI, verificat la 24 octombrie 2026
+
+`Memories` primește `renderMeal` și `mealTypeLabels`; `App.tsx` compune `MealViewer` și dicționarul din Bucătărie. Cronologia păstrează aceleași etichete, modal, cheie pe masă, callbackuri de închidere/acces și context familie/utilizator. Amintiri nu mai importă Bucătărie. Testele AST verifică importuri statice, de tip, reexporturi și importuri dinamice; gardă inițială pentru Amintiri. **23 teste frontend și build TypeScript/Vite trecute**. Proba comună în browser este consemnată în P1a.4; fără schimbări de layout sau API.
+
+### P1a.2 — Familie UI, verificat la 24 octombrie 2026
+
+`MemberProfile` publică tipul `ProfileDocumentsSlot`; `FamilyPage` transmite funcția `renderDocuments`, iar App compune componenta Documente. Sunt păstrate membrul subiect, dreptul `can_write`, deschiderea din căutare, callbackurile și cheia utilizator/familie/membru. Niciun modul frontend nu mai importă alt modul, iar `shared` nu importă module sau aplicația. Garda AST verifică întregul `src/modules` și `src/shared`, inclusiv importurile CSS. **23 teste frontend și build TypeScript/Vite trecute**. Proba comună în browser este consemnată în P1a.4; fără modificări CSS/API.
+
+### P1a.3 — Contracte backend și ownership, verificat la 24 octombrie 2026
+
+- Contracte noi în modulele proprietare: Documente `DocumentLinks`/`DocumentSummaries`, Amintiri `MomentSummaries`, Calendar `Overview`/`SourceItems`/`Birthdays`. Home, Auto și profilul Familiei consumă aceste interfețe; `AppServiceProvider` leagă implementările. Query-urile pentru asocieri rămân proiecții autorizate și filtrate pe familie, fără N+1 ori cereri HTTP noi. Tranzacțiile, JSON-ul și rutele existente sunt păstrate.
+- `FamilyController` emite evenimentul existent `MembershipRevoked`; composition root îl transmite și către Documente, care elimină propriile granturi. Fără SQL direct Familie → tabele Documente. Curățarea este sincronă în aceeași tranzacție tenant, împreună cu celelalte module.
+- Teste noi pentru readmitere fără restaurarea granturilor, rollback atomic la eșecul unui consumator și compunerea Home exclusiv cu substituenți ai contractelor. Garda backend scanează tokenuri PHP pentru dependențe private și acces la tabelele altui modul, inclusiv SQL literal; familiile/utilizatorii/media rămân infrastructură comună.
+- **85 teste backend: 83 trecute, 883 aserțiuni, 2 omise explicit** pentru integrarea ClamAV reală neactivată. Rulare serială numai pe `memoria_test`: arhitectură/contracte, Home, Auto/VC1, BC1, profil/poveste, documente și roluri. Pint și diff check trecute. Un test Home avea așteptarea veche de 3 documente pentru adult limitat; actualizat la cele 4 surse permise de regula Casă/Amintiri deja existentă în seeder și politica Documente, cu verificarea titlurilor. Nicio schimbare a politicii de produs. Probele UI și verificarea finală MD urmează în P1a.4.
+
+### P1a.3b — Sursa aniversărilor, verificat la 24 octombrie 2026
+
+La verificarea finală, și dependența Calendar → implementarea sursei Familiei a fost inversată: `BirthdaySource extends DeadlineSource` expune ocurențele canonice, `FamilyBirthdaySource` îl implementează, iar `BirthdayCalendar` primește numai interfața. Legătura este în composition root; fără modificarea datelor, calculelor sau accesului. **13 teste / 155 aserțiuni trecute**, serial pe `memoria_test` (BC1, arhitectură, contracte); Pint trecut. Restul regresiei P1a.3 rămâne valabil, fără schimbări în celelalte fluxuri.
+
+### P1a.4 — Încheiere și limite, 24 octombrie 2026
+
+- Browser desktop, aplicația locală pe 8000, Ana/Popescu: Cronologie afișează eticheta Prânz; masă → rețeta folosită → revenire la masă → revenire la Cronologie cu focus restaurat. Votul/comentariul existent rămân vizibile; nu au fost salvate modificări. Profil → Documente afișează numai Personale/Sănătate și detaliul personal cu accesul și acțiunile existente. Căutare comună pornită din Amintiri → Dosarul meu personal deschide direct profilul și detaliul canonic. Capturi ignorate `.runtime/p1a-meal-desktop.png` și `.runtime/p1a-document-desktop.png`.
+- Eliminat și prop-ul `userId` devenit inutil din `MemberProfile` și apelant. Buildul final TypeScript/Vite și cele **23 teste frontend** au trecut din nou după curățare; Prettier trecut. Fără CSS, layouturi ori requesturi noi. Documentația a fost actualizată după fiecare pas, cu contractele din fișele afectate, STATE, ROADMAP, index și regula permanentă AGENTS.
+- Gărzi: `frontend/tests/moduleBoundaries.test.mjs` rulează prin `npm test`, cu rezolvare TypeScript, importuri/reexporturi/dependențe de tip/dinamice literale și importuri CSS; `backend/tests/Unit/ModuleBoundariesTest.php` rulează în suita PHPUnit și verifică modulele/platforma, contractele și persistența literală. Compoziția din App/Providers/rute/comenzi și infrastructura comună rămân permise. Nu sunt un analizor exhaustiv pentru cod ori SQL construit dinamic; convențiile de ownership trebuie păstrate și pentru modulele viitoare.
+- Limite: probe UI desktop, fără dispozitiv fizic sau repetarea layouturilor mobile nemodificate; nu au fost salvate voturi, documente, permisiuni ori profiluri în aplicație. Două teste ClamAV real omise explicit, fără modificări în scanare/media. Testele DB au folosit numai `memoria_test`, serial. Fără migrații, schimbări de schemă, pachete noi, commit/push/deploy.
+- Verificarea finală: **81 legături locale și ancore valide în 11 fișe/indexuri modificate**, Prettier și `git diff --check` trecute. HEAD observat `4e7d55c`, ramura `codex/documente-design`; schimbările anterioare VC1/BC1/CD1 sunt păstrate. Profilul Anei → Documente este lăsat deschis, fără dialog.
 
 ## Referințe și limite
 

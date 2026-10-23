@@ -34,6 +34,7 @@ export type Profile = {
   name: string;
   role: string;
   birth_date: string | null;
+  birthday_shared: boolean;
   age: number | null;
   parents: { id: string; name: string }[];
   version: number;

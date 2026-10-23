@@ -4,10 +4,15 @@ import {
   Heart,
   House,
   CalendarDays,
+  ListTodo,
   BookHeart,
   Users,
   UtensilsCrossed,
   CarFront,
+  ChevronRight,
+  MoreHorizontal,
+  Search,
+  Wallet,
 } from "lucide-react";
 import {
   api,
@@ -15,6 +20,9 @@ import {
   onSessionInvalidated,
   type Session,
   type CalendarRequest,
+  type VehicleRequest,
+  type DocumentRequest,
+  familyDocumentCategories,
 } from "../shared/api";
 import { Documents } from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
@@ -25,20 +33,31 @@ import { AuthEntry, type AuthMode } from "./AuthEntry";
 import { UserAvatar } from "../shared/UserAvatar";
 import type { Profile } from "../modules/families/profileData";
 import { SectionTabs } from "../shared/SectionTabs";
+import { Modal } from "../shared/Modal";
 import { observeSessionLifecycle } from "./sessionLifecycle";
 import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
 import { Home } from "../modules/home/Home";
 import { Kitchen } from "../modules/kitchen/Kitchen";
+import { MealViewer } from "../modules/kitchen/MealViewer";
+import { mealTypes } from "../modules/kitchen/mealTypes";
 import { Memories } from "../modules/memory/Memories";
 import { Vehicles } from "../modules/vehicles/Vehicles";
+import { Expenses } from "../modules/expenses/Expenses";
+import { Tasks } from "../modules/tasks/Tasks";
+import {
+  FamilySearch,
+  type SearchResult,
+} from "../modules/search/FamilySearch";
 
 const pageLabels = {
   home: "Acasă",
   family: "Familia mea",
   kitchen: "Bucătărie",
   memory: "Amintiri",
+  expenses: "Cheltuieli",
   calendar: "Calendar",
+  tasks: "Sarcini",
   vehicles: "Auto",
 };
 
@@ -51,6 +70,7 @@ export default function App() {
   const [familySection, setFamilySection] = useState<"members" | "documents">(
     "members",
   );
+  const [desktopMore, setDesktopMore] = useState(false);
   const [account, setAccount] = useState(false);
   const [ownProfile, setOwnProfile] = useState<{
     familyId: string;
@@ -61,9 +81,18 @@ export default function App() {
   const [contentRevision, setContentRevision] = useState(0);
   const [memoryTarget, setMemoryTarget] = useState<string | null>(null);
   const [calendarRevision, setCalendarRevision] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [recipeTarget, setRecipeTarget] = useState<string | null>(null);
+  const [documentTarget, setDocumentTarget] = useState<DocumentRequest | null>(
+    null,
+  );
+  const [vehicleTarget, setVehicleTarget] = useState<VehicleRequest | null>(
+    null,
+  );
   const [calendarTarget, setCalendarTarget] = useState<CalendarRequest | null>(
     null,
   );
+  const [taskTarget, setTaskTarget] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionNotice, setSessionNotice] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
@@ -84,6 +113,14 @@ export default function App() {
     return () => window.removeEventListener("hashchange", changed);
   }, []);
   useEffect(() => {
+    const mobile = window.matchMedia("(max-width: 700px)");
+    const close = () => {
+      if (mobile.matches) setDesktopMore(false);
+    };
+    mobile.addEventListener("change", close);
+    return () => mobile.removeEventListener("change", close);
+  }, []);
+  useEffect(() => {
     document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? (authMode === "register" ? "Creează cont" : "Autentificare") : page === "family" && familySection === "documents" ? "Documente · Familia mea" : pageLabels[page]} · Memoria Familiei`;
   }, [
     page,
@@ -94,6 +131,7 @@ export default function App() {
     authMode,
   ]);
   function acceptSession(data: Session) {
+    setDesktopMore(false);
     sessionRevision.current++;
     knownActor.current = data.user?.id ?? null;
     setSession(data);
@@ -102,6 +140,11 @@ export default function App() {
     setPage("home");
     setFamilySection("members");
     setCalendarTarget(null);
+    setVehicleTarget(null);
+    setTaskTarget(null);
+    setRecipeTarget(null);
+    setDocumentTarget(null);
+    setSearchOpen(false);
     setMemoryTarget(null);
     setAccount(false);
     setError("");
@@ -262,6 +305,7 @@ export default function App() {
         }}
       />
     );
+  const authenticatedUser = session.user;
   async function logout() {
     if (logoutBusy) return;
     setLogoutBusy(true);
@@ -349,14 +393,14 @@ export default function App() {
             Amintiri
           </button>
           <button
-            className={page === "calendar" ? "active" : ""}
-            aria-current={page === "calendar" ? "page" : undefined}
-            onClick={() => setPage("calendar")}
+            className={page === "expenses" ? "active" : ""}
+            aria-current={page === "expenses" ? "page" : undefined}
+            onClick={() => setPage("expenses")}
           >
-            <span className="nav-symbol nav-symbol-calendar" aria-hidden="true">
-              <CalendarDays size={21} />
+            <span className="nav-symbol nav-symbol-expenses" aria-hidden="true">
+              <Wallet size={21} />
             </span>
-            Calendar
+            Cheltuieli
           </button>
           <button
             className={page === "vehicles" ? "active" : ""}
@@ -367,6 +411,24 @@ export default function App() {
               <CarFront size={21} />
             </span>
             Auto
+          </button>
+          <button
+            className={
+              desktopMore || page === "calendar" || page === "tasks"
+                ? "active"
+                : ""
+            }
+            aria-current={
+              page === "calendar" || page === "tasks" ? "page" : undefined
+            }
+            aria-haspopup="dialog"
+            aria-expanded={desktopMore}
+            onClick={() => setDesktopMore(true)}
+          >
+            <span className="nav-symbol" aria-hidden="true">
+              <MoreHorizontal size={21} />
+            </span>
+            Mai multe
           </button>
         </nav>
         <div className="sidebar-bottom">
@@ -411,6 +473,11 @@ export default function App() {
                 onChange={(e) => {
                   setFamilyId(e.target.value);
                   setCalendarTarget(null);
+                  setVehicleTarget(null);
+                  setTaskTarget(null);
+                  setRecipeTarget(null);
+                  setDocumentTarget(null);
+                  setSearchOpen(false);
                   setMemoryTarget(null);
                 }}
               >
@@ -422,6 +489,15 @@ export default function App() {
               </select>
               <ChevronDown size={14} />
             </label>
+            {family && (
+              <button
+                className="icon-button"
+                aria-label="Caută în familie"
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search size={21} />
+              </button>
+            )}
             {family && (
               <CalendarNotifications
                 key={`${session.user.id}:${family.id}`}
@@ -479,6 +555,23 @@ export default function App() {
                 family={family}
                 userId={session.user.id}
                 navigation={familyNavigation}
+                requestedDocument={documentTarget?.id}
+                onDocumentOpened={() => setDocumentTarget(null)}
+                onExpired={() => void refresh()}
+              />
+            ) : page === "expenses" ? (
+              <Expenses
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                onExpired={() => void refresh()}
+              />
+            ) : page === "tasks" ? (
+              <Tasks
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                requestedTask={taskTarget}
+                onTaskOpened={() => setTaskTarget(null)}
+                onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
               />
             ) : page === "kitchen" ? (
@@ -486,6 +579,8 @@ export default function App() {
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 userId={session.user.id}
+                requestedRecipe={recipeTarget}
+                onRecipeOpened={() => setRecipeTarget(null)}
                 onExpired={() => void refresh()}
               />
             ) : page === "memory" ? (
@@ -496,11 +591,26 @@ export default function App() {
                 requestedMoment={memoryTarget}
                 onMomentOpened={() => setMemoryTarget(null)}
                 onExpired={() => void refresh()}
+                mealTypeLabels={mealTypes}
+                renderMeal={({ mealId, onClose, onUnavailable }) => (
+                  <MealViewer
+                    key={mealId}
+                    familyId={family.id}
+                    actorId={authenticatedUser.id}
+                    mealId={mealId}
+                    onClose={onClose}
+                    onUnavailable={onUnavailable}
+                  />
+                )}
               />
             ) : page === "vehicles" ? (
               <Vehicles
                 key={`${session.user.id}:${family.id}`}
                 family={family}
+                userId={session.user.id}
+                requestedEntry={vehicleTarget}
+                onEntryOpened={() => setVehicleTarget(null)}
+                onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
               />
             ) : page === "calendar" ? (
@@ -511,6 +621,14 @@ export default function App() {
                 requestedEvent={calendarTarget}
                 onEventOpened={() => setCalendarTarget(null)}
                 onChanged={() => setCalendarRevision((value) => value + 1)}
+                onVehicle={(target) => {
+                  setVehicleTarget(target);
+                  setPage("vehicles");
+                }}
+                onTask={(id) => {
+                  setTaskTarget(id);
+                  setPage("tasks");
+                }}
                 onExpired={() => void refresh()}
               />
             ) : (
@@ -520,6 +638,16 @@ export default function App() {
                 onExpired={() => void refresh()}
                 userId={session.user.id}
                 navigation={familyNavigation}
+                requestedDocument={documentTarget}
+                onDocumentOpened={() => setDocumentTarget(null)}
+                renderDocuments={(props) => (
+                  <Documents
+                    key={`${authenticatedUser.id}:${family.id}:${props.member.id}`}
+                    family={family}
+                    userId={authenticatedUser.id}
+                    {...props}
+                  />
+                )}
                 onMemory={(id) => {
                   setMemoryTarget(id);
                   setPage("memory");
@@ -549,6 +677,34 @@ export default function App() {
         onPage={setPage}
         onAccount={() => setAccount(true)}
       />
+      {desktopMore && (
+        <Modal title="Mai multe" onClose={() => setDesktopMore(false)}>
+          <nav className="more-menu" aria-label="Mai multe secțiuni">
+            <button
+              aria-current={page === "calendar" ? "page" : undefined}
+              onClick={() => {
+                setDesktopMore(false);
+                setPage("calendar");
+              }}
+            >
+              <CalendarDays size={22} />
+              <span>Calendar</span>
+              <ChevronRight size={18} />
+            </button>
+            <button
+              aria-current={page === "tasks" ? "page" : undefined}
+              onClick={() => {
+                setDesktopMore(false);
+                setPage("tasks");
+              }}
+            >
+              <ListTodo size={22} />
+              <span>Sarcini</span>
+              <ChevronRight size={18} />
+            </button>
+          </nav>
+        </Modal>
+      )}
       {account && (
         <AccountDialog
           key={`${session.user.id}:${family?.id ?? "none"}`}
@@ -581,6 +737,34 @@ export default function App() {
             );
             setContentRevision((value) => value + 1);
             sessionChannel.current?.postMessage("changed");
+          }}
+        />
+      )}
+      {searchOpen && family && (
+        <FamilySearch
+          key={`${session.user.id}:${family.id}`}
+          familyId={family.id}
+          onClose={() => setSearchOpen(false)}
+          onExpired={() => void refresh()}
+          onOpen={(result: SearchResult) => {
+            setSearchOpen(false);
+            if (result.type === "moment") {
+              setMemoryTarget(result.id);
+              setPage("memory");
+            } else if (result.type === "recipe") {
+              setRecipeTarget(result.id);
+              setPage("kitchen");
+            } else {
+              const common =
+                familyDocumentCategories.includes(result.category) ||
+                !result.member_id;
+              setDocumentTarget({
+                id: result.id,
+                memberId: common ? null : result.member_id,
+              });
+              setFamilySection(common ? "documents" : "members");
+              setPage("family");
+            }
           }}
         />
       )}

@@ -1,26 +1,35 @@
 # Interfață comună
 
-Stare curentă: **DD1 — Date demo globale**, adăugate local la cererea utilizatorului. FW1 — Familia mea caldă și PB1 — Fotografii în antete rămân implementate și verificate local; acceptarea vizuală așteaptă feedback. H4 a fost acceptat explicit („Așa da, mult mai cald”) la 23 octombrie 2026. AR1, NM1, A1b și UT3 rămân existente.
+## S1 — Sarcini în Mai multe, 24 octombrie 2026
+
+**Implementat și verificat local**, la cererea utilizatorului. Mai multe include Calendar și Sarcini pe desktop, iar pe mobil Calendar, Sarcini, Amintiri, Auto, Contul meu. Ordinea filelor principale rămâne CH2. App compune noua pagină, cu selecție pe Sarcini în meniu și pe Mai multe în navigație. Un singur layout nou, cu PageBackdrop și calendar românesc comun în shared; [scopul, accesul și verificările S1](tasks.md). Desktop 1280×900 și mobil 390/320 fără overflow, bife/filtre și Escape/focus verificate; build și 6 teste frontend trecute. Acceptarea vizuală așteaptă feedback.
+
+## CH2 — Cheltuieli principal și Calendar în Mai multe, 24 octombrie 2026
+
+**Implementat și verificat local**, la cererea utilizatorului. Desktop: **Acasă → Familia mea → Bucătărie → Amintiri → Cheltuieli → Auto → Mai multe**, cu Calendar în Mai multe și Cont separat. Mobil: **Acasă → Familie → Bucătărie → Cheltuieli → Mai multe**; în Mai multe sunt Calendar, Amintiri, Auto și Contul meu. Acest pas înlocuiește ordinea NM1 și păstrează Acasă implicită. Familia mea are numai Membri/Documente; Cheltuieli are titlu propriu și Familie/Personale. Datele și accesul nu se schimbă.
+
+App compune pagina principală și meniul desktop, MobileNavigation compune bara și meniul mobil; Modal și more-menu sunt comune. Selecția include aria-current și Mai multe activ când Calendar este deschis. Escape/focus și închiderea foii când dispare controlul la schimbarea breakpointului sunt verificate. TypeScript/Vite, cele 3 gărzi frontend și browser desktop/390/320 trecute, fără overflow ori erori de consolă. [Regulile și verificările CH2](expenses.md#ch2--navigație-principală-și-etichete-24-octombrie-2026). Fără redesign al celorlalte pagini, backend sau date noi.
+
+Stare anterioară CH2: **DD1 — Date demo globale**, adăugate local la cererea utilizatorului. FW1 — Familia mea caldă și PB1 — Fotografii în antete rămân implementate și verificate local; acceptarea vizuală așteaptă feedback. H4 a fost acceptat explicit („Așa da, mult mai cald”) la 23 octombrie 2026. AR1, NM1, A1b și UT3 rămân existente.
 
 ## DD1 — Date demo globale, 23 octombrie 2026
 
 Cerere explicită: câte minimum 3–4 exemple în toate zonele, inclusiv istoric, pentru previzualizarea rapidă a aplicației. Populată numai Familia Popescu, vizibilă în sesiunea Mihai. Fără resetarea bazei, modificarea datelor existente sau schimbări de cod/layout. Familia Ionescu rămâne neatinsă. Datele noi au marcajul demo; fotografiile sunt exemple locale existente, nu fotografii personale noi.
 
-| Zonă | Date după completare |
-| --- | --- |
-| Familia mea | 4 membri: Ana, Mihai și copiii fără cont Luca · demo / Emma · demo; ambii adulți sunt părinți desemnați |
-| Profiluri | 80 însemnări noi: câte 4 vizite, medicamente, cărți, cultură și activități pentru fiecare profil; însemnările existente păstrate |
-| Documente | 40 PDF-uri noi: 8 Casă, 4 Amintiri, 14 Personale, 14 Sănătate; fiecare profil are minimum 3 în fiecare categorie personală |
-| Bucătărie | 4 rețete cu fotografii, 12 mese (4 trecute, 4 azi, 4 viitoare), 16 voturi/comentarii demo |
-| Amintiri | 5 momente cu fotografii în total (albumul existent + 4 noi), 4 note noi; date pe ultimele trei luni |
-| Calendar | 9 evenimente vizibile pentru Mihai (4 istorice noi, 5 viitoare în total), 4 remindere programate pentru Mihai; reminderele istorice sunt expirate |
-| Auto | 4 mașini în total: mașina existentă + 3 demo; câte 4 revizii/costuri istorice și 4 programări pe mașină, 32 înregistrări; 4 documente auto comune asociate fiecărei mașini, 16 legături |
+| Zonă        | Date după completare                                                                                                                                                                    |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Familia mea | 4 membri: Ana, Mihai și copiii fără cont Luca · demo / Emma · demo; ambii adulți sunt părinți desemnați                                                                                 |
+| Profiluri   | 80 însemnări noi: câte 4 vizite, medicamente, cărți, cultură și activități pentru fiecare profil; însemnările existente păstrate                                                        |
+| Documente   | 40 PDF-uri noi: 8 Casă, 4 Amintiri, 14 Personale, 14 Sănătate; fiecare profil are minimum 3 în fiecare categorie personală                                                              |
+| Bucătărie   | 4 rețete cu fotografii, 12 mese (4 trecute, 4 azi, 4 viitoare), 16 voturi/comentarii demo                                                                                               |
+| Amintiri    | 5 momente cu fotografii în total (albumul existent + 4 noi), 4 note noi; date pe ultimele trei luni                                                                                     |
+| Calendar    | 9 evenimente vizibile pentru Mihai (4 istorice noi, 5 viitoare în total), 4 remindere programate pentru Mihai; reminderele istorice sunt expirate                                       |
+| Auto        | 4 mașini în total: mașina existentă + 3 demo; câte 4 revizii/costuri istorice și 4 programări pe mașină, 32 înregistrări; 4 documente auto comune asociate fiecărei mașini, 16 legături |
 
 - Copiii nu au utilizatori, emailuri sau autentificări fictive. Documentele personale rămân private și legate de profil prin `subject_membership_id`; Casă păstrează accesul adulților, Amintiri accesul familiei. Asocierea Auto folosește autorizarea documentelor existente. Mașina utilizatorului își păstrează numele, datele și fotografia; primește numai înregistrări demo separate.
 - Patru utilitare locale ignorate în `.runtime/populate-{family,kitchen,memory-calendar,vehicles}-demo.php`, cu verificări pentru mediul local, familia exactă și identitatea actorului. Serviciile/controlerele existente sunt refolosite pentru operațiile de domeniu; PDF-urile și unele fotografii folosesc modelul fixture-urilor locale de încredere. Nu s-a rulat seederul general.
 - Verificate: sintaxa PHP și formatarea utilitarelor, contoarele și relațiile salvate, fișierele media și starea ready; a doua rulare nu adaugă duplicate. Proiecția amintirilor include sursele noi. Comanda de livrare outbox pentru familia Popescu a raportat 0 eșecuri și 0 elemente rămase în lot. Nu sunt probe noi de livrare efectivă a reminderelor.
 - Browser Mihai/Popescu: Auto afișează cele 4 opțiuni de mașină, 3 programări și 3 costuri istorice în sumar; Acasă afișează 5 evenimente apropiate, 4 remindere programate, albumul cu fotografie și noile amintiri. Aplicația rămâne pe Acasă. Fără build sau suite repetate, fiind numai date locale; verificările FW1/PB1 rămân valabile.
-
 
 ## PB1 — Fotografii în antete, 23 octombrie 2026
 
@@ -72,12 +81,12 @@ Cerere explicită: câte minimum 3–4 exemple în toate zonele, inclusiv istori
 
 Adăugate ulterior, la cererea explicită a utilizatorului, prin formularele Calendar din aplicația locală. Autor: Mihai Popescu, familia Popescu. Titlurile au sufixul `· demo`, iar notițele identifică scopul de previzualizare. Nu recrea aceste evenimente la reluare.
 
-| Eveniment | Data și ora României | Acces | Reminder pentru Mihai |
-| --- | --- | --- | --- |
-| Cumpărături pentru weekend · demo | 23 octombrie 2026, toată ziua | Familia mea | Fără |
-| Plimbare în parc · demo | 24 octombrie 2026, 11:00 | Familia mea | 24 octombrie, 10:00 |
-| Prânz în familie · demo | 25 octombrie 2026, toată ziua | Familia mea | 24 octombrie, 09:00 |
-| Programare la service · demo | 26 octombrie 2026, 10:00 | Doar eu | 25 octombrie, 10:00 |
+| Eveniment                         | Data și ora României          | Acces       | Reminder pentru Mihai |
+| --------------------------------- | ----------------------------- | ----------- | --------------------- |
+| Cumpărături pentru weekend · demo | 23 octombrie 2026, toată ziua | Familia mea | Fără                  |
+| Plimbare în parc · demo           | 24 octombrie 2026, 11:00      | Familia mea | 24 octombrie, 10:00   |
+| Prânz în familie · demo           | 25 octombrie 2026, toată ziua | Familia mea | 24 octombrie, 09:00   |
+| Programare la service · demo      | 26 octombrie 2026, 10:00      | Doar eu     | 25 octombrie, 10:00   |
 
 - Confirmate pe Acasă: 4 evenimente, 3 remindere programate și marcaje calendar pe 23–26 octombrie. Reminderele au numai Mihai selectat; Ana nu primește remindere noi. Programarea la service este un eveniment manual, fără integrare nouă cu Auto.
 - Layoutul populat verificat desktop 1280 × 1100 și mobil 390 × 844; capturi ignorate `.runtime/h3-home-demo-desktop.png`, `.runtime/h3-home-demo-mobile.png`. Viewportul temporar este resetat la încheiere. Amintirile rămân goale în această sesiune.
@@ -151,15 +160,15 @@ Utilizatorul a cerut adaptarea produsului existent, incremental. Păstrăm palet
 
 **Ritm explicit:** un singur layout, apoi feedback înainte de pasul următor. UT1 este ajustarea comună a filelor cerută explicit în toate secțiunile, fără redesenarea conținutului fiecăreia. Preferința de verificări restrânse, fără probe vizuale, se păstrează; acestea nu sunt declarate trecute.
 
-| Pagină                              | Adaptare                                                                                                                                                                        | Stare                                                                                                                                                                                           |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Acasă — H3                          | Evenimente/remindere sus, acces rapid compact, amintiri dedesubt; calendar lateral desktop. Fără documente pe Acasă. | Implementat și verificat local; așteaptă feedback vizual. Vezi H3. |
-| Bucătărie — KH1                     | Rețete cu fotografii în rând derulabil pe mobil, căutare în antet, listă completă cu filtre și rânduri compacte pentru mesele zilei; versiuni și voturi existente.              | Implementat, build/probe vizuale locale trecute. Vezi [fișa Bucătărie](kitchen.md#kh1--layout-bucătărie-22-octombrie-2026).                                                                     |
-| Amintiri — MH1                      | Fotografii pe lățimea cardului, note compacte, căutare în antet și panou pentru acces/arhivă; momente/note și cronologia rămân funcționale.                                     | Implementat, build și verificare mobilă scurtă trecute. Vezi [Amintiri](memory.md#mh1--layout-mobil-amintiri-22-octombrie-2026).                                                                |
-| Familia mea — FD2, pas curent / FP1 | Dosarul comun conține doar documentele partajate familiei; Documente este filă în profilul persoanei. Data/părinții sunt separate de datele private și de rolul familiei.       | FD2: build/Pint și 1 test API punctual trecute, fără probe vizuale; vezi [Familie FD2](families.md#fd2--dosarul-comun-și-documentele-din-profil-23-octombrie-2026). Probele FP1 rămân istorice. |
-| Calendar — CH1                      | Lună/Săptămână/Agendă, zile cu puncte după acces, carduri compacte și agendă cu ore; date din API-ul existent.                                                                  | Implementat; build și verificare mobilă inclusiv cu șase evenimente demo trecute; vezi [Calendar](calendar.md#ch1--calendar-mobil-22-octombrie-2026).                                           |
-| Auto — V1a                          | Profil, patru file, scadențe și istoric/costuri după referința Mașini. | Implementat; probe și limite în [Vehicule](vehicles.md#v1a--ecranul-auto-23-octombrie-2026). |
-| Animale                             | Structura profilului din referință se folosește când modulul AN există. | Modul planificat. |
+| Pagină                              | Adaptare                                                                                                                                                                  | Stare                                                                                                                                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Acasă — H3                          | Evenimente/remindere sus, acces rapid compact, amintiri dedesubt; calendar lateral desktop. Fără documente pe Acasă.                                                      | Implementat și verificat local; așteaptă feedback vizual. Vezi H3.                                                                                                                              |
+| Bucătărie — KH1                     | Rețete cu fotografii în rând derulabil pe mobil, căutare în antet, listă completă cu filtre și rânduri compacte pentru mesele zilei; versiuni și voturi existente.        | Implementat, build/probe vizuale locale trecute. Vezi [fișa Bucătărie](kitchen.md#kh1--layout-bucătărie-22-octombrie-2026).                                                                     |
+| Amintiri — MH1                      | Fotografii pe lățimea cardului, note compacte, căutare în antet și panou pentru acces/arhivă; momente/note și cronologia rămân funcționale.                               | Implementat, build și verificare mobilă scurtă trecute. Vezi [Amintiri](memory.md#mh1--layout-mobil-amintiri-22-octombrie-2026).                                                                |
+| Familia mea — FD2, pas curent / FP1 | Dosarul comun conține doar documentele partajate familiei; Documente este filă în profilul persoanei. Data/părinții sunt separate de datele private și de rolul familiei. | FD2: build/Pint și 1 test API punctual trecute, fără probe vizuale; vezi [Familie FD2](families.md#fd2--dosarul-comun-și-documentele-din-profil-23-octombrie-2026). Probele FP1 rămân istorice. |
+| Calendar — CH1                      | Lună/Săptămână/Agendă, zile cu puncte după acces, carduri compacte și agendă cu ore; date din API-ul existent.                                                            | Implementat; build și verificare mobilă inclusiv cu șase evenimente demo trecute; vezi [Calendar](calendar.md#ch1--calendar-mobil-22-octombrie-2026).                                           |
+| Auto — V1a                          | Profil, patru file, scadențe și istoric/costuri după referința Mașini.                                                                                                    | Implementat; probe și limite în [Vehicule](vehicles.md#v1a--ecranul-auto-23-octombrie-2026).                                                                                                    |
+| Animale                             | Structura profilului din referință se folosește când modulul AN există.                                                                                                   | Modul planificat.                                                                                                                                                                               |
 
 ### H2 — Contractul Acasă
 

@@ -41,6 +41,9 @@ export type VehicleEntry = {
   notes: string | null;
   version: number;
   archived_at: string | null;
+  calendar_event_id: string | null;
+  reminder_offset_minutes: number | null;
+  reminder_recipients: string[];
 };
 export type EntryPage = {
   items: VehicleEntry[];

@@ -11,7 +11,12 @@ import {
   FileText,
   Link2Off,
 } from "lucide-react";
-import { api, ApiError, type Family } from "../../shared/api";
+import {
+  api,
+  ApiError,
+  type Family,
+  type VehicleRequest,
+} from "../../shared/api";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
@@ -45,9 +50,17 @@ const shortDate = (date: string) =>
 
 export function Vehicles({
   family,
+  userId,
+  requestedEntry,
+  onEntryOpened,
+  onChanged,
   onExpired,
 }: {
   family: Family;
+  userId: number;
+  requestedEntry: VehicleRequest | null;
+  onEntryOpened: () => void;
+  onChanged: () => void;
   onExpired: () => void;
 }) {
   const base = `/families/${family.id}/vehicles`;
@@ -68,11 +81,27 @@ export function Vehicles({
     api<Vehicle[]>(`${base}?archived=${archived ? 1 : 0}`, {
       signal: controller.signal,
     })
-      .then((rows) => {
+      .then(async (rows) => {
         if (controller.signal.aborted) return;
+        if (
+          requestedEntry &&
+          !rows.some((v) => v.id === requestedEntry.vehicleId)
+        ) {
+          const target = await api<Vehicle>(
+            `${base}/${requestedEntry.vehicleId}`,
+            { signal: controller.signal },
+          );
+          if (controller.signal.aborted) return;
+          if (!!target.archived_at !== archived) {
+            setArchived(!!target.archived_at);
+            return;
+          }
+        }
         setItems(rows);
-        setSelected((id) =>
-          rows.some((v) => v.id === id) ? id : (rows[0]?.id ?? ""),
+        setSelected(
+          (id) =>
+            requestedEntry?.vehicleId ??
+            (rows.some((v) => v.id === id) ? id : (rows[0]?.id ?? "")),
         );
       })
       .catch((e) => {
@@ -99,6 +128,7 @@ export function Vehicles({
   function updated(v: Vehicle) {
     setItems((rows) => rows.map((row) => (row.id === v.id ? v : row)));
     setRevision((n) => n + 1);
+    onChanged();
   }
   return (
     <div className="vehicles-page">
@@ -207,6 +237,12 @@ export function Vehicles({
           key={vehicle.id}
           vehicle={vehicle}
           familyId={family.id}
+          userId={userId}
+          requestedEntry={
+            requestedEntry?.vehicleId === vehicle.id ? requestedEntry : null
+          }
+          onEntryOpened={onEntryOpened}
+          onChanged={onChanged}
           base={`${base}/${vehicle.id}`}
           onUpdated={updated}
           onExpired={onExpired}
@@ -255,12 +291,20 @@ export function Vehicles({
 function VehicleProfile({
   vehicle,
   familyId,
+  userId,
+  requestedEntry,
+  onEntryOpened,
+  onChanged,
   base,
   onUpdated,
   onExpired,
 }: {
   vehicle: Vehicle;
   familyId: string;
+  userId: number;
+  requestedEntry: VehicleRequest | null;
+  onEntryOpened: () => void;
+  onChanged: () => void;
   base: string;
   onUpdated: (v: Vehicle) => void;
   onExpired: () => void;
@@ -330,6 +374,39 @@ function VehicleProfile({
       });
     return () => controller.abort();
   }, [base, tab, revision, page, archived, state]);
+  useEffect(() => {
+    if (!requestedEntry || loading) return;
+    const existing = [
+      ...(planned?.items ?? []),
+      ...(history?.items ?? []),
+    ].find((e) => e.id === requestedEntry.entryId);
+    if (existing) {
+      setDialog(existing);
+      onEntryOpened();
+      return;
+    }
+    const controller = new AbortController();
+    api<VehicleEntry>(`${base}/entries/${requestedEntry.entryId}`, {
+      signal: controller.signal,
+    })
+      .then((entry) => {
+        if (!controller.signal.aborted) {
+          setDialog(entry);
+          onEntryOpened();
+        }
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) {
+          setError(
+            e instanceof Error
+              ? e.message
+              : "Nu am putut încărca înregistrarea.",
+          );
+          onEntryOpened();
+        }
+      });
+    return () => controller.abort();
+  }, [requestedEntry, loading, planned, history, base]);
   function selectTab(value: Tab) {
     setTab(value);
     setPage(1);
@@ -339,6 +416,7 @@ function VehicleProfile({
   function saved() {
     setDialog(null);
     setRevision((v) => v + 1);
+    onChanged();
   }
   async function unlink(document: VehicleDocument) {
     try {
@@ -639,6 +717,8 @@ function VehicleProfile({
         <VehicleEntryForm
           entry={typeof dialog === "object" ? dialog : null}
           base={base}
+          familyId={familyId}
+          userId={userId}
           canManage={!!canManage}
           defaultState={tab === "maintenance" ? "planned" : "completed"}
           onClose={() => setDialog(null)}

@@ -128,7 +128,9 @@ final class HomeOverviewTest extends TestCase
     {
         $this->actingAs($this->ana)->postJson($this->calendar(), $this->event(['reminder_offset_minutes' => 0, 'reminder_recipients' => [$this->mihaiMember]]))->assertCreated();
         DB::connection('admin')->table('family_memberships')->where('id', $this->mihaiMember)->update(['role' => 'limited']);
-        $response = $this->actingAs($this->mihai)->getJson($this->home())->assertOk()->assertJsonCount(3, 'documents')->assertJsonCount(1, 'events')->assertJsonCount(1, 'reminders');
+        $response = $this->actingAs($this->mihai)->getJson($this->home())->assertOk()->assertJsonCount(4, 'documents')->assertJsonCount(1, 'events')->assertJsonCount(1, 'reminders');
+        $this->assertContains('Povestea casei noastre', array_column($response->json('documents'), 'title'));
+        $this->assertContains('Jurnal de călătorie', array_column($response->json('documents'), 'title'));
         $this->assertNotContains('Dosarul meu personal', array_column($response->json('documents'), 'title'));
         DB::connection('admin')->table('family_memberships')->where('id', $this->anaMember)->update(['revoked_at' => now()]);
         $this->getJson($this->home())->assertOk()->assertJsonCount(0, 'reminders');

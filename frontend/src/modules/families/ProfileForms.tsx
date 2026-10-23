@@ -28,6 +28,7 @@ export function ProfileSettings({
   onReload: () => void;
 }) {
   const [birth, setBirth] = useState(profile.birth_date ?? "");
+  const [birthdayShared, setBirthdayShared] = useState(profile.birthday_shared);
   const [name, setName] = useState(profile.name);
   const [parents, setParents] = useState(
     profile.parents.map((parent) => parent.id),
@@ -51,6 +52,7 @@ export function ProfileSettings({
           body: JSON.stringify({
             ...(profile.user_id === null ? { name } : {}),
             birth_date: birth || null,
+            birthday_shared: !!birth && birthdayShared,
             parent_ids: minor ? parents : [],
           }),
         }),
@@ -83,6 +85,22 @@ export function ProfileSettings({
               onChange={(e) => setBirth(e.target.value)}
             />
           </label>
+          <label className="profile-checkbox">
+            <input
+              type="checkbox"
+              checked={!!birth && birthdayShared}
+              disabled={!birth}
+              onChange={(e) => setBirthdayShared(e.target.checked)}
+            />
+            Ziua de naștere în Calendarul familiei
+          </label>
+          <p className="fine-print">
+            Familia vede ziua și luna. Anul nașterii rămâne vizibil numai
+            persoanei și administratorului.
+            {birth.slice(5) === "02-29"
+              ? " În anii fără 29 februarie, aniversarea apare pe 28 februarie."
+              : ""}
+          </p>
           {profile.user_id === null && (
             <label className="field">
               Numele copilului

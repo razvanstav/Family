@@ -2,7 +2,8 @@
 
 namespace App\Modules\Vehicles\Http;
 
-use App\Modules\Documents\Application\DocumentAccess;
+use App\Modules\Documents\Contracts\DocumentLinks;
+use App\Modules\Vehicles\Application\VehicleCalendar;
 use App\Platform\Audit\Audit;
 use App\Platform\Contracts\PrivateMedia;
 use Illuminate\Database\Query\Builder;
@@ -10,11 +11,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class VehicleController
 {
-    public function __construct(private PrivateMedia $media, private DocumentAccess $documents) {}
+    public function __construct(private PrivateMedia $media, private DocumentLinks $documents, private VehicleCalendar $calendar) {}
 
     private function query(string $family): Builder
     {
@@ -99,20 +101,29 @@ final class VehicleController
     {
         $row = $this->editable($request, $family, $vehicle);
         abort_if($row->archived_at, 409, 'Restaurează mașina înainte de modificare.');
-        DB::table('vehicles')->where('family_id', $family)->where('id', $vehicle)->update($this->content($request) + ['version' => $row->version + 1, 'updated_at' => now()]);
-        Audit::record($family, $request->user()->id, 'vehicle.updated', $vehicle);
+        $data = $this->content($request);
 
-        return $this->show($request, $family, $vehicle);
+        return DB::transaction(function () use ($request, $family, $vehicle, $row, $data): JsonResponse {
+            DB::table('vehicles')->where('family_id', $family)->where('id', $vehicle)->update($data + ['version' => $row->version + 1, 'updated_at' => now()]);
+            $this->calendar->syncVehicle($family, $vehicle);
+            Audit::record($family, $request->user()->id, 'vehicle.updated', $vehicle);
+
+            return $this->show($request, $family, $vehicle);
+        });
     }
 
     public function archive(Request $request, string $family, string $vehicle): JsonResponse
     {
         $row = $this->editable($request, $family, $vehicle);
         $data = $request->validate(['archived' => 'required|boolean']);
-        DB::table('vehicles')->where('family_id', $family)->where('id', $vehicle)->update(['archived_at' => $data['archived'] ? now() : null, 'version' => $row->version + 1, 'updated_at' => now()]);
-        Audit::record($family, $request->user()->id, $data['archived'] ? 'vehicle.archived' : 'vehicle.restored', $vehicle);
 
-        return $this->show($request, $family, $vehicle);
+        return DB::transaction(function () use ($request, $family, $vehicle, $row, $data): JsonResponse {
+            DB::table('vehicles')->where('family_id', $family)->where('id', $vehicle)->update(['archived_at' => $data['archived'] ? now() : null, 'version' => $row->version + 1, 'updated_at' => now()]);
+            $this->calendar->syncVehicle($family, $vehicle);
+            Audit::record($family, $request->user()->id, $data['archived'] ? 'vehicle.archived' : 'vehicle.restored', $vehicle);
+
+            return $this->show($request, $family, $vehicle);
+        });
     }
 
     public function photo(Request $request, string $family, string $vehicle): StreamedResponse
@@ -150,7 +161,7 @@ final class VehicleController
         $this->find($family, $vehicle);
         $data = $request->validate(['page' => 'sometimes|integer|min:1|max:10000', 'state' => 'sometimes|in:planned,completed',
             'group' => 'sometimes|in:maintenance,costs', 'archived' => 'sometimes|boolean']);
-        $query = DB::table('vehicle_entries')->where('family_id', $family)->where('vehicle_id', $vehicle);
+        $query = $this->entryQuery($family)->where('vehicle_id', $vehicle);
         $request->boolean('archived') ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
         if (isset($data['state'])) {
             $query->where('state', $data['state']);
@@ -169,7 +180,33 @@ final class VehicleController
     private function entryPayload(object $row): array
     {
         return ['id' => $row->id, 'kind' => $row->kind, 'title' => $row->title, 'state' => $row->state, 'event_date' => $row->event_date,
-            'cost' => $row->cost, 'odometer_km' => $row->odometer_km, 'notes' => $row->notes, 'version' => (int) $row->version, 'archived_at' => $row->archived_at];
+            'cost' => $row->cost, 'odometer_km' => $row->odometer_km, 'notes' => $row->notes, 'version' => (int) $row->version, 'archived_at' => $row->archived_at,
+            'calendar_event_id' => $row->calendar_event_id, 'reminder_offset_minutes' => $row->reminder_offset_minutes,
+            'reminder_recipients' => json_decode($row->recipients_json ?? '[]', true)];
+    }
+
+    private function entryQuery(string $family): Builder
+    {
+        return DB::table('vehicle_entries')->leftJoinSub($this->calendar->settings($family), 'calendar', 'calendar.source_id', '=', 'vehicle_entries.id')
+            ->where('vehicle_entries.family_id', $family)->select('vehicle_entries.*', 'calendar.calendar_event_id', 'calendar.reminder_offset_minutes', 'calendar.recipients_json');
+    }
+
+    private function reminderContent(Request $request, string $family, string $vehicle, string $entry): void
+    {
+        $data = $request->validate(['reminder_offset_minutes' => 'sometimes|nullable|integer|in:0,1440,10080,43200',
+            'reminder_recipients' => 'sometimes|array|max:100', 'reminder_recipients.*' => 'required|uuid|distinct']);
+        $existing = $this->entry($family, $vehicle, $entry);
+        $offset = array_key_exists('reminder_offset_minutes', $data) ? $data['reminder_offset_minutes'] : $existing->reminder_offset_minutes;
+        $recipients = $data['reminder_recipients'] ?? ($offset === null ? [] : json_decode($existing->recipients_json ?? '[]', true));
+        if ($existing->state !== 'planned') {
+            if (($data['reminder_offset_minutes'] ?? null) !== null || count($data['reminder_recipients'] ?? []) > 0) {
+                throw ValidationException::withMessages(['reminder_offset_minutes' => 'Reminderele sunt disponibile numai pentru scadențele planificate.']);
+            }
+            $data = ['reminder_offset_minutes' => null, 'reminder_recipients' => []];
+            $offset = null;
+            $recipients = [];
+        }
+        $this->calendar->syncEntry($family, $entry, $data === [] ? null : ['offset' => $offset, 'recipients' => $recipients]);
     }
 
     private function entryContent(Request $request): array
@@ -189,15 +226,19 @@ final class VehicleController
         $this->writable($request);
         $id = (string) Str::uuid();
         $data = $this->entryContent($request);
-        DB::table('vehicle_entries')->insert($data + ['id' => $id, 'family_id' => $family, 'vehicle_id' => $vehicle, 'author_id' => $request->user()->id, 'created_at' => now(), 'updated_at' => now()]);
-        Audit::record($family, $request->user()->id, 'vehicle.entry_created', $id);
 
-        return $this->showEntry($request, $family, $vehicle, $id)->setStatusCode(201);
+        return DB::transaction(function () use ($request, $family, $vehicle, $id, $data): JsonResponse {
+            DB::table('vehicle_entries')->insert($data + ['id' => $id, 'family_id' => $family, 'vehicle_id' => $vehicle, 'author_id' => $request->user()->id, 'created_at' => now(), 'updated_at' => now()]);
+            $this->reminderContent($request, $family, $vehicle, $id);
+            Audit::record($family, $request->user()->id, 'vehicle.entry_created', $id);
+
+            return $this->showEntry($request, $family, $vehicle, $id)->setStatusCode(201);
+        });
     }
 
     private function entry(string $family, string $vehicle, string $entry): object
     {
-        return DB::table('vehicle_entries')->where('family_id', $family)->where('vehicle_id', $vehicle)->where('id', $entry)->firstOrFail();
+        return $this->entryQuery($family)->where('vehicle_id', $vehicle)->where('vehicle_entries.id', $entry)->firstOrFail();
     }
 
     public function showEntry(Request $request, string $family, string $vehicle, string $entry): JsonResponse
@@ -212,10 +253,15 @@ final class VehicleController
         $this->writable($request);
         $this->version($request, (int) $row->version);
         abort_if($row->archived_at, 409, 'Restaurează înregistrarea înainte de editare.');
-        DB::table('vehicle_entries')->where('family_id', $family)->where('id', $entry)->update($this->entryContent($request) + ['version' => $row->version + 1, 'updated_at' => now()]);
-        Audit::record($family, $request->user()->id, 'vehicle.entry_updated', $entry);
+        $data = $this->entryContent($request);
 
-        return $this->showEntry($request, $family, $vehicle, $entry);
+        return DB::transaction(function () use ($request, $family, $vehicle, $entry, $row, $data): JsonResponse {
+            DB::table('vehicle_entries')->where('family_id', $family)->where('id', $entry)->update($data + ['version' => $row->version + 1, 'updated_at' => now()]);
+            $this->reminderContent($request, $family, $vehicle, $entry);
+            Audit::record($family, $request->user()->id, 'vehicle.entry_updated', $entry);
+
+            return $this->showEntry($request, $family, $vehicle, $entry);
+        });
     }
 
     public function archiveEntry(Request $request, string $family, string $vehicle, string $entry): JsonResponse
@@ -225,10 +271,14 @@ final class VehicleController
         $this->writable($request);
         $this->version($request, (int) $row->version);
         $data = $request->validate(['archived' => 'required|boolean']);
-        DB::table('vehicle_entries')->where('family_id', $family)->where('id', $entry)->update(['archived_at' => $data['archived'] ? now() : null, 'version' => $row->version + 1, 'updated_at' => now()]);
-        Audit::record($family, $request->user()->id, $data['archived'] ? 'vehicle.entry_archived' : 'vehicle.entry_restored', $entry);
 
-        return $this->showEntry($request, $family, $vehicle, $entry);
+        return DB::transaction(function () use ($request, $family, $vehicle, $entry, $row, $data): JsonResponse {
+            DB::table('vehicle_entries')->where('family_id', $family)->where('id', $entry)->update(['archived_at' => $data['archived'] ? now() : null, 'version' => $row->version + 1, 'updated_at' => now()]);
+            $this->calendar->syncEntry($family, $entry);
+            Audit::record($family, $request->user()->id, $data['archived'] ? 'vehicle.entry_archived' : 'vehicle.entry_restored', $entry);
+
+            return $this->showEntry($request, $family, $vehicle, $entry);
+        });
     }
 
     public function documents(Request $request, string $family, string $vehicle): JsonResponse
@@ -245,7 +295,7 @@ final class VehicleController
         $this->active($family, $vehicle);
         $this->writable($request);
         $data = $request->validate(['document_id' => 'required|uuid']);
-        $this->documents->find($family, $request->user()->id, $request->attributes->get('membership')->id, $data['document_id']);
+        $this->documents->assertVisible($family, $request->user()->id, $request->attributes->get('membership')->id, $data['document_id']);
         DB::table('vehicle_documents')->insertOrIgnore(['family_id' => $family, 'vehicle_id' => $vehicle, 'document_id' => $data['document_id']]);
         Audit::record($family, $request->user()->id, 'vehicle.document_linked', $vehicle);
 
@@ -256,7 +306,7 @@ final class VehicleController
     {
         $this->active($family, $vehicle);
         $this->writable($request);
-        $this->documents->find($family, $request->user()->id, $request->attributes->get('membership')->id, $document);
+        $this->documents->assertVisible($family, $request->user()->id, $request->attributes->get('membership')->id, $document);
         DB::table('vehicle_documents')->where('family_id', $family)->where('vehicle_id', $vehicle)->where('document_id', $document)->delete();
         Audit::record($family, $request->user()->id, 'vehicle.document_unlinked', $vehicle);
 

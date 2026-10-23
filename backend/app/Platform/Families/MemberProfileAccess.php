@@ -17,7 +17,7 @@ final class MemberProfileAccess
             })->leftJoin('media_assets as photo', function ($join) {
                 $join->on('photo.family_id', '=', 'm.family_id')->on('photo.id', '=', 'p.photo_asset_id');
             })->where('m.family_id', $family)->where('m.id', $member)->whereNull('m.revoked_at')
-            ->select('m.id', 'm.user_id', 'm.role', 'p.birth_date', 'p.photo_asset_id', 'photo.status as photo_status')
+            ->select('m.id', 'm.user_id', 'm.role', 'p.birth_date', 'p.birthday_shared', 'p.birthday_version', 'p.photo_asset_id', 'photo.status as photo_status')
             ->selectRaw('coalesce(u.name, m.child_name) as name')
             ->selectRaw('coalesce(p.version, 0) as version')->firstOrFail();
     }

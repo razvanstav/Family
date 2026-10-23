@@ -1,14 +1,17 @@
 <?php
 
+use App\Modules\Calendar\Http\BirthdayReminderController;
 use App\Modules\Calendar\Http\CalendarController;
 use App\Modules\Calendar\Http\CalendarNotificationController;
 use App\Modules\Documents\Http\DocumentController;
+use App\Modules\Expenses\Http\ExpenseController;
 use App\Modules\Home\Http\HomeController;
 use App\Modules\Kitchen\Http\KitchenActivityController;
 use App\Modules\Kitchen\Http\MealController;
 use App\Modules\Kitchen\Http\RecipeController;
 use App\Modules\Memory\Http\MomentController;
 use App\Modules\Memory\Http\TimelineController;
+use App\Modules\Tasks\Http\TaskController;
 use App\Modules\Vehicles\Http\VehicleController;
 use App\Platform\Families\FamilyController;
 use App\Platform\Families\FamilyGenealogyController;
@@ -20,6 +23,7 @@ use App\Platform\Identity\AccountController;
 use App\Platform\Identity\PrivateResponse;
 use App\Platform\Identity\RegistrationController;
 use App\Platform\Identity\SessionController;
+use App\Platform\Search\FamilySearchController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
@@ -31,6 +35,18 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/invitations/{family}/inspect', [InvitationController::class, 'inspect'])->whereUuid('family')->middleware('throttle:30,1');
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
+        Route::get('/search', FamilySearchController::class)->middleware('throttle:90,1');
+        Route::get('/tasks', [TaskController::class, 'index']);
+        Route::post('/tasks', [TaskController::class, 'store'])->middleware('throttle:60,1');
+        Route::get('/tasks/{task}', [TaskController::class, 'show'])->whereUuid('task');
+        Route::patch('/tasks/{task}', [TaskController::class, 'update'])->whereUuid('task')->middleware('throttle:60,1');
+        Route::patch('/tasks/{task}/completion', [TaskController::class, 'completion'])->whereUuid('task')->middleware('throttle:60,1');
+        Route::delete('/tasks/{task}', [TaskController::class, 'destroy'])->whereUuid('task')->middleware('throttle:60,1');
+        Route::get('/expenses', [ExpenseController::class, 'index']);
+        Route::post('/expenses', [ExpenseController::class, 'store'])->middleware('throttle:60,1');
+        Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])->whereUuid('expense');
+        Route::patch('/expenses/{expense}', [ExpenseController::class, 'update'])->whereUuid('expense')->middleware('throttle:60,1');
+        Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->whereUuid('expense')->middleware('throttle:60,1');
         Route::get('/invitation-codes', [InvitationCodeController::class, 'index']);
         Route::post('/invitation-codes', [InvitationCodeController::class, 'store'])->middleware('throttle:20,1');
         Route::delete('/invitation-codes/{invitationCode}', [InvitationCodeController::class, 'revoke'])->whereUuid('invitationCode');
@@ -85,6 +101,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::get('/calendar-notifications', [CalendarNotificationController::class, 'index']);
         Route::patch('/calendar-notifications/{notification}', [CalendarNotificationController::class, 'read'])->whereUuid('notification');
         Route::get('/calendar-items', [CalendarController::class, 'index']);
+        Route::patch('/calendar-items/{event}/birthday-reminder', BirthdayReminderController::class)->whereUuid('event');
         Route::post('/calendar-items', [CalendarController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/calendar-items/{event}', [CalendarController::class, 'show'])->whereUuid('event');
         Route::patch('/calendar-items/{event}', [CalendarController::class, 'update'])->whereUuid('event');
