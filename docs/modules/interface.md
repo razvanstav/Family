@@ -2,7 +2,9 @@
 
 ## DS1 — Meniuri pentru lună și an, 25 octombrie 2026
 
-**Implementat și verificat local; publicarea este cerută explicit.** Meniul nativ de lună/an din captura Cheltuieli este înlocuit în `shared/MonthSelect` cu `shared/SelectMenu`, reutilizat și de Calendar/DatePicker. Suprafață crem, bordură fină, selecție verde cu bifă, rânduri de minimum 44 px și derulare internă. Niciun select de lună/an nativ rămas în MonthSelect; celelalte câmpuri select ale formularelor rămân în afara acestui pas.
+**Publicat:** commit `08c60f8` pe `origin/codex/documente-design`; [deploy 40141536615](https://github.com/razvanstav/Family/actions/runs/40141536615) reușit. HTTPS `/up`, `/app/`, JS/CSS și iconițele Netflix/Spotify răspund 200. Bundle-ul public `BrH9asnZ/DJO_Wuan` coincide cu buildul verificat și include navigarea, filele, iconițele și meniurile noi. Fără migrații noi sau probe pe date reale; granturile runtime/workerii nu sunt declarați verificați independent.
+
+**Implementat, verificat și publicat.** Meniul nativ de lună/an din captura Cheltuieli este înlocuit în `shared/MonthSelect` cu `shared/SelectMenu`, reutilizat și de Calendar/DatePicker. Suprafață crem, bordură fină, selecție verde cu bifă, rânduri de minimum 44 px și derulare internă. Niciun select de lună/an nativ rămas în MonthSelect; celelalte câmpuri select ale formularelor rămân în afara acestui pas.
 
 `SelectMenu` păstrează focusul pe combobox, expune lista și opțiunea activă prin ARIA, sare opțiunile dezactivate și permite săgeți, Home/End, Enter/Space, Escape/Tab și căutare prin tastare fără diferențe de diacritice. Meniul este popover descendent al controlului, încadrat în viewportul vizibil și mutat deasupra dacă este necesar; fără portal în afara dialogului, polling sau requesturi noi. Anul selectat este adus în vedere în lista lungă. Limitele și clamparea MonthSelect nu sunt schimbate.
 
@@ -10,7 +12,7 @@
 
 ## SB2 — Abonamente și tranziții, 25 octombrie 2026
 
-**Implementat și verificat local; push și deploy cerute explicit.** Feedbackul cere pagină Abonamente separată de Cheltuieli, filtre pe lățimea containerului și navigare mai fluidă, în special la schimbarea paginilor/filelor. Cererea suplimentară din același pas adaugă iconițe pentru furnizorii predefiniți în lista abonamentelor salvate. Corpul redesenat rămâne numai cel al Abonamentelor; celelalte pagini primesc doar comportamentul comun de mișcare.
+**Implementat, verificat și publicat.** Feedbackul cere pagină Abonamente separată de Cheltuieli, filtre pe lățimea containerului și navigare mai fluidă, în special la schimbarea paginilor/filelor. Cererea suplimentară din același pas adaugă iconițe pentru furnizorii predefiniți în lista abonamentelor salvate. Corpul redesenat rămâne numai cel al Abonamentelor; celelalte pagini primesc doar comportamentul comun de mișcare.
 
 - Intrare desktop după Cheltuieli, acces mobil în Mai multe și destinație Calendar proprie. Bara mobilă păstrează cele cinci poziții și selecția Mai multe pentru Abonamente.
 - Bara proprie Familie / Partajate cu mine a fost înlocuită cu `shared/SectionTabs`, imediat după `PageBackdrop`; aceeași poziție și dimensiune ca Bucătărie/Cheltuieli. Actualizarea este în antet. Clasele `subscriptions-toolbar`/`subscription-scopes` și regulile lor au fost eliminate. Lista nu mai dispare la fiecare actualizare a aceluiași filtru; la schimbarea filtrului nu afișează datele filtrului anterior. Apariție de 180 ms pentru întreaga suprafață inițială; fără animații pe carduri individuale.

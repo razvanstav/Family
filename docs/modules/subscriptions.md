@@ -2,7 +2,9 @@
 
 ## SB2 — Pagină separată și navigare fluidă, 25 octombrie 2026
 
-**Implementat și verificat local, după feedbackul utilizatorului; publicarea este cerută explicit.** Abonamente are intrare proprie după Cheltuieli în meniul desktop și în Mai multe pe mobil; bara mobilă păstrează cele cinci poziții. Calendar deschide direct pagina Abonamente. Compoziția intermediară `ExpensesWorkspace` și sloturile de file rămase fără apelanți sunt eliminate; Cheltuieli își păstrează filtrele proprii.
+**Publicat:** commit `08c60f8` pe `origin/codex/documente-design`; [deploy 40141536615](https://github.com/razvanstav/Family/actions/runs/40141536615) reușit. HTTPS `/up`, `/app/`, JS/CSS și iconițele Netflix/Spotify răspund 200. Bundle-ul public `BrH9asnZ/DJO_Wuan` coincide cu buildul verificat și include navigarea, filele, iconițele și meniurile noi. Fără migrații noi sau probe pe date reale; granturile runtime/workerii nu sunt declarați verificați independent.
+
+**Implementat, verificat și publicat, după feedbackul utilizatorului.** Abonamente are intrare proprie după Cheltuieli în meniul desktop și în Mai multe pe mobil; bara mobilă păstrează cele cinci poziții. Calendar deschide direct pagina Abonamente. Compoziția intermediară `ExpensesWorkspace` și sloturile de file rămase fără apelanți sunt eliminate; Cheltuieli își păstrează filtrele proprii.
 
 Familie / Partajate cu mine folosesc direct `shared/SectionTabs`, imediat după `PageBackdrop`, la aceeași poziție și cu aceleași dimensiuni ca Bucătărie/Cheltuieli: maximum 480 px pe desktop, întreaga lățime pe mobil, înălțime 54 px. Actualizarea este în acțiunile antetului. Bara proprie cu padding separat și toate stilurile ei au fost eliminate. La actualizarea aceluiași filtru, lista rămâne vizibilă și suprafața expune `aria-busy`; iconița de actualizare indică cererea în curs. Schimbarea filtrului ascunde rândurile celuilalt filtru. Încărcarea inițială are o singură apariție discretă a rezultatelor, fără animații pe fiecare card. Erorile de autorizare golesc lista și închid detaliul, iar mecanismul A1 de suspendare/reautorizare rămâne activ.
 
