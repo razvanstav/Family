@@ -1,0 +1,83 @@
+name: Deploy Family Staging
+
+on:
+  push:
+    branches:
+      - codex/documente-design
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: family-staging-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Synchronize source
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          set -euo pipefail
+
+          rsync -az --delete --delete-delay \
+            --no-owner --no-group --no-perms \
+            --exclude='/.git/' \
+            --exclude='/.github/' \
+            --exclude='/.dockerignore' \
+            --exclude='**/.env' \
+            --exclude='**/.env.*' \
+            --exclude='**/node_modules/' \
+            --exclude='**/vendor/' \
+            --exclude='backend/storage/' \
+            --exclude='backend/bootstrap/cache/' \
+            --exclude='backend/public/app/' \
+            --exclude='frontend/dist/' \
+            -e 'ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes' \
+            ./ "$SERVER_USER@$SERVER_HOST:/srv/family/source/"
+
+      - name: Build and deploy on server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$SERVER_USER@$SERVER_HOST" \
+            'sudo -n /srv/family/deploy/deploy.sh'
+
+      - name: Verify public HTTPS
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            --retry 5 --retry-delay 3 \
+            https://family.meai.ro/up -o /dev/null
+
+          curl --fail --silent --show-error \
+            --retry 5 --retry-delay 3 \
+            https://family.meai.ro/app/ -o /dev/null
+
+          echo "Family staging deployed successfully"
