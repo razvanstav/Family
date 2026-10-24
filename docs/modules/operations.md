@@ -2,9 +2,19 @@
 
 Stare: mediul local și scripturile de pornire/test există. CI de bază se introduce în M04; stagingul și acceptarea pentru beta se închid în M11.
 
+## O2b — Eficientizare deploy, 24 octombrie 2026
+
+**Implementat și verificat local; verificarea pe Actions urmează publicării.** Intrare: [workflowul de staging](../../.github/workflows/deploy-family.yml). Cererea curentă este reducerea timpului și a rulărilor inutile, fără schimbări în aplicație sau în procedura externă de migrare.
+
+- Baseline observat prin API-ul GitHub: [rularea 40083569029](https://github.com/razvanstav/Family/actions/runs/40083569029) a avut jobul de 30 s, cu build/deploy 11 s; [40086579720](https://github.com/razvanstav/Family/actions/runs/40086579720) a avut 58 s, cu build/deploy 39 s. Ambele au reușit. SSH, rsync și verificările au ocupat împreună aproximativ 12–13 s. Duratele joburilor exclud așteptarea runnerului și nu estimează facturarea.
+- Pushurile exclusiv Markdown, `docs/`, `artifacts/` sau blueprint nu pornesc publicarea; schimbările mixte și pornirea manuală rămân disponibile. Aceleași referințe și directoarele locale `.runtime/`/`.tools/` sunt excluse din rsync. Nu se folosește `--delete-excluded`; fișierele persistente deja excluse rămân protejate.
+- Testul SSH, sincronizarea, buildul și cele două verificări reutilizează o conexiune OpenSSH, cu verificarea gazdei și autentificarea păstrate. Conexiunea și cheia runnerului sunt curățate la încheiere. Verificarea HTTP locală are limite de conectare/răspuns. Deployurile rămân seriale, fără anularea celui activ în timpul migrării.
+- Verificări locale trecute: actionlint 1.7.12, parsare YAML, sintaxă Bash pentru fiecare pas, `ssh -G` fără conexiune și rsync dry-run cu fișiere reprezentative: codul se transferă, codul învechit se șterge, iar `.env`, storage, cache și configurația Docker a serverului sunt protejate. Revizie independentă a diff-ului; calea configurației SSH din rsync este absolută. Fără suite/build de aplicație, fiind schimbat numai workflowul.
+- Limite: scriptul `/srv/family/deploy/deploy.sh` și configurația Docker sunt externe repositoryului. Cache-ul Docker nu a fost inspectat sau modificat. Câștigul de timp nu este confirmat până la rularea pe server; baseline-ul are numai două deployuri reușite.
+
 ## AP1 — Administrare Amora, 24 octombrie 2026
 
-**Implementat și verificat local, acceptare vizuală deschisă:** logo comun în dashboard, cont propriu de administrator al aplicației, deschidere în Administrare după login, statistici reale și configurare Brevo SMTP. Commit și push sunt autorizate. Workflowul existent `Deploy Family Staging` publică automat pushurile pe `codex/documente-design`; rezultatul fiecărui deploy se consemnează numai după observare.
+**Implementat și verificat local, acceptare vizuală deschisă:** logo comun în dashboard, cont propriu de administrator al aplicației, deschidere în Administrare după login, statistici reale și configurare Brevo SMTP. Commit și push sunt autorizate. Workflowul existent `Deploy Family Staging` publică automat schimbările de cod/configurație pe `codex/documente-design`, cu filtrele O2b; deployul commitului `105bddf` a reușit în rularea `40086579720`.
 
 - Prezentare: număr de utilizatori, utilizatori noi în ultimele 30 de zile, familii, trimiteri email acceptate de SMTP/eșuate și ultimele 10 înregistrări. Nu se inventează date și nu se prezintă acceptarea SMTP drept confirmare în inbox. Istoricul începe cu implementarea jurnalului, fără reconstituirea trimiterilor anterioare.
 - Email: server Brevo și port/TLS fixe, Login și cheie SMTP, nume/adresă expeditor, adresă opțională pentru răspunsuri, activare și test explicit către destinatarul ales. Cheia se salvează criptat, fără afișare la citire; câmpul gol păstrează cheia. Formularele folosesc versiune și reîncărcare explicită după conflict.

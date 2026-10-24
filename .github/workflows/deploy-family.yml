@@ -1,10 +1,14 @@
-
 name: Deploy Family Staging
 
 on:
   push:
     branches:
       - codex/documente-design
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "artifacts/**"
+      - "Memoria_Familiei_Review_v1.2/**"
 
   workflow_dispatch:
 
@@ -42,6 +46,19 @@ jobs:
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+          cat > ~/.ssh/family.conf <<'EOF'
+          Host *
+            IdentityFile ~/.ssh/id_ed25519
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+            ConnectTimeout 15
+            ControlMaster auto
+            ControlPath ~/.ssh/cm-%C
+            ControlPersist 5m
+          EOF
+          chmod 600 ~/.ssh/family.conf
+
       # 3. Verify SSH connection
       - name: Test SSH connection
         env:
@@ -51,10 +68,7 @@ jobs:
           set -euo pipefail
 
           ssh \
-            -i ~/.ssh/id_ed25519 \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            -o ConnectTimeout=15 \
+            -F ~/.ssh/family.conf \
             "$SERVER_USER@$SERVER_HOST" \
             'echo "SSH connection successful"'
 
@@ -76,6 +90,12 @@ jobs:
             --exclude='/.git/' \
             --exclude='/.github/' \
             --exclude='/.dockerignore' \
+            --exclude='/.runtime/' \
+            --exclude='/.tools/' \
+            --exclude='/docs/' \
+            --exclude='/artifacts/' \
+            --exclude='/Memoria_Familiei_Review_v1.2/' \
+            --exclude='*.md' \
             --exclude='**/.env' \
             --exclude='**/.env.*' \
             --exclude='**/node_modules/' \
@@ -84,7 +104,7 @@ jobs:
             --exclude='backend/bootstrap/cache/' \
             --exclude='backend/public/app/' \
             --exclude='frontend/dist/' \
-            -e 'ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes' \
+            -e "ssh -F $HOME/.ssh/family.conf" \
             ./ \
             "$SERVER_USER@$SERVER_HOST:/srv/family/source/"
 
@@ -99,9 +119,7 @@ jobs:
           set -euo pipefail
 
           ssh \
-            -i ~/.ssh/id_ed25519 \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
+            -F ~/.ssh/family.conf \
             "$SERVER_USER@$SERVER_HOST" \
             'sudo -n /srv/family/deploy/deploy.sh'
 
@@ -116,15 +134,15 @@ jobs:
           set -euo pipefail
 
           ssh \
-            -i ~/.ssh/id_ed25519 \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
+            -F ~/.ssh/family.conf \
             "$SERVER_USER@$SERVER_HOST" \
             'set -eu
              for path in /up /app/; do
                code=$(curl \
                  --silent \
                  --show-error \
+                 --connect-timeout 10 \
+                 --max-time 30 \
                  --output /dev/null \
                  --write-out "%{http_code}" \
                  "http://127.0.0.1:8085${path}")
@@ -142,9 +160,7 @@ jobs:
           set -euo pipefail
 
           ssh \
-            -i ~/.ssh/id_ed25519 \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
+            -F ~/.ssh/family.conf \
             "$SERVER_USER@$SERVER_HOST" \
             'set -eu
 
@@ -174,3 +190,16 @@ jobs:
           echo "Commit: $GITHUB_SHA"
           echo "Branch: $GITHUB_REF_NAME"
           echo "URL: https://family.meai.ro/app/"
+
+      - name: Close SSH connection
+        if: always()
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          set -euo pipefail
+
+          if [ -f ~/.ssh/family.conf ]; then
+            ssh -F ~/.ssh/family.conf -O exit "$SERVER_USER@$SERVER_HOST" 2>/dev/null || true
+          fi
+          rm -f ~/.ssh/id_ed25519 ~/.ssh/family.conf ~/.ssh/cm-*
