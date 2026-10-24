@@ -3,6 +3,7 @@
 namespace App\Modules\Tasks\Http;
 
 use App\Modules\Tasks\Application\TaskCalendar;
+use App\Modules\Tasks\Application\TaskRecurrence;
 use App\Platform\Audit\Audit;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -15,7 +16,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class TaskController
 {
-    public function __construct(private readonly TaskCalendar $calendar) {}
+    public function __construct(private readonly TaskCalendar $calendar, private readonly TaskRecurrence $recurrence) {}
 
     private function query(Request $request, string $family): Builder
     {
@@ -46,7 +47,7 @@ final class TaskController
     {
         return ['id' => $row->id, 'title' => $row->title, 'assignee_membership_id' => $row->assignee_membership_id,
             'assignee_name' => $row->assignee_name, 'due_on' => $row->due_on, 'visibility' => $row->visibility,
-            'owner_name' => $row->owner_name, 'completed_at' => $row->completed_at, 'version' => (int) $row->version,
+            'owner_name' => $row->owner_name, 'completed_at' => $row->completed_at, 'recurrence' => $row->recurrence, 'version' => (int) $row->version,
             'can_edit' => $row->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited',
             'can_complete' => $this->canComplete($request, $row)];
     }
@@ -97,6 +98,9 @@ final class TaskController
             'title' => 'required|string|max:160', 'assignee_membership_id' => ['sometimes', 'required', 'uuid'],
             'due_on' => 'nullable|date_format:Y-m-d|after_or_equal:1900-01-01|before_or_equal:2099-12-31',
             'visibility' => [$existing ? 'required' : 'sometimes', Rule::in(['family', 'private'])],
+            'recurrence' => ['sometimes', 'nullable', Rule::in(['daily', 'weekly', 'monthly', 'yearly'])],
+            'recurrence_anchor_on' => 'prohibited', 'recurrence_parent_id' => 'prohibited',
+            'recurrence_notice' => 'prohibited', 'next_due_on' => 'prohibited',
             'family_id' => 'prohibited', 'owner_id' => 'prohibited', 'version' => 'prohibited', 'completed_at' => 'prohibited',
         ], ['title.required' => 'Introdu titlul sarcinii.', 'title.max' => 'Titlul poate avea cel mult 160 de caractere.']);
         $assignee = $data['assignee_membership_id'] ?? $request->attributes->get('membership')->id;
@@ -108,9 +112,18 @@ final class TaskController
             && ! $this->assignees($family)->where('m.id', $assignee)->exists()) {
             throw ValidationException::withMessages(['assignee_membership_id' => 'Alege un membru activ al familiei cu cont.']);
         }
+        $recurrence = array_key_exists('recurrence', $data) ? $data['recurrence'] : ($existing->recurrence ?? null);
+        $dueOn = $data['due_on'] ?? null;
+        if ($recurrence !== null && $dueOn === null) {
+            throw ValidationException::withMessages(['due_on' => 'Alege un termen pentru sarcina care se repetă.']);
+        }
+        $anchorOn = $recurrence === null ? null : (
+            $existing && $existing->recurrence === $recurrence && $existing->due_on === $dueOn
+                ? $existing->recurrence_anchor_on : $dueOn
+        );
 
         return ['title' => trim($data['title']), 'assignee_membership_id' => $assignee,
-            'due_on' => $data['due_on'] ?? null, 'visibility' => $visibility];
+            'due_on' => $dueOn, 'visibility' => $visibility, 'recurrence' => $recurrence, 'recurrence_anchor_on' => $anchorOn];
     }
 
     public function store(Request $request, string $family): JsonResponse
@@ -165,7 +178,12 @@ final class TaskController
         $this->calendar->syncTask($family, $task);
         Audit::record($family, $request->user()->id, $data['completed'] ? 'task.completed' : 'task.reopened', $task);
 
-        return $this->show($request, $family, $task);
+        $outcome = $data['completed'] && $row->completed_at === null && $row->recurrence !== null
+            ? $this->recurrence->createNext($family, $row, $request->user()->id) : [];
+
+        $updated = $this->rows($this->query($request, $family)->where('t.id', $task))->firstOrFail();
+
+        return response()->json(array_merge($this->payload($request, $updated), $outcome));
     }
 
     public function destroy(Request $request, string $family, string $task): Response

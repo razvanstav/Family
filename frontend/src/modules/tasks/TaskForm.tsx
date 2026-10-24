@@ -4,7 +4,13 @@ import { api, ApiError, errorMessage, type Family } from "../../shared/api";
 import { DatePicker } from "../../shared/DatePicker";
 import { dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
-import type { Assignee, Task, TaskVisibility } from "./taskData";
+import {
+  recurrenceLabels,
+  type Assignee,
+  type Task,
+  type TaskRecurrence,
+  type TaskVisibility,
+} from "./taskData";
 
 export function TaskForm({
   family,
@@ -27,6 +33,9 @@ export function TaskForm({
     task?.assignee_membership_id ?? family.membership_id,
   );
   const [due, setDue] = useState(task?.due_on ?? "");
+  const [recurrence, setRecurrence] = useState<TaskRecurrence>(
+    task?.recurrence ?? null,
+  );
   const [visibility, setVisibility] = useState<TaskVisibility>(
     task?.visibility ?? "family",
   );
@@ -59,7 +68,7 @@ export function TaskForm({
     }
   }
   async function submit(remove = false) {
-    if (pending.current || stale) return;
+    if (pending.current || stale || (!remove && recurrence && !due)) return;
     pending.current = true;
     setBusy(true);
     setError("");
@@ -75,6 +84,7 @@ export function TaskForm({
                 title: title.trim(),
                 assignee_membership_id: assignee,
                 due_on: due || null,
+                recurrence,
                 visibility,
               }),
         },
@@ -98,6 +108,7 @@ export function TaskForm({
       setTitle(fresh.title);
       setAssignee(fresh.assignee_membership_id);
       setDue(fresh.due_on ?? "");
+      setRecurrence(fresh.recurrence);
       setVisibility(fresh.visibility);
       setStale(false);
       setDeleting(false);
@@ -176,6 +187,12 @@ export function TaskForm({
             <dt>Acces</dt>
             <dd>{source.visibility === "family" ? "Familie" : "Personal"}</dd>
           </div>
+          {source.recurrence && (
+            <div>
+              <dt>Repetare</dt>
+              <dd>{recurrenceLabels[source.recurrence]}</dd>
+            </div>
+          )}
           <div>
             <dt>Stare</dt>
             <dd>{source.completed_at ? "Finalizată" : "De făcut"}</dd>
@@ -217,13 +234,42 @@ export function TaskForm({
               </select>
             </label>
             <DatePicker
-              label="Termen (opțional)"
+              label={recurrence ? "Termen" : "Termen (opțional)"}
               name="due_on"
               dialogLabel="Alege termenul"
-              optional
+              optional={!recurrence}
               value={due}
               onChange={setDue}
             />
+            <label className="field">
+              Repetare
+              <select
+                name="recurrence"
+                value={recurrence ?? ""}
+                aria-describedby={
+                  recurrence && !source?.completed_at
+                    ? "task-recurrence-hint"
+                    : undefined
+                }
+                onChange={(event) =>
+                  setRecurrence((event.target.value || null) as TaskRecurrence)
+                }
+              >
+                <option value="">Fără</option>
+                {Object.entries(recurrenceLabels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              {recurrence && !source?.completed_at && (
+                <small id="task-recurrence-hint">
+                  {due
+                    ? "La finalizare se creează următoarea sarcină, la primul termen viitor."
+                    : "Alege un termen pentru repetare."}
+                </small>
+              )}
+            </label>
             <label className="field">
               Acces
               <select
@@ -269,7 +315,9 @@ export function TaskForm({
             </button>
             <button
               className="button primary"
-              disabled={busy || stale || !title.trim()}
+              disabled={
+                busy || stale || !title.trim() || (!!recurrence && !due)
+              }
             >
               {busy ? "Se salvează…" : "Salvează"}
             </button>
@@ -277,14 +325,21 @@ export function TaskForm({
         </form>
       )}
       {!deleting && source?.can_complete && (
-        <button
-          type="button"
-          className="button secondary full task-completion"
-          disabled={busy || stale}
-          onClick={() => void complete()}
-        >
-          {source.completed_at ? "Redeschide sarcina" : "Finalizează sarcina"}
-        </button>
+        <>
+          <button
+            type="button"
+            className="button secondary full task-completion"
+            disabled={busy || stale}
+            onClick={() => void complete()}
+          >
+            {source.completed_at ? "Redeschide sarcina" : "Finalizează sarcina"}
+          </button>
+          {source.completed_at && source.recurrence && (
+            <p className="task-recurrence-note">
+              Modificarea sau redeschiderea nu schimbă sarcinile deja create.
+            </p>
+          )}
+        </>
       )}
       {error && (
         <p className="error" role="alert">

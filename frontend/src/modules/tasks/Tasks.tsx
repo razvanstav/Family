@@ -7,6 +7,7 @@ import {
   LockKeyhole,
   Plus,
   RefreshCw,
+  Repeat,
   UsersRound,
 } from "lucide-react";
 import { api, ApiError, errorMessage, type Family } from "../../shared/api";
@@ -14,12 +15,14 @@ import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { TaskForm } from "./TaskForm";
-import type {
-  Assignee,
-  Task,
-  TaskPage,
-  TaskStatus,
-  TaskVisibility,
+import {
+  recurrenceLabels,
+  taskCompletionMessage,
+  type Assignee,
+  type Task,
+  type TaskPage,
+  type TaskStatus,
+  type TaskVisibility,
 } from "./taskData";
 import "./tasks.css";
 
@@ -193,18 +196,17 @@ export function Tasks({
     setError("");
     setMessage("");
     try {
-      await api<Task>(`/families/${family.id}/tasks/${task.id}/completion`, {
-        method: "PATCH",
-        headers: { "If-Match": `"${task.version}"` },
-        body: JSON.stringify({ completed: task.completed_at === null }),
-      });
+      const saved = await api<Task>(
+        `/families/${family.id}/tasks/${task.id}/completion`,
+        {
+          method: "PATCH",
+          headers: { "If-Match": `"${task.version}"` },
+          body: JSON.stringify({ completed: task.completed_at === null }),
+        },
+      );
       onChanged();
       if (request === sequence.current) {
-        setMessage(
-          task.completed_at
-            ? "Sarcina a fost redeschisă."
-            : "Sarcina a fost finalizată.",
-        );
+        setMessage(taskCompletionMessage(saved));
         afterRefresh.current = "list";
       }
       setRevision((value) => value + 1);
@@ -397,6 +399,12 @@ export function Tasks({
                             )}
                           </span>
                         )}
+                        {task.recurrence && (
+                          <span>
+                            <Repeat size={14} aria-hidden="true" />
+                            {recurrenceLabels[task.recurrence]}
+                          </span>
+                        )}
                       </div>
                     </div>
                     {task.can_edit && (
@@ -460,9 +468,9 @@ export function Tasks({
             onChanged();
             setMessage(
               action === "completion"
-                ? saved?.completed_at
-                  ? "Sarcina a fost finalizată."
-                  : "Sarcina a fost redeschisă."
+                ? saved
+                  ? taskCompletionMessage(saved)
+                  : "Sarcina a fost finalizată."
                 : saved
                   ? "Sarcina a fost salvată."
                   : "Sarcina a fost ștearsă.",
