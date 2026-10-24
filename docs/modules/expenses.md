@@ -2,7 +2,9 @@
 
 ## CH3 — Plăți planificate și recurente, 24 octombrie 2026
 
-**Implementat și verificat local; publicarea este în lucru.** Cheltuielile existente rămân plătite. La adăugare se aleg Plătită / De plătit și repetarea Fără repetare / Zilnic / Săptămânal / Lunar / Anual. `spent_on` rămâne data aleasă: data cheltuielii plătite sau termenul plății planificate. Marcarea ca plătită nu schimbă această dată; se poate modifica în formular.
+**Publicare:** `a7aeea8`, [deploy 40127782128](https://github.com/razvanstav/Family/actions/runs/40127782128) reușit; migrația 162605 apare efectiv `DONE` în logul de build/deploy și cinci operațiuni GRANT executate. HTTPS `/up`, `/app/` și JS răspund 200, bundle final `CDzmPc0C/C5pZLMOO` verificat. Diagnosticul separat al workerilor/granturilor efective rămâne indisponibil din cauza accesului Docker refuzat; CH3 nu introduce worker sau tabel nou și nu schimbă configurația emailului. Nu s-au rulat probe cu date financiare reale pe server.
+
+**Implementat, verificat și publicat.** Cheltuielile existente rămân plătite. La adăugare se aleg Plătită / De plătit și repetarea Fără repetare / Zilnic / Săptămânal / Lunar / Anual. `spent_on` rămâne data aleasă: data cheltuielii plătite sau termenul plății planificate. Marcarea ca plătită nu schimbă această dată; se poate modifica în formular.
 
 O cheltuială plătită cu repetare creează o singură plată viitoare neplătită, la salvare. Una planificată o creează numai când este marcată plătită. Data următoare este strict după maximul dintre data rândului și ziua curentă din România; ciclurile trecute se sar. Ziua inițială este păstrată pentru lunile scurte și 29 februarie. Modificarea datei sau frecvenței rândului planificat pornește o ancoră nouă; oprirea repetării oprește numai continuarea lui. Ștergerea afectează un singur rând. Istoricul plătit și succesorul deja creat nu se modifică reciproc. Frecvența unui părinte care are deja succesor, inclusiv șters logic, este blocată: repetarea se schimbă în următoarea plată. Nu se recreează un succesor șters.
 
