@@ -8,7 +8,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | Familie    | FS1: profil cu cronologie, realizări și arbore genealogic cu rude fără cont, verificat local; așteaptă feedback                                                        | [Familie](modules/families.md)    |
 | Cheltuieli | CH1 implementat și verificat local: pagină principală cu adăugare rapidă/evidență lunară, Familie/Personale, exemple Popescu și calendar românesc; CH2 verificat local | [Cheltuieli](modules/expenses.md) |
-| Abonamente | SB1 în lucru: servicii și date de acces criptate, acces de familie și invitații individuale către alte conturi | [Abonamente](modules/subscriptions.md) |
+| Abonamente | SB1 implementat, verificat și publicat: servicii, date de acces criptate, familie și invitații individuale cu cod | [Abonamente](modules/subscriptions.md) |
 | Sarcini    | S3 recurențe zilnice/săptămânale/lunare/anuale și SC1 Calendar cu deschidere directă, acces păstrat; implementate și verificate local                                  | [Sarcini](modules/tasks.md)       |
 | Documente  | În Familia mea → Documente; dosare pe persoană și comune, cu upload/acces/descărcare existente                                                                         | [Documente](modules/documents.md) |
 | Bucătărie  | Rețete, versiuni, mese, vot și acces implementate; KH1 mobil pregătit pentru feedback                                                                                  | [Bucătărie](modules/kitchen.md)   |

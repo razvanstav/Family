@@ -2,7 +2,9 @@
 
 ## SB1 — Abonamente și acces partajat, 24 octombrie 2026
 
-**Implementat și verificat local; publicarea este în lucru.** Cerere explicită: servicii precum Netflix/streaming/Digi Sport, acces automat pentru familie și partajare către alte conturi ale platformei prin email. Utilizatorul a confirmat și păstrarea datelor de acces. Push și deploy la final, împreună cu eliminarea Cronologiei din Amintiri.
+**Publicare:** commit `c5c81a2`, [deploy 40130862434](https://github.com/razvanstav/Family/actions/runs/40130862434) reușit. Migrația202023 apare efectiv `DONE`, cinci operațiuni GRANT executate; HTTPS `/up`, `/app/` și JS200, bundle `btuOof81/BB7XjicJ` confirmat. Diagnosticul suplimentar al granturilor runtime/workerilor rămâne limitat de accesul Docker refuzat; nu este declarat verificat independent. Nu au fost create conturi, parole de serviciu sau abonamente de probă pe server.
+
+**Implementat, verificat și publicat.** Cerere explicită: servicii precum Netflix/streaming/Digi Sport, acces automat pentru familie și partajare către alte conturi ale platformei prin email. Utilizatorul a confirmat și păstrarea datelor de acces. Push și deploy la final, împreună cu eliminarea Cronologiei din Amintiri.
 
 ### Scop și acces
 
@@ -26,4 +28,4 @@ Backend `Modules/Subscriptions`, tabele proprii și adaptor `Calendar/Contracts/
 - **Frontend:** 56 teste comune trecute, inclusiv contractul destinației Calendar și două teste pentru payloadul/curățarea secretelor; TypeScript/Vite și Prettier/diff trecute. Build final `btuOof81/BB7XjicJ`, după clarificarea consecinței ștergerii; avertismentul JS peste500kB rămâne.
 - **Migrație:** 202023 și granturile celor două tabele aplicate în memoria_test și memoria. Amprentele surselor existente și cheltuielilor au rămas identice; fără conturi sau abonamente reale create în memoria.
 - **Browser:** desktop, 390 și320px, două familii și trei conturi fictive în memoria_test. Creare Netflix cu cost, scadență și date de acces fictive; afișare/ascundere explicită; invitație și copiere cod; cod greșit păstrează eroarea în fereastră, codul corect oferă acces. Destinatarul nu are editare sau partajare, iar celălalt membru din familia sa vede ambele liste goale. Scadența din Calendar este Persoane alese și deschide abonamentul; după revocare lista destinatarului este goală. Fără overflow observat la390/320, consola probei fără erori/warninguri observate. Capturi `.runtime/sb1-list-mobile.png`, `.runtime/sb1-shared-detail-320.png`. Fixture-urile și server8001 curățate/oprit, viewport resetat.
-- **Limite:** fără SMTP real, conturi/abonamente reale sau dispozitiv fizic. Tarifele și regulile serviciilor externe nu sunt importate ori verificate automat. Backupul bazei trebuie păstrat împreună cu cheia aplicației existente; fără ea ciphertextul nu se poate decripta. Acceptarea vizuală rămâne la utilizator; push/deploy urmează.
+- **Limite:** fără SMTP real, conturi/abonamente reale sau dispozitiv fizic. Tarifele și regulile serviciilor externe nu sunt importate ori verificate automat. Backupul bazei trebuie păstrat împreună cu cheia aplicației existente; fără ea ciphertextul nu se poate decripta. Acceptarea vizuală rămâne la utilizator.
