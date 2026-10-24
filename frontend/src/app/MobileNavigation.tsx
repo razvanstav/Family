@@ -11,6 +11,7 @@ import {
   Users,
   UtensilsCrossed,
   Wallet,
+  PawPrint,
 } from "lucide-react";
 import { Modal } from "../shared/Modal";
 
@@ -22,6 +23,7 @@ type Page =
   | "memory"
   | "calendar"
   | "tasks"
+  | "pets"
   | "vehicles";
 
 export function MobileNavigation({
@@ -70,7 +72,8 @@ export function MobileNavigation({
             page === "calendar" ||
             page === "tasks" ||
             page === "memory" ||
-            page === "vehicles"
+            page === "vehicles" ||
+            page === "pets"
               ? "active"
               : ""
           }
@@ -79,7 +82,8 @@ export function MobileNavigation({
             page === "calendar" ||
             page === "tasks" ||
             page === "memory" ||
-            page === "vehicles"
+            page === "vehicles" ||
+            page === "pets"
               ? "page"
               : undefined
           }
@@ -136,6 +140,17 @@ export function MobileNavigation({
             >
               <CarFront size={22} />
               <span>Auto</span>
+              <ChevronRight size={18} />
+            </button>
+            <button
+              aria-current={page === "pets" ? "page" : undefined}
+              onClick={() => {
+                setMore(false);
+                onPage("pets");
+              }}
+            >
+              <PawPrint size={22} />
+              <span>Animale</span>
               <ChevronRight size={18} />
             </button>
             <button

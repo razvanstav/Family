@@ -1,6 +1,7 @@
 import {
   CalendarDays,
   ClipboardList,
+  PawPrint,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -150,6 +151,8 @@ export function CalendarEvents({
             <span className="calendar-event-symbol" aria-hidden="true">
               {item.source?.type === "task" ? (
                 <ClipboardList size={21} />
+              ) : item.source?.type === "pet_entry" ? (
+                <PawPrint size={21} />
               ) : item.visibility === "family" ? (
                 <Users size={21} />
               ) : (

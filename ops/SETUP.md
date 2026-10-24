@@ -243,6 +243,8 @@ Deschide [aplicația](http://127.0.0.1:8000/app/) sau [previzualizarea mobilă](
 
 La instalarea SC1 (Sarcini în Calendar), aplică migrațiile, inclusiv `2026_10_23_232810_allow_private_task_calendar_sources.php`, apoi rulează `php -d extension=pdo_pgsql backend/artisan tasks:sync-calendar` pentru sarcinile existente, înaintea deschiderii noului build. Comanda păstrează sarcinile și se poate repeta fără duplicarea proiecțiilor; nu configurează remindere. Nu folosi seederul pentru această actualizare.
 
+La instalarea S3 și Animale, aplică `2026_10_23_235040_add_task_recurrence.php` și `2026_10_24_000128_create_pet_tables.php` înaintea noului build. Reaplică granturile runtime din `ops/grant-runtime.sql`; noile tabele sunt `pets`, `pet_entries` și `pet_documents`. Actualizarea este aditivă și nu necesită seed/reset sau animale demonstrative. Recurența este inițial oprită pentru sarcinile existente. Scadențele animalelor folosesc workerul existent `calendar:deliver-reminders`, cu notificări in-app; acest pas nu configurează email sau push nativ.
+
 ## 5. Verificare și continuare
 
 Copiază `.env` în `.env.testing`, apoi setează `APP_ENV=testing`, `DB_DATABASE=memoria_test` și `DB_ADMIN_PASSWORD` la parola administratorului local. Păstrează `DB_USERNAME=memoria_app` și parola runtime în ambele fișiere. Nu porni testele asupra bazei `memoria`: testele refac datele din baza dedicată `memoria_test`.

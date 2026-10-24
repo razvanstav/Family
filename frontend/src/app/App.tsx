@@ -13,6 +13,7 @@ import {
   MoreHorizontal,
   Search,
   Wallet,
+  PawPrint,
 } from "lucide-react";
 import {
   api,
@@ -21,6 +22,7 @@ import {
   type Session,
   type CalendarRequest,
   type VehicleRequest,
+  type PetRequest,
   type DocumentRequest,
   familyDocumentCategories,
 } from "../shared/api";
@@ -45,6 +47,7 @@ import { Memories } from "../modules/memory/Memories";
 import { Vehicles } from "../modules/vehicles/Vehicles";
 import { Expenses } from "../modules/expenses/Expenses";
 import { Tasks } from "../modules/tasks/Tasks";
+import { Pets } from "../modules/pets/Pets";
 import {
   FamilySearch,
   type SearchResult,
@@ -59,6 +62,7 @@ const pageLabels = {
   calendar: "Calendar",
   tasks: "Sarcini",
   vehicles: "Auto",
+  pets: "Animale",
 };
 
 export default function App() {
@@ -93,6 +97,7 @@ export default function App() {
     null,
   );
   const [taskTarget, setTaskTarget] = useState<string | null>(null);
+  const [petTarget, setPetTarget] = useState<PetRequest | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionNotice, setSessionNotice] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
@@ -142,6 +147,7 @@ export default function App() {
     setCalendarTarget(null);
     setVehicleTarget(null);
     setTaskTarget(null);
+    setPetTarget(null);
     setRecipeTarget(null);
     setDocumentTarget(null);
     setSearchOpen(false);
@@ -414,12 +420,17 @@ export default function App() {
           </button>
           <button
             className={
-              desktopMore || page === "calendar" || page === "tasks"
+              desktopMore ||
+              page === "calendar" ||
+              page === "tasks" ||
+              page === "pets"
                 ? "active"
                 : ""
             }
             aria-current={
-              page === "calendar" || page === "tasks" ? "page" : undefined
+              page === "calendar" || page === "tasks" || page === "pets"
+                ? "page"
+                : undefined
             }
             aria-haspopup="dialog"
             aria-expanded={desktopMore}
@@ -475,6 +486,7 @@ export default function App() {
                   setCalendarTarget(null);
                   setVehicleTarget(null);
                   setTaskTarget(null);
+                  setPetTarget(null);
                   setRecipeTarget(null);
                   setDocumentTarget(null);
                   setSearchOpen(false);
@@ -613,6 +625,16 @@ export default function App() {
                 onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
               />
+            ) : page === "pets" ? (
+              <Pets
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                userId={session.user.id}
+                requestedEntry={petTarget}
+                onEntryOpened={() => setPetTarget(null)}
+                onChanged={() => setCalendarRevision((value) => value + 1)}
+                onExpired={() => void refresh()}
+              />
             ) : page === "calendar" ? (
               <CalendarPage
                 key={`${session.user.id}:${family.id}`}
@@ -628,6 +650,10 @@ export default function App() {
                 onTask={(id) => {
                   setTaskTarget(id);
                   setPage("tasks");
+                }}
+                onPet={(target) => {
+                  setPetTarget(target);
+                  setPage("pets");
                 }}
                 onExpired={() => void refresh()}
               />
@@ -700,6 +726,17 @@ export default function App() {
             >
               <ListTodo size={22} />
               <span>Sarcini</span>
+              <ChevronRight size={18} />
+            </button>
+            <button
+              aria-current={page === "pets" ? "page" : undefined}
+              onClick={() => {
+                setDesktopMore(false);
+                setPage("pets");
+              }}
+            >
+              <PawPrint size={22} />
+              <span>Animale</span>
               <ChevronRight size={18} />
             </button>
           </nav>

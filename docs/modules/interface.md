@@ -1,5 +1,9 @@
 # Interfață comună
 
+## AN1 — Animale în Mai multe, 24 octombrie 2026
+
+**Implementat și verificat local**, la cererea explicită de a livra Animale după Sarcini recurente fără întrebări/feedback intermediar. Mai multe include Calendar/Sarcini/Animale pe desktop și Calendar/Sarcini/Amintiri/Auto/Animale/Contul meu pe mobil, cu selecție clară și pagina păstrată la schimbarea familiei. Restul navigației rămâne în ordinea CH2. Un singur layout nou folosește antetul comun cu fotografie decorativă generată, selector de animal și file stabile; profilurile reale folosesc numai fotografiile încărcate. [Scop și verificări Animale](pets.md).
+
 ## S1 — Sarcini în Mai multe, 24 octombrie 2026
 
 **Implementat și verificat local**, la cererea utilizatorului. Mai multe include Calendar și Sarcini pe desktop, iar pe mobil Calendar, Sarcini, Amintiri, Auto, Contul meu. Ordinea filelor principale rămâne CH2. App compune noua pagină, cu selecție pe Sarcini în meniu și pe Mai multe în navigație. Un singur layout nou, cu PageBackdrop și calendar românesc comun în shared; [scopul, accesul și verificările S1](tasks.md). Desktop 1280×900 și mobil 390/320 fără overflow, bife/filtre și Escape/focus verificate; build și 6 teste frontend trecute. Acceptarea vizuală așteaptă feedback.

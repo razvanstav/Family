@@ -4,7 +4,7 @@ Pornim de la aplicația locală existentă și livrăm un singur pas verificabil
 
 ## Ordinea etapelor
 
-**Prioritatea nouă — 24 octombrie 2026:** utilizatorul cere [S3 — Sarcini recurente](modules/tasks.md#s3--sarcini-recurente-24-octombrie-2026), apoi [Animale](modules/pets.md), profil/documente/îngrijire, fără întrebări sau așteptarea feedbackului între cele două. Animale va fi în Mai multe pe mobil și desktop (poziția desktop lăsată la alegere). Lucrăm secvențial pe module, cu verificări și MD după fiecare; commit/push la final, fără deploy.
+**Prioritatea finalizată — 24 octombrie 2026:** [S3 — Sarcini recurente](modules/tasks.md#s3--sarcini-recurente-24-octombrie-2026), apoi [Animale AN1–AN4 in-app](modules/pets.md), implementate și verificate local. Recurență cu ancore și succesor unic; profil/fotografie, greutate/îngrijire, documente autorizate și Calendar/remindere. Animale este în Mai multe pe mobil și desktop. Migrațiile păstrează datele existente. Verificări și limite în fișele modulelor; utilizatorul a autorizat livrarea fără întrebări/feedback intermediar și push la final, fără deploy.
 
 **Prioritatea nouă — 24 octombrie 2026:** [SC1 — Sarcini în Calendar](modules/tasks.md#sc1--sarcini-în-calendar-24-octombrie-2026), cerut explicit după S2, cu commit și push. Implementat și verificat local: sarcini nefinalizate cu termen, deschidere directă, acces și drepturi păstrate, sincronizare atomică/reconciliere. 75 teste backend/980 aserțiuni, 23 teste frontend, build și browser desktop/mobil trecute; fără remindere/recurențe ori deploy. Așteaptă feedback vizual.
 

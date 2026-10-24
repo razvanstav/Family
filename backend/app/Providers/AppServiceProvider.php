@@ -28,6 +28,7 @@ use App\Modules\Memory\Application\MomentSearch;
 use App\Modules\Memory\Application\RecentMoments;
 use App\Modules\Memory\Application\TimelineProjection;
 use App\Modules\Memory\Contracts\MomentSummaries;
+use App\Modules\Pets\Application\PetDeadlineSource;
 use App\Modules\Tasks\Application\TaskDeadlineSource;
 use App\Modules\Vehicles\Application\VehicleDeadlineSource;
 use App\Platform\Contracts\Outbox;
@@ -57,7 +58,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(Birthdays::class, BirthdayCalendar::class);
         $this->app->bind(BirthdaySource::class, FamilyBirthdaySource::class);
         $this->app->bind(FamilySearch::class, fn ($app) => new FamilySearch([$app->make(DocumentSearch::class), $app->make(MomentSearch::class), $app->make(RecipeSearch::class)]));
-        $this->app->bind(CalendarSources::class, fn ($app) => new CalendarSources([$app->make(VehicleDeadlineSource::class), $app->make(FamilyBirthdaySource::class), $app->make(TaskDeadlineSource::class)]));
+        $this->app->bind(CalendarSources::class, fn ($app) => new CalendarSources([$app->make(VehicleDeadlineSource::class), $app->make(FamilyBirthdaySource::class), $app->make(TaskDeadlineSource::class), $app->make(PetDeadlineSource::class)]));
         $this->app->bind(Scanner::class, ClamAvScanner::class);
         $this->app->bind(PrivateMedia::class, LocalPrivateMedia::class);
         $this->app->bind(Recipes::class, RecipeCatalog::class);

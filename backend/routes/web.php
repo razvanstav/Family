@@ -11,6 +11,7 @@ use App\Modules\Kitchen\Http\MealController;
 use App\Modules\Kitchen\Http\RecipeController;
 use App\Modules\Memory\Http\MomentController;
 use App\Modules\Memory\Http\TimelineController;
+use App\Modules\Pets\Http\PetController;
 use App\Modules\Tasks\Http\TaskController;
 use App\Modules\Vehicles\Http\VehicleController;
 use App\Platform\Families\FamilyController;
@@ -51,6 +52,25 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::post('/invitation-codes', [InvitationCodeController::class, 'store'])->middleware('throttle:20,1');
         Route::delete('/invitation-codes/{invitationCode}', [InvitationCodeController::class, 'revoke'])->whereUuid('invitationCode');
         Route::get('/vehicles', [VehicleController::class, 'index']);
+        Route::get('/pets', [PetController::class, 'index']);
+        Route::post('/pets', [PetController::class, 'store'])->middleware('throttle:20,1');
+        Route::prefix('/pets/{pet}')->whereUuid('pet')->group(function () {
+            Route::get('/', [PetController::class, 'show']);
+            Route::patch('/', [PetController::class, 'update'])->middleware('throttle:60,1');
+            Route::post('/archive', [PetController::class, 'archive'])->middleware('throttle:60,1');
+            Route::get('/photo', [PetController::class, 'photo']);
+            Route::post('/photo', [PetController::class, 'uploadPhoto'])->middleware('throttle:20,1');
+            Route::post('/photo/retry', [PetController::class, 'retryPhoto'])->middleware('throttle:10,1');
+            Route::get('/entries', [PetController::class, 'entries']);
+            Route::post('/entries', [PetController::class, 'storeEntry'])->middleware('throttle:60,1');
+            Route::get('/entries/{entry}', [PetController::class, 'showEntry'])->whereUuid('entry');
+            Route::patch('/entries/{entry}', [PetController::class, 'updateEntry'])->whereUuid('entry')->middleware('throttle:60,1');
+            Route::post('/entries/{entry}/archive', [PetController::class, 'archiveEntry'])->whereUuid('entry')->middleware('throttle:60,1');
+            Route::patch('/entries/{entry}/completion', [PetController::class, 'completeEntry'])->whereUuid('entry')->middleware('throttle:60,1');
+            Route::get('/documents', [PetController::class, 'documents']);
+            Route::post('/documents', [PetController::class, 'linkDocument'])->middleware('throttle:60,1');
+            Route::delete('/documents/{document}', [PetController::class, 'unlinkDocument'])->whereUuid('document')->middleware('throttle:60,1');
+        });
         Route::post('/vehicles', [VehicleController::class, 'store'])->middleware('throttle:20,1');
         Route::prefix('/vehicles/{vehicle}')->whereUuid('vehicle')->group(function () {
             Route::get('/', [VehicleController::class, 'show']);

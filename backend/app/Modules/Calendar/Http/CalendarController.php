@@ -151,6 +151,7 @@ final class CalendarController
         abort_if($item->source_type !== null, 409, match ($item->source_type) {
             'birthday' => 'Modifică data nașterii din profil.',
             'task' => 'Modifică termenul din Sarcini.',
+            'pet_entry' => 'Modifică scadența din înregistrarea de îngrijire a animalului.',
             default => 'Modifică scadența din înregistrarea Auto.',
         });
         abort_unless($item->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited', 403, 'Doar autorul poate modifica acest eveniment.');

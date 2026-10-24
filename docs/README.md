@@ -8,12 +8,12 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | Familie    | FS1: profil cu cronologie, realizări și arbore genealogic cu rude fără cont, verificat local; așteaptă feedback                                                        | [Familie](modules/families.md)    |
 | Cheltuieli | CH1 implementat și verificat local: pagină principală cu adăugare rapidă/evidență lunară, Familie/Personale, exemple Popescu și calendar românesc; CH2 verificat local | [Cheltuieli](modules/expenses.md) |
-| Sarcini    | S1 acceptat; S2 verificat; SC1 Sarcini în Calendar cu deschidere directă, acces păstrat și verificări desktop/mobil; așteaptă feedback                                 | [Sarcini](modules/tasks.md)       |
+| Sarcini    | S3 recurențe zilnice/săptămânale/lunare/anuale și SC1 Calendar cu deschidere directă, acces păstrat; implementate și verificate local                                  | [Sarcini](modules/tasks.md)       |
 | Documente  | În Familia mea → Documente; dosare pe persoană și comune, cu upload/acces/descărcare existente                                                                         | [Documente](modules/documents.md) |
 | Bucătărie  | Rețete, versiuni, mese, vot și acces implementate; KH1 mobil pregătit pentru feedback                                                                                  | [Bucătărie](modules/kitchen.md)   |
 | Amintiri   | MH2 album pe ani și În ziua asta implementat și verificat local, așteaptă feedback; acceptarea AM1–AM3 rămâne deschisă                                                 | [Amintiri](modules/memory.md)     |
-| Calendar   | C1/C3/CH1 existente; VC1 scadențe Auto și BC1 aniversări cu activare explicită și reminder personal, verificate local                                                  | [Calendar](modules/calendar.md)   |
-| Animale    | Planificat; fără implementare de produs                                                                                                                                | [Animale](modules/pets.md)        |
+| Calendar   | C1/C3/CH1, VC1 Auto, BC1 aniversări, SC1 Sarcini și AN3 scadențe Animale cu deschidere directă și remindere in-app verificate                                          | [Calendar](modules/calendar.md)   |
+| Animale    | AN1–AN4 in-app: profil/fotografie, greutate/îngrijire, documente autorizate și scadențe Calendar; verificat local, fără email                                          | [Animale](modules/pets.md)        |
 | Vehicule   | Auto V1a existent; VC1 leagă scadențele de Calendar și notificări in-app, verificat local                                                                              | [Vehicule](modules/vehicles.md)   |
 
 ## Servicii și funcții comune

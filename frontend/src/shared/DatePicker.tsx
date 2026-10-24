@@ -24,12 +24,14 @@ export function DatePicker({
   name = "date",
   dialogLabel = "Alege data",
   optional = false,
+  emptyLabel = "Fără termen",
 }: {
   value: string;
   label?: string;
   name?: string;
   dialogLabel?: string;
   optional?: boolean;
+  emptyLabel?: string;
   onChange: (date: string) => void;
 }) {
   const id = useId();
@@ -140,7 +142,7 @@ export function DatePicker({
                 month: "short",
                 year: "numeric",
               })
-            : "Fără termen"}
+            : emptyLabel}
         </span>
         <CalendarDays size={18} aria-hidden="true" />
       </button>
@@ -233,7 +235,7 @@ export function DatePicker({
                 type="button"
                 onClick={() => choose("")}
               >
-                Fără termen
+                {emptyLabel}
               </button>
             )}
             <button

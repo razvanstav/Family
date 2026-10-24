@@ -18,6 +18,7 @@ import {
   type Family,
   type CalendarRequest,
   type VehicleRequest,
+  type PetRequest,
   visibilityLabel,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
@@ -43,6 +44,7 @@ export function CalendarPage({
   onChanged,
   onVehicle,
   onTask,
+  onPet,
   onExpired,
 }: {
   family: Family;
@@ -52,6 +54,7 @@ export function CalendarPage({
   onChanged: () => void;
   onVehicle: (target: VehicleRequest) => void;
   onTask: (id: string) => void;
+  onPet: (target: PetRequest) => void;
   onExpired: () => void;
 }) {
   const today = bucharestToday();
@@ -201,6 +204,8 @@ export function CalendarPage({
   function openItem(id: string) {
     const item = items.find((event) => event.id === id);
     if (item?.source?.type === "task") onTask(item.source.id);
+    else if (item?.source?.type === "pet_entry")
+      onPet({ petId: item.source.parent_id, entryId: item.source.id });
     else setEditor(id);
   }
   return (
@@ -459,6 +464,7 @@ export function CalendarPage({
           onSaved={saved}
           onVehicle={onVehicle}
           onTask={onTask}
+          onPet={onPet}
           onUnavailable={() => {
             setEditor(null);
             setRevision((value) => value + 1);
@@ -481,6 +487,7 @@ function EventEditor({
   onUnavailable,
   onVehicle,
   onTask,
+  onPet,
 }: {
   familyId: string;
   userId: number;
@@ -493,6 +500,7 @@ function EventEditor({
   onUnavailable: () => void;
   onVehicle: (target: VehicleRequest) => void;
   onTask: (id: string) => void;
+  onPet: (target: PetRequest) => void;
 }) {
   const [item, setItem] = useState<CalendarItem | null>(initialItem);
   const [loading, setLoading] = useState(id !== "new" && !initialItem);
@@ -524,6 +532,13 @@ function EventEditor({
       onTask(initialItem.source.id);
       return;
     }
+    if (initialItem?.source?.type === "pet_entry") {
+      onPet({
+        petId: initialItem.source.parent_id,
+        entryId: initialItem.source.id,
+      });
+      return;
+    }
     if (id === "new" || (initialItem && attempt === 0)) return;
     let active = true;
     setLoading(true);
@@ -535,6 +550,10 @@ function EventEditor({
         if (!active) return;
         if (data.source?.type === "task") {
           onTask(data.source.id);
+          return;
+        }
+        if (data.source?.type === "pet_entry") {
+          onPet({ petId: data.source.parent_id, entryId: data.source.id });
           return;
         }
         setItem(data);
@@ -806,7 +825,9 @@ function EventEditor({
                       ? " · Zi de naștere"
                       : item.source?.type === "task"
                         ? " · Sarcină"
-                        : ` · ${item.owner_name}`}
+                        : item.source?.type === "pet_entry"
+                          ? " · Animale"
+                          : ` · ${item.owner_name}`}
                 </p>
                 {item.notes && <p className="calendar-notes">{item.notes}</p>}
                 {item.archived_at && (

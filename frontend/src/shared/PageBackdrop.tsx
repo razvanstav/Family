@@ -10,6 +10,7 @@ const images = {
   calendar: new URL("../assets/categories/personal.webp", import.meta.url).href,
   vehicles: new URL("../assets/headers/header-vehicles.png", import.meta.url)
     .href,
+  pets: new URL("../assets/headers/header-pets.png", import.meta.url).href,
 };
 
 export function PageBackdrop({

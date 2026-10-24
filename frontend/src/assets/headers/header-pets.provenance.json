@@ -1,0 +1,8 @@
+{
+  "asset": "header-pets.png",
+  "generator": "OpenAI built-in image_gen",
+  "generated_on": "2026-10-24",
+  "dimensions": [2164, 727],
+  "purpose": "Decorative photographic header for the Pets page. The generic animal is not presented as an actual family pet. CSS supplies the shared fade; profile photos remain user uploads.",
+  "prompt": "Use case: photorealistic-natural. Asset type: decorative wide header photograph for the Animale section of a Romanian family organizer app. A warm, quiet pet corner at home, naturally photographed in soft morning window light. A relaxed golden-brown dog resting beside a light cream woven pet bed, a soft sage blanket and a small ceramic bowl in a modest cozy family living room. No humans. Panoramic 3:1 landscape; calm cream wall and uncluttered negative space on the left for the UI title; dog and bed on the right, with enough space for a shallow 130 px header crop. Soft photographic depth of field, natural fur and linen textures, warm ivory, muted sage and pale oak. Low contrast, gentle airy atmosphere for fading behind dark green UI text. Decorative generic scene, not an identified family pet. No text, logos, writing on collars, watermark, borders, medical imagery or UI; photographic, not an illustration."
+}

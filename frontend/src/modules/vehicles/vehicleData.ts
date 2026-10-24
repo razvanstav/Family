@@ -57,12 +57,7 @@ export type VehicleDocument = {
   mime: string;
   status: PhotoStatus;
 };
-export const money = (value: string) =>
-  new Intl.NumberFormat("ro-RO", {
-    style: "currency",
-    currency: "RON",
-    maximumFractionDigits: 2,
-  }).format(Number(value));
+export { money } from "../../shared/numbers";
 export function dueLabel(date: string): { text: string; overdue: boolean } {
   const days = Math.round(
     (Date.parse(`${date}T12:00:00Z`) -

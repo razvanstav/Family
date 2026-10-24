@@ -50,6 +50,7 @@ final class ModuleBoundariesTest extends TestCase
             '<?php DB::select("SELECT * FROM calendar_items");',
             '<?php DB::table("expenses")->get();',
             '<?php DB::table("family_tasks")->get();',
+            '<?php DB::table("pet_entries")->get();',
         ] as $source) {
             $this->assertNotEmpty($this->violations('Modules/Vehicles/Http/Controller.php', $source));
             $this->assertNotEmpty($this->violations('Platform/Families/Controller.php', $source));
@@ -116,7 +117,7 @@ final class ModuleBoundariesTest extends TestCase
     private function tableOwner(string $table): ?string
     {
         foreach (['Documents' => ['documents', 'document_'], 'Kitchen' => ['recipes', 'recipe_', 'meals', 'meal_', 'kitchen_'],
-            'Memory' => ['memory_'], 'Calendar' => ['calendar_', 'birthday_reminder_'], 'Vehicles' => ['vehicles', 'vehicle_'], 'Expenses' => ['expenses'], 'Tasks' => ['family_tasks']] as $owner => $prefixes) {
+            'Memory' => ['memory_'], 'Calendar' => ['calendar_', 'birthday_reminder_'], 'Vehicles' => ['vehicles', 'vehicle_'], 'Expenses' => ['expenses'], 'Tasks' => ['family_tasks'], 'Pets' => ['pets', 'pet_']] as $owner => $prefixes) {
             foreach ($prefixes as $prefix) {
                 if (str_ends_with($prefix, '_') ? str_starts_with($table, $prefix) : $table === $prefix) {
                     return $owner;

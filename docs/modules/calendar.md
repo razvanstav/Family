@@ -1,5 +1,7 @@
 # Calendar
 
+**AN3/AN4, 24 octombrie 2026:** [Animale](pets.md) publică următoarea scadență prin sursa pet_entry și deschide direct înregistrarea de îngrijire. Data istorică, scadența și încheierea ei sunt distincte; modificarea, arhivarea și restaurarea sincronizează atomic Calendar și reminderele in-app. Sursa canonică se reverifică la listare/livrare. Integrarea folosește numai contractele DeadlineSource/SourceItems și callbackul PetRequest compus în App. 87 teste backend/934 aserțiuni și 28 frontend, build și browser desktop/390/320 trecute; limitele sunt în fișa Animale. Emailul nu este inclus.
+
 **SC1, 24 octombrie 2026:** [Sarcinile nefinalizate cu termen](tasks.md#sc1--sarcini-în-calendar-24-octombrie-2026) apar în Lună/Săptămână/Agendă și se deschid direct în Sarcini. Accesul personal rămâne exclusiv autorului; termenul/finalizarea/ștergerea sincronizează proiecția în aceeași tranzacție. Fără remindere noi sau schimbarea agendei Acasă. Implementat și verificat local; rezultatele și limitele sunt în fișa Sarcini.
 
 **P1a.3/3b, 24 octombrie 2026:** consumatorii externi folosesc `Contracts/Overview`, `SourceItems` și `Birthdays`; Calendar primește sursa Familiei prin `BirthdaySource extends DeadlineSource`. Implementările sunt legate în `AppServiceProvider`. Payloadurile, sursele, tranzacțiile și reminderele sunt păstrate. [Regresie și limite P1a](platform.md#p1a3--contracte-backend-și-ownership-verificat-la-24-octombrie-2026).

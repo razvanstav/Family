@@ -13,7 +13,7 @@ export type CalendarItem = {
   version: number;
   archived_at: string | null;
   source: {
-    type: "vehicle_entry" | "birthday" | "task";
+    type: "vehicle_entry" | "birthday" | "task" | "pet_entry";
     id: string;
     parent_id: string;
   } | null;
