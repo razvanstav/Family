@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Configure SSH
         env:
@@ -72,12 +72,18 @@ jobs:
       - name: Verify public HTTPS
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error \
-            --retry 5 --retry-delay 3 \
-            https://family.meai.ro/up -o /dev/null
-
-          curl --fail --silent --show-error \
-            --retry 5 --retry-delay 3 \
-            https://family.meai.ro/app/ -o /dev/null
-
+          for path in /up /app/; do
+            echo "Checking $path"
+            curl \
+              --retry 5 \
+              --retry-delay 3 \
+              --retry-all-errors \
+              --fail-with-body \
+              --silent \
+              --show-error \
+              --output /dev/null \
+              --write-out "HTTP %{http_code}\n" \
+              "https://family.meai.ro${path}"
+          done
+         
           echo "Family staging deployed successfully"
