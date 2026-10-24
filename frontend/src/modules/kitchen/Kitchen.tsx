@@ -42,7 +42,7 @@ export function Kitchen({
 }) {
   const base = `/families/${family.id}/recipes`;
   const [section, setSection] = useState<"recipes" | "meals">(
-    requestedMeal ? "meals" : "recipes",
+    requestedMeal || !requestedRecipe ? "meals" : "recipes",
   );
   const [mealTarget, setMealTarget] = useState<Recipe | null>(null);
   const [items, setItems] = useState<Recipe[]>([]);
