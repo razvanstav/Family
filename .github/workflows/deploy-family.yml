@@ -1,9 +1,11 @@
+
 name: Deploy Family Staging
 
 on:
   push:
     branches:
       - codex/documente-design
+
   workflow_dispatch:
 
 permissions:
@@ -15,25 +17,48 @@ concurrency:
 
 jobs:
   deploy:
+    name: Deploy Family
     runs-on: ubuntu-24.04
     timeout-minutes: 30
 
     steps:
-      - name: Checkout
+      # 1. Download repository
+      - name: Checkout repository
         uses: actions/checkout@v5
 
+      # 2. Configure secure SSH connection
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
           KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
         run: |
           set -euo pipefail
+
           install -d -m 700 ~/.ssh
+
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
+
           printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+      # 3. Verify SSH connection
+      - name: Test SSH connection
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          set -euo pipefail
+
+          ssh \
+            -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=15 \
+            "$SERVER_USER@$SERVER_HOST" \
+            'echo "SSH connection successful"'
+
+      # 4. Synchronize only source files
       - name: Synchronize source
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -41,8 +66,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          rsync -az --delete --delete-delay \
-            --no-owner --no-group --no-perms \
+          rsync -az \
+            --delete \
+            --delete-delay \
+            --no-owner \
+            --no-group \
+            --no-perms \
+            --omit-dir-times \
             --exclude='/.git/' \
             --exclude='/.github/' \
             --exclude='/.dockerignore' \
@@ -55,35 +85,97 @@ jobs:
             --exclude='backend/public/app/' \
             --exclude='frontend/dist/' \
             -e 'ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes' \
-            ./ "$SERVER_USER@$SERVER_HOST:/srv/family/source/"
+            ./ \
+            "$SERVER_USER@$SERVER_HOST:/srv/family/source/"
 
+          echo "Source synchronization completed"
+
+      # 5. Build containers and apply migrations
       - name: Build and deploy on server
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/id_ed25519 \
+
+          ssh \
+            -i ~/.ssh/id_ed25519 \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "$SERVER_USER@$SERVER_HOST" \
             'sudo -n /srv/family/deploy/deploy.sh'
 
+          echo "Docker deployment completed"
+
+      # 6. Verify application through local reverse proxy
+      - name: Verify application on server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          set -euo pipefail
+
+          ssh \
+            -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$SERVER_USER@$SERVER_HOST" \
+            'for path in /up /app/; do
+              code=$(curl -sS -o /dev/null -w "%{http_code}" \
+                "http://127.0.0.1:8085${path}")
+              echo "Local ${path}: HTTP ${code}"
+              test "$code" = "200" || exit 1
+            done'
+
+      # 7. Verify public HTTPS through Cloudflare
       - name: Verify public HTTPS
         run: |
           set -euo pipefail
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
           for path in /up /app/; do
-            echo "Checking $path"
-            curl \
-              --retry 5 \
-              --retry-delay 3 \
-              --retry-all-errors \
-              --fail-with-body \
+            url="https://family.meai.ro${path}"
+
+            echo "Checking $url"
+
+            if code=$(curl \
               --silent \
               --show-error \
-              --output /dev/null \
-              --write-out "HTTP %{http_code}\n" \
-              "https://family.meai.ro${path}"
+              --location \
+              --retry 3 \
+              --retry-delay 3 \
+              --retry-all-errors \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --output "$response_file" \
+              --write-out '%{http_code}' \
+              "$url"); then
+              echo "HTTP $code"
+            else
+              echo "HTTPS connection failed for $path"
+              exit 1
+            fi
+
+            if [ "$code" != "200" ]; then
+              echo "Unexpected HTTP status: $code"
+              echo "Response headers:"
+              curl -sS -I --max-time 15 "$url" \
+                | grep -iE '^(HTTP/|server:|cf-ray:|location:|content-type:)' \
+                || true
+              exit 1
+            fi
           done
-         
-          echo "Family staging deployed successfully"
+
+          echo "Public HTTPS verification successful"
+
+      # 8. Final result
+      - name: Deployment completed
+        run: |
+          echo "===================================="
+          echo " Family Staging - DEPLOY SUCCESS"
+          echo "===================================="
+          echo "Commit: $GITHUB_SHA"
+          echo "Branch: $GITHUB_REF_NAME"
+          echo "URL: https://family.meai.ro/app/"
