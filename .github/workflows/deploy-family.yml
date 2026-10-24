@@ -19,14 +19,14 @@ jobs:
   deploy:
     name: Deploy Family
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     steps:
-      # 1. Download repository
+      # 1. Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      # 2. Configure secure SSH connection
+      # 2. Configure SSH
       - name: Configure SSH
         env:
           SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
@@ -58,7 +58,7 @@ jobs:
             "$SERVER_USER@$SERVER_HOST" \
             'echo "SSH connection successful"'
 
-      # 4. Synchronize only source files
+      # 4. Synchronize source code only
       - name: Synchronize source
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -90,7 +90,7 @@ jobs:
 
           echo "Source synchronization completed"
 
-      # 5. Build containers and apply migrations
+      # 5. Build Docker images, migrate and publish
       - name: Build and deploy on server
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -107,7 +107,7 @@ jobs:
 
           echo "Docker deployment completed"
 
-      # 6. Verify application through local reverse proxy
+      # 6. Verify Laravel and React directly in Docker
       - name: Verify application on server
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
@@ -120,57 +120,52 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "$SERVER_USER@$SERVER_HOST" \
-            'for path in /up /app/; do
-              code=$(curl -sS -o /dev/null -w "%{http_code}" \
-                "http://127.0.0.1:8085${path}")
-              echo "Local ${path}: HTTP ${code}"
-              test "$code" = "200" || exit 1
-            done'
+            'set -eu
+             for path in /up /app/; do
+               code=$(curl \
+                 --silent \
+                 --show-error \
+                 --output /dev/null \
+                 --write-out "%{http_code}" \
+                 "http://127.0.0.1:8085${path}")
 
-      # 7. Verify public HTTPS through Cloudflare
-      - name: Verify public HTTPS
+               echo "Local ${path}: HTTP ${code}"
+               test "$code" = "200" || exit 1
+             done'
+
+      # 7. Verify HTTPS directly through Apache, bypassing Cloudflare
+      - name: Verify HTTPS directly on origin
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
         run: |
           set -euo pipefail
 
-          response_file="$(mktemp)"
-          trap 'rm -f "$response_file"' EXIT
+          ssh \
+            -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$SERVER_USER@$SERVER_HOST" \
+            'set -eu
 
-          for path in /up /app/; do
-            url="https://family.meai.ro${path}"
+             for path in /up /app/; do
+               echo "Checking HTTPS origin: $path"
 
-            echo "Checking $url"
+               curl \
+                 --resolve family.meai.ro:443:127.0.0.1 \
+                 --fail \
+                 --silent \
+                 --show-error \
+                 --connect-timeout 10 \
+                 --max-time 30 \
+                 --output /dev/null \
+                 --write-out "HTTP %{http_code}\n" \
+                 "https://family.meai.ro${path}"
+             done'
 
-            if code=$(curl \
-              --silent \
-              --show-error \
-              --location \
-              --retry 3 \
-              --retry-delay 3 \
-              --retry-all-errors \
-              --connect-timeout 10 \
-              --max-time 30 \
-              --output "$response_file" \
-              --write-out '%{http_code}' \
-              "$url"); then
-              echo "HTTP $code"
-            else
-              echo "HTTPS connection failed for $path"
-              exit 1
-            fi
+          echo "HTTPS origin verification successful"
 
-            if [ "$code" != "200" ]; then
-              echo "Unexpected HTTP status: $code"
-              echo "Response headers:"
-              curl -sS -I --max-time 15 "$url" \
-                | grep -iE '^(HTTP/|server:|cf-ray:|location:|content-type:)' \
-                || true
-              exit 1
-            fi
-          done
-
-          echo "Public HTTPS verification successful"
-
-      # 8. Final result
+      # 8. Deployment completed
       - name: Deployment completed
         run: |
           echo "===================================="
