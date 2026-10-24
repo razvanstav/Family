@@ -5,7 +5,7 @@ export type Family = {
   role: "owner" | "adult" | "limited";
 };
 export type Session = {
-  user: { id: number; name: string; email: string } | null;
+  user: { id: number; name: string; email: string; is_admin: boolean } | null;
   families: Family[];
   csrf_token: string;
   demo: boolean;

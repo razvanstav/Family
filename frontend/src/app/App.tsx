@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
-  Heart,
   House,
   CalendarDays,
   ListTodo,
@@ -14,6 +13,7 @@ import {
   Search,
   Wallet,
   PawPrint,
+  Settings,
 } from "lucide-react";
 import {
   api,
@@ -32,6 +32,11 @@ import { AcceptInvitation } from "../modules/families/AcceptInvitation";
 import { MobileNavigation } from "./MobileNavigation";
 import { AccountDialog } from "./AccountDialog";
 import { AuthEntry, type AuthMode } from "./AuthEntry";
+import { Brand } from "../shared/Brand";
+import {
+  Administration,
+  type AdministrationMemory,
+} from "../modules/administration/Administration";
 import { UserAvatar } from "../shared/UserAvatar";
 import type { Profile } from "../modules/families/profileData";
 import { SectionTabs } from "../shared/SectionTabs";
@@ -63,11 +68,12 @@ const pageLabels = {
   tasks: "Sarcini",
   vehicles: "Auto",
   pets: "Animale",
+  admin: "Administrare",
 };
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [authMode, setAuthMode] = useState<AuthMode>("register");
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [familyId, setFamilyId] = useState("");
   const [error, setError] = useState("");
   const [page, setPage] = useState<keyof typeof pageLabels>("home");
@@ -103,12 +109,17 @@ export default function App() {
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [logoutError, setLogoutError] = useState("");
   const sessionRevision = useRef(0);
+  const adminMemory = useRef<AdministrationMemory>({ section: "overview" });
   const knownActor = useRef<number | null>(null);
   const sessionChannel = useRef<BroadcastChannel | null>(null);
   const sessionRequest = useRef<Promise<void> | null>(null);
   const [invitation, setInvitation] = useState(() =>
     new URLSearchParams(window.location.hash.slice(1)).get("invite"),
   );
+  useEffect(() => {
+    if (session?.user && !session.user.is_admin && page === "admin")
+      setPage("home");
+  }, [session?.user?.is_admin, page]);
   useEffect(() => {
     const changed = () =>
       setInvitation(
@@ -126,7 +137,7 @@ export default function App() {
     return () => mobile.removeEventListener("change", close);
   }, []);
   useEffect(() => {
-    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? (authMode === "register" ? "Creează cont" : "Autentificare") : page === "family" && familySection === "documents" ? "Documente · Familia mea" : pageLabels[page]} · Memoria Familiei`;
+    document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? (authMode === "register" ? "Creează cont" : "Autentificare") : page === "family" && familySection === "documents" ? "Documente · Familia mea" : pageLabels[page]} · ${!session?.user && !invitation ? "Amora" : "Memoria Familiei"}`;
   }, [
     page,
     familySection,
@@ -138,11 +149,13 @@ export default function App() {
   function acceptSession(data: Session) {
     setDesktopMore(false);
     sessionRevision.current++;
+    if (knownActor.current !== (data.user?.id ?? null) || !data.user?.is_admin)
+      adminMemory.current = { section: "overview" };
     knownActor.current = data.user?.id ?? null;
     setSession(data);
     if (!data.user) setAuthMode("login");
     setFamilyId(data.families[0]?.id ?? "");
-    setPage("home");
+    setPage(data.user?.is_admin ? "admin" : "home");
     setFamilySection("members");
     setCalendarTarget(null);
     setVehicleTarget(null);
@@ -172,6 +185,13 @@ export default function App() {
           setSessionNotice(true);
           setAuthMode("login");
         }
+        if (
+          knownActor.current !== (data.user?.id ?? null) ||
+          !data.user?.is_admin
+        )
+          adminMemory.current = { section: "overview" };
+        if (knownActor.current !== (data.user?.id ?? null))
+          setPage(data.user?.is_admin ? "admin" : "home");
         knownActor.current = data.user?.id ?? null;
         setSession(data);
         setProfileRevision((value) => value + 1);
@@ -222,6 +242,7 @@ export default function App() {
         }
       };
     const unsubscribe = onSessionInvalidated(() => {
+      adminMemory.current = { section: "overview" };
       setSessionNotice(true);
       sessionRequest.current = null;
       void refresh();
@@ -300,7 +321,6 @@ export default function App() {
   if (!session.user)
     return (
       <AuthEntry
-        brand={<Brand />}
         mode={authMode}
         demo={session.demo}
         expired={sessionNotice}
@@ -351,98 +371,121 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <Brand />
-        <div className="sidebar-family">
-          <span className="family-symbol">
-            <Users size={23} aria-hidden="true" />
-          </span>
-          <strong>{family?.name ?? "Familia ta"}</strong>
-        </div>
-        <nav aria-label="Navigație principală">
-          <button
-            className={page === "home" ? "active" : ""}
-            aria-current={page === "home" ? "page" : undefined}
-            onClick={() => setPage("home")}
-          >
-            <span className="nav-symbol nav-symbol-home" aria-hidden="true">
-              <House size={21} />
+        {family && (
+          <div className="sidebar-family">
+            <span className="family-symbol">
+              <Users size={23} aria-hidden="true" />
             </span>
-            Acasă
-          </button>
-          <button
-            className={page === "family" ? "active" : ""}
-            aria-current={page === "family" ? "page" : undefined}
-            onClick={() => setPage("family")}
-          >
-            <span className="nav-symbol nav-symbol-family" aria-hidden="true">
-              <Users size={21} />
-            </span>
-            Familia mea
-          </button>
-          <button
-            className={page === "kitchen" ? "active" : ""}
-            aria-current={page === "kitchen" ? "page" : undefined}
-            onClick={() => setPage("kitchen")}
-          >
-            <span className="nav-symbol nav-symbol-kitchen" aria-hidden="true">
-              <UtensilsCrossed size={21} />
-            </span>
-            Bucătărie
-          </button>
-          <button
-            className={page === "memory" ? "active" : ""}
-            aria-current={page === "memory" ? "page" : undefined}
-            onClick={() => setPage("memory")}
-          >
-            <span className="nav-symbol nav-symbol-memory" aria-hidden="true">
-              <BookHeart size={21} />
-            </span>
-            Amintiri
-          </button>
-          <button
-            className={page === "expenses" ? "active" : ""}
-            aria-current={page === "expenses" ? "page" : undefined}
-            onClick={() => setPage("expenses")}
-          >
-            <span className="nav-symbol nav-symbol-expenses" aria-hidden="true">
-              <Wallet size={21} />
-            </span>
-            Cheltuieli
-          </button>
-          <button
-            className={page === "vehicles" ? "active" : ""}
-            aria-current={page === "vehicles" ? "page" : undefined}
-            onClick={() => setPage("vehicles")}
-          >
-            <span className="nav-symbol nav-symbol-vehicles" aria-hidden="true">
-              <CarFront size={21} />
-            </span>
-            Auto
-          </button>
-          <button
-            className={
-              desktopMore ||
-              page === "calendar" ||
-              page === "tasks" ||
-              page === "pets"
-                ? "active"
-                : ""
-            }
-            aria-current={
-              page === "calendar" || page === "tasks" || page === "pets"
-                ? "page"
-                : undefined
-            }
-            aria-haspopup="dialog"
-            aria-expanded={desktopMore}
-            onClick={() => setDesktopMore(true)}
-          >
-            <span className="nav-symbol" aria-hidden="true">
-              <MoreHorizontal size={21} />
-            </span>
-            Mai multe
-          </button>
-        </nav>
+            <strong>{family?.name ?? "Familia ta"}</strong>
+          </div>
+        )}
+        {session.families.length > 0 && (
+          <nav aria-label="Navigație principală">
+            <button
+              className={page === "home" ? "active" : ""}
+              aria-current={page === "home" ? "page" : undefined}
+              onClick={() => setPage("home")}
+            >
+              <span className="nav-symbol nav-symbol-home" aria-hidden="true">
+                <House size={21} />
+              </span>
+              Acasă
+            </button>
+            <button
+              className={page === "family" ? "active" : ""}
+              aria-current={page === "family" ? "page" : undefined}
+              onClick={() => setPage("family")}
+            >
+              <span className="nav-symbol nav-symbol-family" aria-hidden="true">
+                <Users size={21} />
+              </span>
+              Familia mea
+            </button>
+            <button
+              className={page === "kitchen" ? "active" : ""}
+              aria-current={page === "kitchen" ? "page" : undefined}
+              onClick={() => setPage("kitchen")}
+            >
+              <span
+                className="nav-symbol nav-symbol-kitchen"
+                aria-hidden="true"
+              >
+                <UtensilsCrossed size={21} />
+              </span>
+              Bucătărie
+            </button>
+            <button
+              className={page === "memory" ? "active" : ""}
+              aria-current={page === "memory" ? "page" : undefined}
+              onClick={() => setPage("memory")}
+            >
+              <span className="nav-symbol nav-symbol-memory" aria-hidden="true">
+                <BookHeart size={21} />
+              </span>
+              Amintiri
+            </button>
+            <button
+              className={page === "expenses" ? "active" : ""}
+              aria-current={page === "expenses" ? "page" : undefined}
+              onClick={() => setPage("expenses")}
+            >
+              <span
+                className="nav-symbol nav-symbol-expenses"
+                aria-hidden="true"
+              >
+                <Wallet size={21} />
+              </span>
+              Cheltuieli
+            </button>
+            <button
+              className={page === "vehicles" ? "active" : ""}
+              aria-current={page === "vehicles" ? "page" : undefined}
+              onClick={() => setPage("vehicles")}
+            >
+              <span
+                className="nav-symbol nav-symbol-vehicles"
+                aria-hidden="true"
+              >
+                <CarFront size={21} />
+              </span>
+              Auto
+            </button>
+            <button
+              className={
+                desktopMore ||
+                page === "calendar" ||
+                page === "tasks" ||
+                page === "pets"
+                  ? "active"
+                  : ""
+              }
+              aria-current={
+                page === "calendar" || page === "tasks" || page === "pets"
+                  ? "page"
+                  : undefined
+              }
+              aria-haspopup="dialog"
+              aria-expanded={desktopMore}
+              onClick={() => setDesktopMore(true)}
+            >
+              <span className="nav-symbol" aria-hidden="true">
+                <MoreHorizontal size={21} />
+              </span>
+              Mai multe
+            </button>
+          </nav>
+        )}
         <div className="sidebar-bottom">
+          {session.user.is_admin && (
+            <button
+              className="sidebar-admin"
+              aria-current={page === "admin" ? "page" : undefined}
+              onClick={() => setPage("admin")}
+            >
+              <Settings size={20} aria-hidden="true" />
+              Administrare
+            </button>
+          )}
           <button className="sidebar-profile" onClick={() => setAccount(true)}>
             <UserAvatar name={session.user.name} photo={userPhoto} />
             <span>
@@ -457,15 +500,19 @@ export default function App() {
         <header className="topbar">
           <div className="mobile-brand">
             <button
-              className="avatar"
+              className="mobile-account-brand"
               aria-label="Contul meu"
               onClick={() => setAccount(true)}
             >
-              <UserAvatar name={session.user.name} photo={userPhoto} />
+              <Brand compact />
             </button>
           </div>
           <span className="desktop-breadcrumb">
-            {page === "family" ? "Familia mea" : "Spațiul familiei"}{" "}
+            {page === "admin"
+              ? "Amora"
+              : page === "family"
+                ? "Familia mea"
+                : "Spațiul familiei"}{" "}
             <span>/</span>{" "}
             <strong>
               {page === "family"
@@ -476,32 +523,34 @@ export default function App() {
             </strong>
           </span>
           <div className="topbar-actions">
-            <label className="family-selector">
-              <Users size={16} aria-hidden="true" />
-              <select
-                aria-label="Familia activă"
-                value={familyId}
-                onChange={(e) => {
-                  setFamilyId(e.target.value);
-                  setCalendarTarget(null);
-                  setVehicleTarget(null);
-                  setTaskTarget(null);
-                  setPetTarget(null);
-                  setRecipeTarget(null);
-                  setDocumentTarget(null);
-                  setSearchOpen(false);
-                  setMemoryTarget(null);
-                }}
-              >
-                {session.families.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={14} />
-            </label>
-            {family && (
+            {page !== "admin" && session.families.length > 0 && (
+              <label className="family-selector">
+                <Users size={16} aria-hidden="true" />
+                <select
+                  aria-label="Familia activă"
+                  value={familyId}
+                  onChange={(e) => {
+                    setFamilyId(e.target.value);
+                    setCalendarTarget(null);
+                    setVehicleTarget(null);
+                    setTaskTarget(null);
+                    setPetTarget(null);
+                    setRecipeTarget(null);
+                    setDocumentTarget(null);
+                    setSearchOpen(false);
+                    setMemoryTarget(null);
+                  }}
+                >
+                  {session.families.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={14} />
+              </label>
+            )}
+            {family && page !== "admin" && (
               <button
                 className="icon-button"
                 aria-label="Caută în familie"
@@ -510,7 +559,7 @@ export default function App() {
                 <Search size={21} />
               </button>
             )}
-            {family && (
+            {family && page !== "admin" && (
               <CalendarNotifications
                 key={`${session.user.id}:${family.id}`}
                 familyId={family.id}
@@ -545,7 +594,13 @@ export default function App() {
               {error}
             </p>
           )}
-          {family ? (
+          {page === "admin" && session.user.is_admin ? (
+            <Administration
+              userEmail={session.user.email}
+              onExpired={() => void refresh()}
+              memory={adminMemory}
+            />
+          ) : family ? (
             page === "home" ? (
               <Home
                 key={`${session.user.id}:${family.id}`}
@@ -702,6 +757,8 @@ export default function App() {
         page={page}
         onPage={setPage}
         onAccount={() => setAccount(true)}
+        admin={session.user.is_admin}
+        hasFamily={session.families.length > 0}
       />
       {desktopMore && (
         <Modal title="Mai multe" onClose={() => setDesktopMore(false)}>
@@ -762,7 +819,9 @@ export default function App() {
           }}
           onUserSaved={(user) => {
             setSession((current) =>
-              current?.user?.id === user.id ? { ...current, user } : current,
+              current?.user?.id === user.id
+                ? { ...current, user: { ...current.user, ...user } }
+                : current,
             );
             setOwnProfile((current) =>
               current?.profile.user_id === user.id
@@ -805,21 +864,6 @@ export default function App() {
           }}
         />
       )}
-    </div>
-  );
-}
-
-function Brand() {
-  return (
-    <div className="brand" aria-label="Memoria Familiei">
-      <span className="brand-mark" aria-hidden="true">
-        <House size={41} strokeWidth={1.7} />
-        <Heart className="brand-heart" size={12} strokeWidth={1.6} />
-      </span>
-      <span className="brand-name">
-        <span>Memoria</span>
-        <span>Familiei</span>
-      </span>
     </div>
   );
 }

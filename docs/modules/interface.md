@@ -4,6 +4,14 @@
 
 **Implementat și verificat local**, la cererea explicită de a livra Animale după Sarcini recurente fără întrebări/feedback intermediar. Mai multe include Calendar/Sarcini/Animale pe desktop și Calendar/Sarcini/Amintiri/Auto/Animale/Contul meu pe mobil, cu selecție clară și pagina păstrată la schimbarea familiei. Restul navigației rămâne în ordinea CH2. Un singur layout nou folosește antetul comun cu fotografie decorativă generată, selector de animal și file stabile; profilurile reale folosesc numai fotografiile încărcate. [Scop și verificări Animale](pets.md).
 
+## AP1 — Logo și administrare, 24 octombrie 2026
+
+Logo-ul original Amora este reutilizat prin `shared/Brand.tsx` în intrare, încărcarea sesiunii și sidebar, cu variantă compactă în antetul mobil care păstrează accesul la Contul meu. Administratorul aplicației are Administrare înainte de cont; pe mobil este în Mai multe, iar contul fără familie are numai Administrare/Cont. Filele Prezentare/Email folosesc cadrul comun stabil. Statisticile și istoricul sunt reale, panourile neutre; setările Brevo au etichete, linkuri directe și câmpuri SMTP auto-configurate. [Contracte și probe AP1](operations.md#ap1--administrare-amora-24-octombrie-2026); acceptarea vizuală rămâne pentru feedback.
+
+## AL1 — Landing Amora, 24 octombrie 2026
+
+La cererea utilizatorului, intrarea publică are logo-ul Amora, prezentare scurtă și cardul Autentificare implicit; Creează cont este secundar. Pe mobil, formularul precedă prezentarea. Paleta, tipografia locală și acuarela existentă se păstrează. Un singur layout modificat; contractele, verificările și limitele sunt în [Autentificare AL1](identity.md#al1--landing-amora-24-octombrie-2026). Acceptarea vizuală așteaptă feedback; cererea înlocuiește prioritatea formularului de înscriere din AR1 de mai jos.
+
 ## S1 — Sarcini în Mai multe, 24 octombrie 2026
 
 **Implementat și verificat local**, la cererea utilizatorului. Mai multe include Calendar și Sarcini pe desktop, iar pe mobil Calendar, Sarcini, Amintiri, Auto, Contul meu. Ordinea filelor principale rămâne CH2. App compune noua pagină, cu selecție pe Sarcini în meniu și pe Mai multe în navigație. Un singur layout nou, cu PageBackdrop și calendar românesc comun în shared; [scopul, accesul și verificările S1](tasks.md). Desktop 1280×900 și mobil 390/320 fără overflow, bife/filtre și Escape/focus verificate; build și 6 teste frontend trecute. Acceptarea vizuală așteaptă feedback.

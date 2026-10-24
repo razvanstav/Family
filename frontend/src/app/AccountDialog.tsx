@@ -12,7 +12,7 @@ import { UserAvatar } from "../shared/UserAvatar";
 import { ProfilePhotoEditor } from "../shared/ProfilePhotoEditor";
 import type { Profile } from "../modules/families/profileData";
 
-type User = NonNullable<Session["user"]>;
+type User = Pick<NonNullable<Session["user"]>, "id" | "name" | "email">;
 
 export function AccountDialog({
   user,

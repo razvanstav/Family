@@ -1,5 +1,7 @@
 # Planul de dezvoltare
 
+**Prioritatea nouă — 24 octombrie 2026:** [AP1 — Administrare Amora](modules/operations.md#ap1--administrare-amora-24-octombrie-2026): logo în dashboard, cont de administrator global, statistici utilizatori/emailuri și setări Brevo SMTP. Înscrierea fără verificare email nu acordă administrarea; accesul se autorizează explicit. Commit și push cerute după verificări. Nu începe automat recuperarea parolei, confirmarea emailului sau alte module.
+
 Pornim de la aplicația locală existentă și livrăm un singur pas verificabil odată. Prima sesiune de implementare este 22 octombrie 2026, la cererea utilizatorului. Nu sunt stabilite termene de livrare pentru celelalte etape.
 
 ## Ordinea etapelor
