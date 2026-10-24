@@ -2,15 +2,17 @@
 
 ## KH5 — Mese implicit, 25 octombrie 2026
 
-**Implementat și verificat local; publicarea urmează.** La intrarea obișnuită în Bucătărie, fila Mese este selectată implicit. O destinație explicită de rețetă deschide în continuare Rețete; cererile de masă și schimbarea manuală a filelor rămân existente. Schimbare numai a inițializării selecției în `Kitchen.tsx`, fără modificări de API, date, permisiuni sau layout. KH5 înlocuiește selecția inițială Rețete consemnată în KH4.
+**Implementat, verificat și publicat.** La intrarea obișnuită în Bucătărie, fila Mese este selectată implicit. O destinație explicită de rețetă deschide în continuare Rețete; cererile de masă și schimbarea manuală a filelor rămân existente. Schimbare numai a inițializării selecției în `Kitchen.tsx`, fără modificări de API, date, permisiuni sau layout. KH5 înlocuiește selecția inițială Rețete consemnată în KH4.
 
 Verificat: TypeScript/Vite, Prettier și `git diff --check`; browser pe API fictiv numai GET confirmă Mese la prima intrare și după Rețete → Acasă → Bucătărie. Condiția pentru destinația explicită de rețetă a fost păstrată și inspectată în cod; nu a fost reprobată deschiderea unui detaliu real. Build `CM6Pg_Y2/DJO_Wuan`; fără date salvate sau teste noi pentru această schimbare punctuală.
+
+**Publicare KH5:** commit `3530fa1` pe origin; [deploy 40142344536](https://github.com/razvanstav/Family/actions/runs/40142344536) reușit. HTTPS `/app/` răspunde 200 cu bundle-ul verificat `CM6Pg_Y2`.
 
 **DC1, 24 octombrie 2026:** data mesei apare în Calendar prin `MealDatedRecords`, cu accesul mesei; rețeta/fotografia nu primesc acces suplimentar. Deschiderea păstrează ziua și fila Mese, inclusiv pentru un element din afara primei pagini, cu revalidarea detaliului la actualizare. [Contract și verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
 
 **P1a.1, 24 octombrie 2026:** App compune `MealViewer` și transmite `mealTypes` către Amintiri prin punctele de extensie ale acestuia. Bucătărie nu a fost mutată în shared și nu este importată de alt modul; componentele mesei/rețetei și endpointurile rămân existente. [Probe P1a](platform.md#p1a--eliminarea-cuplărilor-24-octombrie-2026).
 
-Stare: **KH5 — Mese implicit**, implementat și verificat local la 25 octombrie 2026. KH4, KH3, KH2, K1, K2, K3a și K4a–K4b rămân implementate și verificate anterior. Preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
+Stare: **KH5 — Mese implicit**, implementat, verificat și publicat la 25 octombrie 2026. KH4, KH3, KH2, K1, K2, K3a și K4a–K4b rămân implementate și verificate anterior. Preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
 
 ## KH4 — Mese în stânga, 24 octombrie 2026
 
