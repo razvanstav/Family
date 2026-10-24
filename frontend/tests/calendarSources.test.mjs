@@ -112,6 +112,20 @@ test("shared Calendar filtering includes selected and adult access without inclu
   );
 });
 
+test("a subscription date opens the canonical subscription with its direct label", () => {
+  const source = {
+    type: "subscription",
+    id: "subscription",
+    parent_id: "subscription",
+    virtual: true,
+  };
+  assert.deepEqual(calendarSourceDestination(source), {
+    type: "subscription",
+    id: "subscription",
+  });
+  assert.equal(calendarSourceLabel(source), "Abonament");
+});
+
 test("profile record labels distinguish medical, reading and activity dates", () => {
   const entry = { type: "profile_entry", id: "entry", parent_id: "subject" };
   assert.equal(

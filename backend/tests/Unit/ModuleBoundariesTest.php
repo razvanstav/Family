@@ -135,7 +135,7 @@ final class ModuleBoundariesTest extends TestCase
     private function tableOwner(string $table): ?string
     {
         foreach (['Documents' => ['documents', 'document_'], 'Kitchen' => ['recipes', 'recipe_', 'meals', 'meal_', 'kitchen_'],
-            'Memory' => ['memory_'], 'Calendar' => ['calendar_', 'birthday_reminder_'], 'Vehicles' => ['vehicles', 'vehicle_'], 'Expenses' => ['expenses'], 'Tasks' => ['family_tasks'], 'Pets' => ['pets', 'pet_']] as $owner => $prefixes) {
+            'Memory' => ['memory_'], 'Calendar' => ['calendar_', 'birthday_reminder_'], 'Vehicles' => ['vehicles', 'vehicle_'], 'Expenses' => ['expenses'], 'Tasks' => ['family_tasks'], 'Pets' => ['pets', 'pet_'], 'Subscriptions' => ['subscriptions', 'subscription_']] as $owner => $prefixes) {
             foreach ($prefixes as $prefix) {
                 if (str_ends_with($prefix, '_') ? str_starts_with($table, $prefix) : $table === $prefix) {
                     return $owner;

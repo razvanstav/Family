@@ -54,11 +54,10 @@ import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
 import { Home } from "../modules/home/Home";
 import { Kitchen } from "../modules/kitchen/Kitchen";
-import { MealViewer } from "../modules/kitchen/MealViewer";
-import { mealTypes, type MealRequest } from "../modules/kitchen/mealTypes";
+import type { MealRequest } from "../modules/kitchen/mealTypes";
 import { Memories } from "../modules/memory/Memories";
 import { Vehicles } from "../modules/vehicles/Vehicles";
-import { Expenses } from "../modules/expenses/Expenses";
+import { ExpensesWorkspace } from "./ExpensesWorkspace";
 import { UpcomingPaymentsCard } from "../modules/expenses/UpcomingPaymentsCard";
 import type { Expense, ExpenseRequest } from "../modules/expenses/expenseData";
 import { Tasks } from "../modules/tasks/Tasks";
@@ -123,6 +122,9 @@ export default function App() {
   const [expenseTarget, setExpenseTarget] = useState<ExpenseRequest | null>(
     null,
   );
+  const [subscriptionTarget, setSubscriptionTarget] = useState<string | null>(
+    null,
+  );
   const [mealDateTarget, setMealDateTarget] = useState<MealRequest | null>(
     null,
   );
@@ -181,6 +183,7 @@ export default function App() {
     setPetTarget(null);
     setProfileTarget(null);
     setExpenseTarget(null);
+    setSubscriptionTarget(null);
     setMealDateTarget(null);
     setPetProfileTarget(null);
     setRecipeTarget(null);
@@ -282,6 +285,7 @@ export default function App() {
   useEffect(() => {
     setProfileTarget(null);
     setExpenseTarget(null);
+    setSubscriptionTarget(null);
     setMealDateTarget(null);
     setPetProfileTarget(null);
   }, [familyId]);
@@ -683,6 +687,7 @@ export default function App() {
                       setCalendarRevision((value) => value + 1);
                     }}
                     onOpen={(expense) => {
+                      setSubscriptionTarget(null);
                       setExpenseTarget({
                         id: expense.id,
                         date: expense.spent_on,
@@ -712,11 +717,15 @@ export default function App() {
                 onExpired={() => void refresh()}
               />
             ) : page === "expenses" ? (
-              <Expenses
+              <ExpensesWorkspace
                 key={`${session.user.id}:${family.id}`}
                 family={family}
+                actorId={session.user.id}
                 requestedExpense={expenseTarget}
+                requestedSubscription={subscriptionTarget}
                 onExpenseOpened={() => setExpenseTarget(null)}
+                onSubscriptionOpened={() => setSubscriptionTarget(null)}
+                onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
               />
             ) : page === "tasks" ? (
@@ -747,17 +756,6 @@ export default function App() {
                 requestedMoment={memoryTarget}
                 onMomentOpened={() => setMemoryTarget(null)}
                 onExpired={() => void refresh()}
-                mealTypeLabels={mealTypes}
-                renderMeal={({ mealId, onClose, onUnavailable }) => (
-                  <MealViewer
-                    key={mealId}
-                    familyId={family.id}
-                    actorId={authenticatedUser.id}
-                    mealId={mealId}
-                    onClose={onClose}
-                    onUnavailable={onUnavailable}
-                  />
-                )}
               />
             ) : page === "vehicles" ? (
               <Vehicles
@@ -842,11 +840,17 @@ export default function App() {
                   setPage("family");
                 }}
                 onExpense={(id, date, visibility) => {
+                  setSubscriptionTarget(null);
                   setExpenseTarget({
                     id,
                     date,
                     visibility: visibility === "private" ? "private" : "family",
                   });
+                  setPage("expenses");
+                }}
+                onSubscription={(id) => {
+                  setExpenseTarget(null);
+                  setSubscriptionTarget(id);
                   setPage("expenses");
                 }}
                 onMeal={(id, date) => {

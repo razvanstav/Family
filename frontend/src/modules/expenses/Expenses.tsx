@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Bike,
   Check,
@@ -74,11 +74,13 @@ export function Expenses({
   onExpired,
   requestedExpense,
   onExpenseOpened,
+  sectionTabs,
 }: {
   family: Family;
   onExpired: () => void;
   requestedExpense: ExpenseRequest | null;
   onExpenseOpened: () => void;
+  sectionTabs?: ReactNode;
 }) {
   const [month, setMonth] = useState(() =>
     (requestedExpense?.date ?? bucharestToday()).slice(0, 7),
@@ -293,6 +295,7 @@ export function Expenses({
           )}
         </section>
       </PageBackdrop>
+      {sectionTabs}
       <SectionTabs
         label="Starea cheltuielilor"
         value={paymentStatus}

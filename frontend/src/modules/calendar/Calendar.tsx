@@ -58,6 +58,7 @@ export function CalendarPage({
   onMemory,
   onProfile,
   onExpense,
+  onSubscription,
   onMeal,
   onPetProfile,
   onExpired,
@@ -74,6 +75,7 @@ export function CalendarPage({
   onMemory: (id: string) => void;
   onProfile: (memberId: string, entryId?: string, kind?: string) => void;
   onExpense: (id: string, date: string, visibility: CalendarVisibility) => void;
+  onSubscription: (id: string) => void;
   onMeal: (id: string, date: string) => void;
   onPetProfile: (id: string) => void;
   onExpired: () => void;
@@ -494,6 +496,7 @@ export function CalendarPage({
           onMemory={onMemory}
           onProfile={onProfile}
           onExpense={onExpense}
+          onSubscription={onSubscription}
           onMeal={onMeal}
           onPetProfile={onPetProfile}
           onExpired={onExpired}
@@ -524,6 +527,7 @@ function EventEditor({
   onMemory,
   onProfile,
   onExpense,
+  onSubscription,
   onMeal,
   onPetProfile,
   onExpired,
@@ -544,6 +548,7 @@ function EventEditor({
   onMemory: (id: string) => void;
   onProfile: (memberId: string, entryId?: string, kind?: string) => void;
   onExpense: (id: string, date: string, visibility: CalendarVisibility) => void;
+  onSubscription: (id: string) => void;
   onMeal: (id: string, date: string) => void;
   onPetProfile: (id: string) => void;
   onExpired: () => void;
@@ -654,6 +659,9 @@ function EventEditor({
           break;
         case "expense":
           onExpense(destination.id, item.event_date, item.visibility);
+          break;
+        case "subscription":
+          onSubscription(destination.id);
           break;
         case "meal":
           onMeal(destination.id, item.event_date);

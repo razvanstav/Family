@@ -44,6 +44,7 @@ use App\Modules\Memory\Application\TimelineProjection;
 use App\Modules\Memory\Contracts\MomentSummaries;
 use App\Modules\Pets\Application\PetDatedRecords;
 use App\Modules\Pets\Application\PetDeadlineSource;
+use App\Modules\Subscriptions\Application\SubscriptionDatedRecords;
 use App\Modules\Tasks\Application\TaskAccess;
 use App\Modules\Tasks\Application\TaskCalendar;
 use App\Modules\Tasks\Application\TaskDatedRecords;
@@ -100,6 +101,7 @@ class AppServiceProvider extends ServiceProvider
             $app->make(DocumentDatedRecords::class), $app->make(ProfileDatedRecords::class), $app->make(ExpenseDatedRecords::class),
             $app->make(MealDatedRecords::class), $app->make(MemoryDatedRecords::class), $app->make(TaskDatedRecords::class),
             $app->make(VehicleDatedRecords::class), $app->make(PetDatedRecords::class),
+            $app->make(SubscriptionDatedRecords::class),
         ]));
         $this->app->bind(Scanner::class, ClamAvScanner::class);
         $this->app->bind(PrivateMedia::class, LocalPrivateMedia::class);

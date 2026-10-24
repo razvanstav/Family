@@ -10,6 +10,7 @@ export type CalendarSource = {
     | "member_birth"
     | "profile_entry"
     | "expense"
+    | "subscription"
     | "meal"
     | "memory_date"
     | "task_date"
@@ -34,6 +35,7 @@ export const calendarSourceLabels: Record<CalendarSource["type"], string> = {
   member_birth: "Data nașterii",
   profile_entry: "Însemnare",
   expense: "Cheltuială",
+  subscription: "Abonament",
   meal: "Masă",
   memory_date: "Amintire",
   task_date: "Sarcină",
@@ -58,6 +60,7 @@ export const calendarSourceActions: Partial<
   member_birth: "Deschide profilul",
   profile_entry: "Deschide însemnarea",
   expense: "Deschide cheltuiala",
+  subscription: "Deschide abonamentul",
   meal: "Deschide masa",
   memory_date: "Deschide amintirea",
   task_date: "Deschide sarcina",
@@ -79,7 +82,14 @@ export type CalendarVisibility = "private" | "family" | "selected" | "adults";
 
 export type CalendarDestination =
   | {
-      type: "document" | "expense" | "meal" | "memory" | "task" | "petProfile";
+      type:
+        | "document"
+        | "expense"
+        | "subscription"
+        | "meal"
+        | "memory"
+        | "task"
+        | "petProfile";
       id: string;
     }
   | { type: "profile"; memberId: string; entryId?: string; kind?: string }
@@ -104,6 +114,7 @@ export function calendarSourceDestination(
         kind: source.kind,
       };
     case "expense":
+    case "subscription":
     case "meal":
       return { type: source.type, id: source.id };
     case "memory_date":

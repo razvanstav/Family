@@ -25,6 +25,7 @@ final class TenantContext
             abort_unless($membership, 404);
             if (DB::getDriverName() === 'pgsql') {
                 DB::select("SELECT set_config('app.family_id', ?, true)", [$familyId]);
+                DB::select("SELECT set_config('app.actor_id', ?, true)", [(string) $request->user()->id]);
             }
             $request->attributes->set('membership', $membership);
 

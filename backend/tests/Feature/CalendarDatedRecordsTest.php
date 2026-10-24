@@ -278,13 +278,13 @@ final class CalendarDatedRecordsTest extends TestCase
             }
         });
         $before = $this->calendar();
-        $this->assertSame(8, $queries);
+        $this->assertSame(9, $queries);
         for ($i = 0; $i < 20; $i++) {
             $this->record('member_profile_entries', ['visibility' => 'family']);
         }
         $queries = 0;
         $this->assertCount(count($before) + 20, $this->calendar());
-        $this->assertSame(8, $queries);
+        $this->assertSame(9, $queries);
         $other = $this->newFamily();
         DB::connection('admin')->table('family_memberships')->insert(['id' => (string) Str::uuid(), 'family_id' => $other, 'user_id' => $this->users['owner']->id, 'role' => 'owner']);
         $this->getJson('/api/v1/families/'.$other.'/calendar-items?month=2026-10')->assertOk()->assertExactJson([]);

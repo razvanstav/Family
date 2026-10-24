@@ -10,8 +10,8 @@ use App\Modules\Kitchen\Http\KitchenActivityController;
 use App\Modules\Kitchen\Http\MealController;
 use App\Modules\Kitchen\Http\RecipeController;
 use App\Modules\Memory\Http\MomentController;
-use App\Modules\Memory\Http\TimelineController;
 use App\Modules\Pets\Http\PetController;
+use App\Modules\Subscriptions\Http\SubscriptionController;
 use App\Modules\Tasks\Http\TaskController;
 use App\Modules\Vehicles\Http\VehicleController;
 use App\Platform\Administration\AdminContext;
@@ -49,6 +49,19 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');
     Route::prefix('/families/{family}')->middleware(['auth', TenantContext::class])->group(function () {
         Route::get('/search', FamilySearchController::class)->middleware('throttle:90,1');
+        Route::get('/subscriptions', [SubscriptionController::class, 'index']);
+        Route::post('/subscriptions', [SubscriptionController::class, 'store'])->middleware('throttle:30,1');
+        Route::prefix('/subscriptions/{subscription}')->whereUuid('subscription')->group(function () {
+            Route::get('/', [SubscriptionController::class, 'show']);
+            Route::patch('/', [SubscriptionController::class, 'update'])->middleware('throttle:30,1');
+            Route::delete('/', [SubscriptionController::class, 'destroy'])->middleware('throttle:30,1');
+            Route::get('/credentials', [SubscriptionController::class, 'credentials'])->middleware('throttle:30,1');
+            Route::get('/shares', [SubscriptionController::class, 'shares']);
+            Route::post('/shares', [SubscriptionController::class, 'share'])->middleware('throttle:20,1');
+            Route::delete('/shares/{share}', [SubscriptionController::class, 'revoke'])->whereUuid('share')->middleware('throttle:20,1');
+            Route::post('/accept', [SubscriptionController::class, 'accept'])->middleware('throttle:20,1');
+            Route::post('/decline', [SubscriptionController::class, 'decline'])->middleware('throttle:20,1');
+        });
         Route::get('/tasks', [TaskController::class, 'index']);
         Route::post('/tasks', [TaskController::class, 'store'])->middleware('throttle:60,1');
         Route::get('/tasks/{task}', [TaskController::class, 'show'])->whereUuid('task');
@@ -101,7 +114,6 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
             Route::post('/documents', [VehicleController::class, 'linkDocument']);
             Route::delete('/documents/{document}', [VehicleController::class, 'unlinkDocument'])->whereUuid('document');
         });
-        Route::get('/timeline', TimelineController::class);
         Route::get('/moments', [MomentController::class, 'index']);
         Route::post('/moments', [MomentController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/moments/{moment}', [MomentController::class, 'show'])->whereUuid('moment');

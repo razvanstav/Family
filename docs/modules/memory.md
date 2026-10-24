@@ -1,5 +1,15 @@
 # Amintiri
 
+## MT1 — Album fără Cronologie, 24 octombrie 2026
+
+**Implementat și verificat local; publicarea în lucru.** La cererea explicită a utilizatorului, Amintiri deschide direct albumul, fără selectorul Momente și note / Cronologie. Rămân fotografiile și galeria, gruparea pe ani, În ziua asta, momentele/notele, căutarea, filtrele, paginarea, arhiva și accesul existente. Mesele se consultă în Bucătărie.
+
+Eliminate componenta `Timeline.tsx`, toate stilurile sale `.timeline-*`, starea vizualizării și a mesei din `Memories`, plus sloturile/importurile fără apelant din compoziția App. Tipurile albumului rămân folosite. În backend sunt eliminate ruta `GET /families/{family}/timeline`, `TimelineController` și `TimelineReader`, care nu mai au apelanți. Povestea profilului citește separat prin `MomentSummaries::forMember` și `RecentMoments`, direct din sursele canonice; nu depinde de cititorul sau indexul eliminat din HTTP.
+
+**Compatibilitate păstrată deliberat:** `TimelineProjection`, înregistrarea handlerului outbox, comanda de reconstruire și tabela istorică rămân existente, fără cititor UI. Evenimentele Memory încă publicate și livrările aflate deja în outbox necesită handlerul înregistrat; retragerea acestei infrastructuri cere un pas separat de compatibilitate, fără ștergerea datelor istorice. MT1 nu pornește o asemenea migrație și nu schimbă profilele ori comenzile operaționale.
+
+**Verificări observate:** TypeScript, cele trei gărzi modulare frontend, Prettier pentru Memories/CSS și `git diff --check` trecute. Căutarea în `frontend/src` nu mai găsește `Timeline`, `.timeline-*`, `renderMeal` sau `mealTypeLabels`. `MealViewer` rămâne folosit în Bucătărie prin KitchenToday. După eliminarea endpointului, sintaxa `routes/web.php`, `artisan route:list` și Pint pe toate fișierele PHP modificate au trecut: zero rute timeline, ruta story a profilului și cele 11 rute Abonamente păstrate. Fără teste noi pentru eliminarea unei vizualizări, fără migrații, date șterse sau teste DB în MT1. Buildul comun și cele56teste frontend au trecut. Browserul mobil a confirmat albumul direct, În ziua asta și filtrele existente, fără control Cronologie. Datele reale și infrastructura outbox nu au fost șterse; migrația SB1 a păstrat amprentele amintirilor/media. Acceptarea vizuală rămâne la utilizator; publicarea urmează.
+
 **DC1, 24 octombrie 2026:** data originală a amintirii/însemnării apare în Calendar prin `MemoryDatedRecords`, indiferent de notificări, cu ACL canonic; este distinctă de aniversarea opțională „În ziua asta” din NS1. Detaliul se deschide în sursă; [verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
 
 **NS1, 24 octombrie 2026:** Contul meu → Setări → Amintiri activează independent În aplicație / Email pentru „În ziua asta”, la 09:00 România. Numai momente/însemnări autorizate din anii precedenți cu aceeași zi/lună; proiecție privată per destinatar și deschidere canonică din Calendar. Implicit oprit, fără replay al orelor trecute; contracte și verificări în [NS1](calendar.md#ns1--setări-personale-și-emailuri-automate-24-octombrie-2026).
@@ -30,7 +40,7 @@
 
 **P1a.3, 24 octombrie 2026:** Home și profilul Familiei consumă `Contracts/MomentSummaries`, implementat de `RecentMoments`. Filtrele canonice, ordinea, paginarea și payloadurile rămân aceleași; [regresia este în Platformă](platform.md#p1a3--contracte-backend-și-ownership-verificat-la-24-octombrie-2026).
 
-**P1a.1, 24 octombrie 2026:** compoziția mesei din Cronologie este furnizată de App prin `renderMeal` și `mealTypeLabels`; nu există importuri din Bucătărie. Modalul, accesul, voturile și revenirea la Cronologie rămân în componentele existente. [Verificări și limite P1a](platform.md#p1a1--amintiri-ui-verificat-la-24-octombrie-2026).
+**P1a.1, istoric la 24 octombrie 2026:** compoziția mesei din Cronologie folosea sloturile App, fără importuri din Bucătărie. Această integrare UI este eliminată în MT1; MealViewer rămâne folosit în Bucătărie. [Verificări și limite P1a](platform.md#p1a1--amintiri-ui-verificat-la-24-octombrie-2026).
 
 Stare la 22 octombrie 2026: **AM1–AM3 implementate**, cu fluxurile principale demonstrate local pe Windows, desktop și mobil. Acceptarea completă rămâne deschisă pentru scenariile neexercitate de mai jos. Se păstrează prioritatea funcțiilor, fără suite de teste, înaintea instalării Linux.
 
@@ -136,6 +146,8 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 - Eliminarea/înlocuirea desprinde fotografia de moment, fără ștergere fizică imediată. Media nereferențiată rămâne privată și intră în cotă până la cleanupul planificat în P2; niciun endpoint Memory nu o poate descărca prin ID-ul media. Nu sunt albume cu mai multe fotografii, upload în fundal sau timeline în acest pas.
 
 ## AM3 — cronologie
+
+**Istoric:** vizualizarea frontend descrisă în această secțiune a fost eliminată prin cererea MT1. Proiecțiile și contractele backend existente sunt păstrate; secțiunea consemnează implementarea și probele anterioare, nu o vizualizare curentă din Amintiri.
 
 ### Scop verificat în cod, 24 octombrie 2026
 
