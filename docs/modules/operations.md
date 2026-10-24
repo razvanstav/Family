@@ -4,13 +4,14 @@ Stare: mediul local și scripturile de pornire/test există. CI de bază se intr
 
 ## O2b — Eficientizare deploy, 24 octombrie 2026
 
-**Implementat și verificat local; verificarea pe Actions urmează publicării.** Intrare: [workflowul de staging](../../.github/workflows/deploy-family.yml). Cererea curentă este reducerea timpului și a rulărilor inutile, fără schimbări în aplicație sau în procedura externă de migrare.
+**Implementat, publicat și verificat în Actions.** Intrare: [workflowul de staging](../../.github/workflows/deploy-family.yml). Cererea curentă este reducerea timpului și a rulărilor inutile, fără schimbări în aplicație sau în procedura externă de migrare.
 
 - Baseline observat prin API-ul GitHub: [rularea 40083569029](https://github.com/razvanstav/Family/actions/runs/40083569029) a avut jobul de 30 s, cu build/deploy 11 s; [40086579720](https://github.com/razvanstav/Family/actions/runs/40086579720) a avut 58 s, cu build/deploy 39 s. Ambele au reușit. SSH, rsync și verificările au ocupat împreună aproximativ 12–13 s. Duratele joburilor exclud așteptarea runnerului și nu estimează facturarea.
 - Pushurile exclusiv Markdown, `docs/`, `artifacts/` sau blueprint nu pornesc publicarea; schimbările mixte și pornirea manuală rămân disponibile. Aceleași referințe și directoarele locale `.runtime/`/`.tools/` sunt excluse din rsync. Nu se folosește `--delete-excluded`; fișierele persistente deja excluse rămân protejate.
 - Testul SSH, sincronizarea, buildul și cele două verificări reutilizează o conexiune OpenSSH, cu verificarea gazdei și autentificarea păstrate. Conexiunea și cheia runnerului sunt curățate la încheiere. Verificarea HTTP locală are limite de conectare/răspuns. Deployurile rămân seriale, fără anularea celui activ în timpul migrării.
 - Verificări locale trecute: actionlint 1.7.12, parsare YAML, sintaxă Bash pentru fiecare pas, `ssh -G` fără conexiune și rsync dry-run cu fișiere reprezentative: codul se transferă, codul învechit se șterge, iar `.env`, storage, cache și configurația Docker a serverului sunt protejate. Revizie independentă a diff-ului; calea configurației SSH din rsync este absolută. Fără suite/build de aplicație, fiind schimbat numai workflowul.
-- Limite: scriptul `/srv/family/deploy/deploy.sh` și configurația Docker sunt externe repositoryului. Cache-ul Docker nu a fost inspectat sau modificat. Câștigul de timp nu este confirmat până la rularea pe server; baseline-ul are numai două deployuri reușite.
+- **Verificat pe server:** commitul `6e42871`, [rularea 40089157338](https://github.com/razvanstav/Family/actions/runs/40089157338), reușit în 22 s pentru job: SSH inițial 3 s, rsync 2 s, build/deploy 9 s, verificări 1 s cumulat și închidere SSH reușită. Ambele straturi HTTP/HTTPS au trecut. SSH, rsync și verificările au coborât împreună la 6 s în această probă.
+- Limite: scriptul `/srv/family/deploy/deploy.sh` și configurația Docker sunt externe repositoryului. Cache-ul Docker nu a fost inspectat sau modificat. Proba nouă nu schimbă codul aplicației; buildul de 9 s nu prezice durata unui release cu schimbări de cod/dependențe. Baseline-ul are numai două deployuri reușite.
 
 ## AP1 — Administrare Amora, 24 octombrie 2026
 
