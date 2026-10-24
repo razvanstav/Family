@@ -1,5 +1,7 @@
 # Vehicule
 
+**DC1, 24 octombrie 2026:** toate datele înregistrărilor Auto active, inclusiv istoric/finalizate, apar în Calendar prin `VehicleDatedRecords`, fără dubluri cu programările existente. Arhivarea rămâne respectată; documentele asociate fără fișier sunt afișate neutru, fără acces nou. [Contract și verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
+
 **P1a.3, 24 octombrie 2026:** Auto consumă numai contractele publice `DocumentLinks` și `SourceItems` pentru asocieri și Calendar. Accesul documentelor este reverificat prin modulul proprietar, iar setările rămân o proiecție autorizată în query-ul listei. [Regresie P1a](platform.md#p1a3--contracte-backend-și-ownership-verificat-la-24-octombrie-2026).
 
 Stare: **VC1 — scadențe Auto în Calendar și notificări in-app**, implementat și verificat local. V1a rămâne existent, iar restul V1–V4 (inclusiv emailul) rămâne separat.

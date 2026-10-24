@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, ApiError } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
+import { observePageResume } from "../../shared/pageResume";
 import { MealDetail } from "./Meals";
 import { RecipeDetail } from "./RecipeDetail";
 import type { MealDetailData } from "./mealTypes";
@@ -45,11 +46,9 @@ export function MealViewer({
     return () => controller.abort();
   }, [base, mealId, revision]);
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible")
-        setRevision((value) => value + 1);
-    }, 60000);
-    return () => window.clearInterval(timer);
+    return observePageResume(document, window, () =>
+      setRevision((value) => value + 1),
+    );
   }, []);
   if (recipe)
     return (

@@ -12,6 +12,7 @@ import {
 import { api, ApiError, visibilityLabel } from "../../shared/api";
 import { dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto, type PhotoStatus } from "../../shared/PrivatePhoto";
+import { observePageResume } from "../../shared/pageResume";
 import { momentKinds, type Moment } from "./memoryTypes";
 
 type TimelineCard = {
@@ -104,12 +105,11 @@ export function Timeline({
     return () => controller.abort();
   }, [base, kind, cursor, refresh, revision]);
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible")
-        setRefresh((value) => value + 1);
-    }, 15000);
+    const unsubscribe = observePageResume(document, window, () =>
+      setRefresh((value) => value + 1),
+    );
     return () => {
-      window.clearInterval(timer);
+      unsubscribe();
       pending.current?.abort();
     };
   }, []);

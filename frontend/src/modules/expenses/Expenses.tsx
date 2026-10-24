@@ -33,6 +33,7 @@ import {
   type ExpenseCategory,
   type ExpenseMonth,
   type ExpenseVisibility,
+  type ExpenseRequest,
 } from "./expenseData";
 import "./expenses.css";
 
@@ -60,12 +61,20 @@ function CategoryIcon({ category }: { category: ExpenseCategory }) {
 export function Expenses({
   family,
   onExpired,
+  requestedExpense,
+  onExpenseOpened,
 }: {
   family: Family;
   onExpired: () => void;
+  requestedExpense: ExpenseRequest | null;
+  onExpenseOpened: () => void;
 }) {
-  const [month, setMonth] = useState(() => bucharestToday().slice(0, 7));
-  const [visibility, setVisibility] = useState<ExpenseVisibility>("family");
+  const [month, setMonth] = useState(() =>
+    (requestedExpense?.date ?? bucharestToday()).slice(0, 7),
+  );
+  const [visibility, setVisibility] = useState<ExpenseVisibility>(
+    requestedExpense?.visibility ?? "family",
+  );
   const [data, setData] = useState<ExpenseMonth | null>(null);
   const [loading, setLoading] = useState(true);
   const [moreBusy, setMoreBusy] = useState(false);
@@ -125,6 +134,39 @@ export function Expenses({
       sequence.current++;
     };
   }, [endpoint, revision]);
+  useEffect(() => {
+    if (!requestedExpense) return;
+    const targetMonth = requestedExpense.date.slice(0, 7);
+    if (month !== targetMonth || visibility !== requestedExpense.visibility) {
+      setMonth(targetMonth);
+      setVisibility(requestedExpense.visibility);
+      return;
+    }
+    if (loading || !current) return;
+    const controller = new AbortController();
+    function open(expense: Expense) {
+      setEditor({ expense });
+      onExpenseOpened();
+    }
+    const existing = current.items.find(
+      (expense) => expense.id === requestedExpense.id,
+    );
+    if (existing) open(existing);
+    else
+      api<Expense>(`/families/${family.id}/expenses/${requestedExpense.id}`, {
+        signal: controller.signal,
+      })
+        .then((expense) => {
+          if (!controller.signal.aborted) open(expense);
+        })
+        .catch((cause) => {
+          if (controller.signal.aborted) return;
+          setError(errorMessage(cause));
+          onExpenseOpened();
+          unavailable(cause);
+        });
+    return () => controller.abort();
+  }, [requestedExpense, month, visibility, loading, current, family.id]);
   async function loadMore() {
     if (!current?.next_page || loading || morePending.current) return;
     const request = sequence.current;

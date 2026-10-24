@@ -4,10 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Modules\Calendar\Contracts\SourceItems;
+use App\Modules\Tasks\Application\TaskCalendar;
 use Carbon\CarbonImmutable;
-use Database\Seeders\DemoSeeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Mockery;
 use RuntimeException;
 use Tests\TestCase;
@@ -24,6 +24,14 @@ final class TaskCalendarTest extends TestCase
 
     private string $base;
 
+    private string $family;
+
+    private string $otherFamily;
+
+    private array $families = [];
+
+    private array $fixtureUsers = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -31,29 +39,50 @@ final class TaskCalendarTest extends TestCase
         $admin = config('database.connections.pgsql');
         $admin['username'] = 'memoria_admin';
         $admin['password'] = env('DB_ADMIN_PASSWORD');
-        config(['database.connections.admin' => $admin, 'memoria.demo_enabled' => true]);
-        DB::connection('admin')->statement('TRUNCATE families, users RESTART IDENTITY CASCADE');
-        DB::setDefaultConnection('admin');
-        Storage::fake('local');
-        (new DemoSeeder)->run();
-        DB::setDefaultConnection('pgsql');
-        $this->ana = User::where('email', 'ana@example.test')->firstOrFail();
-        $this->mihai = User::where('email', 'mihai@example.test')->firstOrFail();
-        $members = DB::table('family_memberships')->where('family_id', DemoSeeder::POPESCU)->pluck('id', 'user_id');
-        $this->anaMember = $members[$this->ana->id];
-        $this->mihaiMember = $members[$this->mihai->id];
-        $this->base = '/api/v1/families/'.DemoSeeder::POPESCU;
-        $this->actingAs($this->ana);
+        config(['database.connections.admin' => $admin]);
         $this->travelTo(CarbonImmutable::parse('2026-10-24T10:00:00Z'));
+        $this->family = (string) Str::uuid();
+        $this->otherFamily = (string) Str::uuid();
+        $this->families = [$this->family, $this->otherFamily];
+        foreach ($this->families as $family) {
+            DB::connection('admin')->table('families')->insert(['id' => $family, 'name' => 'Task Calendar fixture']);
+        }
+        foreach (['ana' => 'Ana Test', 'mihai' => 'Mihai Test'] as $key => $name) {
+            $user = User::factory()->make(['name' => $name, 'email' => 'task-calendar-'.$this->family.'-'.$key.'@example.test']);
+            $user->setConnection('admin')->save();
+            $this->fixtureUsers[] = $user;
+            $this->{$key} = $user;
+        }
+        $this->anaMember = (string) Str::uuid();
+        $this->mihaiMember = (string) Str::uuid();
+        DB::connection('admin')->table('family_memberships')->insert([
+            ['id' => $this->anaMember, 'family_id' => $this->family, 'user_id' => $this->ana->id, 'role' => 'owner'],
+            ['id' => $this->mihaiMember, 'family_id' => $this->family, 'user_id' => $this->mihai->id, 'role' => 'adult'],
+            ['id' => (string) Str::uuid(), 'family_id' => $this->otherFamily, 'user_id' => $this->ana->id, 'role' => 'owner'],
+        ]);
+        $this->base = '/api/v1/families/'.$this->family;
+        $this->actingAs($this->ana);
     }
 
     protected function tearDown(): void
     {
-        $this->travelBack();
-        DB::disableQueryLog();
-        DB::disconnect('pgsql');
-        DB::disconnect('admin');
-        parent::tearDown();
+        try {
+            foreach ($this->families as $family) {
+                foreach (['calendar_items', 'family_tasks', 'audit_events', 'member_profiles', 'family_memberships'] as $table) {
+                    DB::connection('admin')->table($table)->where('family_id', $family)->delete();
+                }
+                DB::connection('admin')->table('families')->where('id', $family)->delete();
+            }
+            foreach ($this->fixtureUsers as $user) {
+                DB::connection('admin')->table('users')->where('id', $user->id)->delete();
+            }
+        } finally {
+            $this->travelBack();
+            DB::disableQueryLog();
+            DB::disconnect('pgsql');
+            DB::disconnect('admin');
+            parent::tearDown();
+        }
     }
 
     private function create(array $changes = []): array
@@ -66,7 +95,16 @@ final class TaskCalendarTest extends TestCase
     {
         $items = $this->getJson($this->base.'/calendar-items?month='.$month.'&archived='.(int) $archived)->assertOk()->json();
 
-        return array_values(array_filter($items, fn (array $item) => ($item['source']['type'] ?? null) === 'task'));
+        return array_values(array_filter($items, fn (array $item) => in_array($item['source']['type'] ?? null, ['task', 'task_date'], true)));
+    }
+
+    private function reconcile(): void
+    {
+        DB::transaction(function (): void {
+            DB::table('families')->where('id', $this->family)->lockForUpdate()->firstOrFail();
+            DB::select("SELECT set_config('app.family_id', ?, true)", [$this->family]);
+            app(TaskCalendar::class)->syncFamily($this->family);
+        });
     }
 
     private function edit(array $task, array $changes): array
@@ -80,14 +118,19 @@ final class TaskCalendarTest extends TestCase
         return $this->withHeader('If-Match', '"'.$task['version'].'"')->patchJson($this->base.'/tasks/'.$task['id'].'/completion', ['completed' => $completed])->assertOk()->json();
     }
 
-    public function test_only_dated_open_tasks_appear_as_readonly_sources_with_direct_links_and_no_reminders(): void
+    public function test_dated_tasks_include_completed_history_as_readonly_sources_without_new_reminders(): void
     {
         $task = $this->create();
         $this->create(['due_on' => null]);
-        $this->complete($this->create(), true);
+        $completed = $this->complete($this->create(), true);
         $events = $this->events();
-        $this->assertCount(1, $events);
-        $event = $events[0];
+        $this->assertCount(2, $events);
+        $event = collect($events)->first(fn (array $item) => $item['source']['id'] === $task['id']);
+        $history = collect($events)->first(fn (array $item) => $item['source']['id'] === $completed['id']);
+        $this->assertSame('task_date', $history['source']['type']);
+        $this->assertTrue($history['source']['virtual']);
+        $this->assertFalse($history['can_edit']);
+        $this->assertNull($history['reminder']);
         $this->assertSame(['type' => 'task', 'id' => $task['id'], 'parent_id' => $task['id']], $event['source']);
         $this->assertSame('2026-10-25', $event['event_date']);
         $this->assertTrue($event['all_day']);
@@ -119,7 +162,11 @@ final class TaskCalendarTest extends TestCase
         $task = $this->edit($task, ['due_on' => '2026-10-28']);
         $this->assertSame($id, $this->events()[0]['id']);
         $task = $this->complete($task, true);
-        $this->assertSame([], $this->events());
+        $history = $this->events();
+        $this->assertCount(1, $history);
+        $this->assertSame('task_date', $history[0]['source']['type']);
+        $this->assertSame($task['id'], $history[0]['source']['id']);
+        $this->assertNull($history[0]['reminder']);
         $this->assertSame([], $this->events(archived: true));
         $this->getJson($this->base.'/calendar-items/'.$id)->assertNotFound();
         $task = $this->complete($task, false);
@@ -158,7 +205,7 @@ final class TaskCalendarTest extends TestCase
     {
         $task = $this->create(['assignee_membership_id' => $this->mihaiMember]);
         $id = $this->events()[0]['id'];
-        $other = '/api/v1/families/'.DemoSeeder::IONESCU;
+        $other = '/api/v1/families/'.$this->otherFamily;
         $this->getJson($other.'/calendar-items/'.$id)->assertNotFound();
         $this->getJson($other.'/tasks/'.$task['id'])->assertNotFound();
         DB::connection('admin')->table('family_memberships')->where('id', $this->mihaiMember)->update(['role' => 'limited']);
@@ -166,7 +213,10 @@ final class TaskCalendarTest extends TestCase
         $this->assertCount(1, $this->events());
         $this->getJson($this->base.'/tasks/'.$task['id'])->assertOk()->assertJsonPath('can_edit', false)->assertJsonPath('can_complete', true);
         $task = $this->complete($task, true);
-        $this->assertSame([], $this->events());
+        $history = $this->events();
+        $this->assertCount(1, $history);
+        $this->assertSame('task_date', $history[0]['source']['type']);
+        $this->assertSame($task['id'], $history[0]['source']['id']);
         $task = $this->complete($task, false);
         DB::connection('admin')->table('family_memberships')->where('id', $this->mihaiMember)->update(['revoked_at' => now()]);
         $this->getJson($this->base.'/calendar-items?month=2026-10')->assertNotFound();
@@ -184,7 +234,7 @@ final class TaskCalendarTest extends TestCase
         $this->actingAs($this->mihai);
         $this->assertSame([], $this->events());
         $this->getJson($this->base.'/calendar-items/'.$id)->assertNotFound();
-        $this->artisan('tasks:sync-calendar')->assertSuccessful();
+        $this->reconcile();
         $this->assertSame([], $this->events());
         $this->actingAs($this->ana);
         $this->assertSame('private', $this->events()[0]['visibility']);
@@ -226,10 +276,10 @@ final class TaskCalendarTest extends TestCase
         DB::flushQueryLog();
         $this->assertCount(7, $this->events());
         $this->assertSame($small, count(DB::getQueryLog()));
-        DB::connection('admin')->table('calendar_items')->where('source_type', 'task')->delete();
-        $this->artisan('tasks:sync-calendar')->assertSuccessful();
+        DB::connection('admin')->table('calendar_items')->where('family_id', $this->family)->where('source_type', 'task')->delete();
+        $this->reconcile();
         $before = $this->events();
-        $this->artisan('tasks:sync-calendar')->assertSuccessful();
+        $this->reconcile();
         $this->assertSame($before, $this->events());
         $this->assertCount(7, $before);
         $this->getJson($this->base.'/tasks/'.$task['id'])->assertOk()->assertJsonPath('version', 1);

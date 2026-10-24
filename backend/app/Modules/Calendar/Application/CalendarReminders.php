@@ -2,6 +2,7 @@
 
 namespace App\Modules\Calendar\Application;
 
+use App\Platform\Contracts\NotificationPreferences;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
@@ -11,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 final class CalendarReminders
 {
-    public function __construct(private readonly CalendarSources $sources) {}
+    public function __construct(private readonly CalendarSources $sources, private readonly NotificationPreferences $preferences) {}
 
     /** @return array{due_at: CarbonImmutable, expires_at: CarbonImmutable} */
     public function schedule(object $event, ?int $offset = null): array
@@ -44,7 +45,11 @@ final class CalendarReminders
             if (count($recipients) === 0 || $allowed->count() !== count($recipients)) {
                 throw ValidationException::withMessages(['reminder_recipients' => 'Alege membri activi care au acces la eveniment. Pentru un eveniment privat te poți alege doar pe tine.']);
             }
-            $allDayOffsets = ($event->source_type ?? null) === 'vehicle_entry' ? [0, 1440, 10080, 43200] : [0, 1440];
+            $allDayOffsets = match ($event->source_type ?? null) {
+                'vehicle_entry' => [0, 1440, 10080, 43200],
+                'document_expiry' => [10080],
+                default => [0, 1440],
+            };
             if ($event->all_day && ! in_array($offset, $allDayOffsets, true)) {
                 throw ValidationException::withMessages(['reminder_offset_minutes' => 'Pentru un eveniment fără oră, alege ziua evenimentului sau ziua precedentă.']);
             }
@@ -79,7 +84,10 @@ final class CalendarReminders
                 'due_at' => $schedule['due_at']->toIso8601String(), 'expires_at' => $schedule['expires_at']->toIso8601String(),
                 'state' => $schedule['due_at']->lt(now()) ? 'expired' : 'pending',
                 'delivered_at' => null, 'read_at' => null,
-            ], ['calendar_item_id', 'source_version', 'membership_id'], ['due_at', 'expires_at', 'state', 'delivered_at', 'read_at']);
+                'in_app_enabled' => true, 'email_state' => null, 'email_attempts' => 0,
+                'email_claimed_at' => null, 'email_sent_at' => null, 'email_next_attempt_at' => null, 'email_error_code' => null,
+            ], ['calendar_item_id', 'source_version', 'membership_id'], ['due_at', 'expires_at', 'state', 'delivered_at', 'read_at',
+                'in_app_enabled', 'email_state', 'email_attempts', 'email_claimed_at', 'email_sent_at', 'email_next_attempt_at', 'email_error_code']);
         }
     }
 
@@ -96,7 +104,7 @@ final class CalendarReminders
         DB::table('birthday_reminder_preferences')->where('family_id', $family)->where(fn (Builder $query) => $query->where('recipient_membership_id', $membership)->orWhere('subject_membership_id', $membership))->delete();
     }
 
-    private function authorized(string $family): Builder
+    public function authorized(string $family): Builder
     {
         return $this->sources->restrict(DB::table('calendar_reminder_deliveries as d'), $family, 'e')
             ->join('calendar_items as e', function ($join) {
@@ -120,7 +128,7 @@ final class CalendarReminders
 
     public function notifications(string $family, int $user): Builder
     {
-        return $this->authorized($family)->where('d.state', 'delivered')->where('recipient.user_id', $user);
+        return $this->authorized($family)->where('d.state', 'delivered')->where('d.in_app_enabled', true)->where('recipient.user_id', $user);
     }
 
     /** @return Collection<int, object> Pending reminders addressed to this actor, never other recipients. */
@@ -128,7 +136,7 @@ final class CalendarReminders
     {
         $now = CarbonImmutable::now();
 
-        return $this->authorized($family)->where('recipient.user_id', $actor)->where('d.state', 'pending')
+        return $this->filterEnabledChannels($this->authorized($family), $actor)->where('recipient.user_id', $actor)->where('d.state', 'pending')
             ->where('d.expires_at', '>=', $now->toIso8601String())
             ->where('d.due_at', '<=', $now->addDays(30)->toIso8601String())
             ->orderBy('d.due_at')->orderBy('d.id')->limit(5)
@@ -138,6 +146,21 @@ final class CalendarReminders
 
                 return $reminder;
             });
+    }
+
+    private function filterEnabledChannels(Builder $query, int $user): Builder
+    {
+        $preferences = $this->preferences->forUser($user);
+
+        return $query->where(function (Builder $enabled) use ($preferences) {
+            foreach ([null, 'birthday', 'task', 'memory_anniversary', 'vehicle_entry', 'pet_entry', 'document_expiry'] as $sourceType) {
+                $channels = $preferences[$this->preferences->category($sourceType)];
+                if ($channels['in_app'] || $channels['email']) {
+                    $sourceType === null ? $enabled->orWhereNull('e.source_type') : $enabled->orWhere('e.source_type', $sourceType);
+                }
+            }
+            $enabled->orWhereRaw('false');
+        });
     }
 
     public function deliverFamily(string $family, ?BirthdayCalendar $birthdays = null): int
@@ -151,14 +174,26 @@ final class CalendarReminders
             $now = now();
             $due = DB::table('calendar_reminder_deliveries')->where('family_id', $family)->where('state', 'pending')
                 ->where('due_at', '<=', $now->toIso8601String())->orderBy('due_at')->orderBy('id')->limit(100)->get();
+            if ($due->isEmpty()) {
+                return 0;
+            }
+            $authorized = $this->authorized($family)->whereIn('d.id', $due->pluck('id'))
+                ->get(['d.id', 'recipient.user_id', 'e.source_type'])->keyBy('id');
+            $preferences = [];
             $delivered = 0;
             foreach ($due as $delivery) {
-                $state = ! $this->authorized($family)->where('d.id', $delivery->id)->exists()
-                    ? 'cancelled' : (CarbonImmutable::parse($delivery->expires_at)->lt($now) ? 'expired' : 'delivered');
+                $recipient = $authorized->get($delivery->id);
+                $state = ! $recipient ? 'cancelled' : (CarbonImmutable::parse($delivery->expires_at)->lt($now) ? 'expired' : 'delivered');
+                if ($recipient && ! isset($preferences[$recipient->user_id])) {
+                    $preferences[$recipient->user_id] = $this->preferences->forUser($recipient->user_id);
+                }
+                $channels = $recipient ? $preferences[$recipient->user_id][$this->preferences->category($recipient->source_type)] : ['in_app' => false, 'email' => false];
                 DB::table('calendar_reminder_deliveries')->where('id', $delivery->id)->where('state', 'pending')->update([
                     'state' => $state, 'delivered_at' => $state === 'delivered' ? $now->toIso8601String() : null,
+                    'in_app_enabled' => $state === 'delivered' && $channels['in_app'],
+                    'email_state' => $state === 'delivered' && $channels['email'] ? 'pending' : null,
                 ]);
-                if ($state === 'delivered') {
+                if ($state === 'delivered' && $channels['in_app']) {
                     $delivered++;
                 }
             }

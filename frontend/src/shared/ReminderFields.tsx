@@ -64,7 +64,7 @@ export function ReminderFields({
   return (
     <div className="reminder-fields">
       <label className="field">
-        Reminder în aplicație
+        Reminder
         <select
           value={offset === null ? "off" : offset}
           onChange={(e) => {

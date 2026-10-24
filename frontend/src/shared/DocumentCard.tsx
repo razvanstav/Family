@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { visibilityLabel, type DocumentSummary } from "./api";
+import { documentFileType, documentFileState } from "./documentFiles";
 import "./documentCards.css";
 
 export const categories = [
@@ -32,10 +33,10 @@ export function FilePreview({
   mime,
   category,
 }: {
-  mime: string;
+  mime: string | null;
   category: string;
 }) {
-  const Icon = mime === "application/pdf" ? FileText : Image;
+  const Icon = mime === null || mime === "application/pdf" ? FileText : Image;
   return (
     <div className={`file-preview color-${category}`} aria-hidden="true">
       <Icon size={36} strokeWidth={1.25} />
@@ -49,10 +50,11 @@ export function DocumentCard({
   document: DocumentSummary;
   onOpen: (id: string) => void;
 }) {
+  const fileState = documentFileState(doc.status);
   return (
     <button
       className="document-card"
-      aria-label={`${doc.title} · ${categoryName(doc.category)} · ${visibilityLabel[doc.visibility]}${doc.status === "quarantine" ? " · În verificare" : doc.status === "rejected" ? " · Respins" : ""}`}
+      aria-label={`${doc.title} · ${categoryName(doc.category)} · ${visibilityLabel[doc.visibility]}${fileState ? ` · ${fileState}` : ""}`}
       onClick={() => onOpen(doc.id)}
     >
       <div className="card-top">
@@ -71,8 +73,8 @@ export function DocumentCard({
       </div>
       <div className="card-bottom">
         <h3 title={doc.title}>{doc.title}</h3>
-        {doc.status === "ready" ? (
-          <p>{doc.mime === "application/pdf" ? "PDF" : "Imagine"}</p>
+        {doc.status === null || doc.status === "ready" ? (
+          <p>{documentFileType(doc.mime)}</p>
         ) : (
           <p className={`card-status ${doc.status}`}>
             {doc.status === "quarantine" ? (

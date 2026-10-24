@@ -59,6 +59,19 @@ final class ModuleBoundariesTest extends TestCase
         $this->assertSame([], $this->violations('Modules/Vehicles/Http/Controller.php', '<?php $payload = ["documents" => [], "source_type" => "vehicle_entry", "document_id" => "id"];'));
     }
 
+    public function test_feature_modules_only_send_email_through_the_platform_contract(): void
+    {
+        foreach ([
+            '<?php use Illuminate\\Support\\Facades\\Mail;',
+            '<?php new \\App\\Platform\\Administration\\BrevoTransport;',
+            '<?php app("App\\\\Platform\\\\Administration\\\\SmtpReminderEmailSender");',
+            '<?php new \\Symfony\\Component\\Mailer\\Transport\\Smtp\\EsmtpTransport;',
+        ] as $source) {
+            $this->assertNotEmpty($this->violations('Modules/Calendar/Application/Delivery.php', $source));
+        }
+        $this->assertSame([], $this->violations('Modules/Calendar/Application/Delivery.php', '<?php use App\\Platform\\Contracts\\ReminderEmailSender;'));
+    }
+
     /** @return list<string> */
     private function violations(string $path, string $source): array
     {
@@ -73,6 +86,11 @@ final class ModuleBoundariesTest extends TestCase
             }
             if (in_array($token[0], [T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED, T_CONSTANT_ENCAPSED_STRING], true)) {
                 $name = ltrim(str_replace('\\\\', '\\', trim($token[1], '\'"')), '\\');
+                if ($owner !== null && ($name === 'Illuminate\\Support\\Facades\\Mail'
+                    || str_starts_with($name, 'Symfony\\Component\\Mailer\\Transport\\')
+                    || in_array($name, ['App\\Platform\\Administration\\BrevoTransport', 'App\\Platform\\Administration\\BrevoTransportFactory', 'App\\Platform\\Administration\\SmtpReminderEmailSender', 'App\\Platform\\Administration\\EmailSettings'], true))) {
+                    $violations[] = 'Direct email transport '.$name;
+                }
                 if (preg_match('/^App\\\\Modules\\\\([^\\\\]+)\\\\([^\\\\]+)/', $name, $target)
                     && ($target[1] !== $owner || $isContract) && $target[2] !== 'Contracts') {
                     $violations[] = 'Private dependency '.$name;

@@ -3,6 +3,7 @@
 namespace App\Platform\Families;
 
 use App\Models\User;
+use App\Modules\Calendar\Contracts\ReminderReconciliation;
 use App\Platform\Audit\Audit;
 use App\Platform\Identity\SessionController;
 use Closure;
@@ -70,9 +71,9 @@ final class InvitationController
         });
     }
 
-    public function accept(Request $request, string $family): JsonResponse
+    public function accept(Request $request, string $family, ReminderReconciliation $reminders): JsonResponse
     {
-        $user = $this->withInvitation($request, $family, function (object $invitation) use ($request, $family): User {
+        $user = $this->withInvitation($request, $family, function (object $invitation) use ($request, $family, $reminders): User {
             // Serialize account creation across invitations for the same address in different families.
             DB::select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [$invitation->email]);
             $existing = User::whereRaw('lower(email) = ?', [$invitation->email])->first();
@@ -100,6 +101,7 @@ final class InvitationController
             DB::table('families')->where('id', $family)->increment('authz_revision');
             Audit::record($family, $user->id, 'invitation.accepted', $invitation->id);
             Audit::record($family, $user->id, 'membership.added', $membership);
+            $reminders->invalidateFamily($family);
 
             return $user;
         });

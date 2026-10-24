@@ -3,6 +3,7 @@ import { api, ApiError, shareableMembers, type Member } from "../../shared/api";
 import { bucharestToday } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
 import { momentKinds, type Moment } from "./memoryTypes";
+import { MomentPhotoEditor } from "./MomentPhotoEditor";
 
 export function MomentForm({
   base,
@@ -33,7 +34,10 @@ export function MomentForm({
     initialMoment?.visibility ?? "private",
   );
   const [grants, setGrants] = useState(initialMoment?.grants ?? []);
-  const [photoAction, setPhotoAction] = useState("keep");
+  const [photoIds, setPhotoIds] = useState(
+    initialMoment?.photos.map((photo) => photo.id) ?? [],
+  );
+  const [uploads, setUploads] = useState<File[]>([]);
   const [membersError, setMembersError] = useState(false);
   const [membersRevision, setMembersRevision] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -89,7 +93,8 @@ export function MomentForm({
       setPeople(current.people.map((person) => person.id));
       setVisibility(current.visibility);
       setGrants(current.grants);
-      setPhotoAction("keep");
+      setPhotoIds(current.photos.map((photo) => photo.id));
+      setUploads([]);
       setConflict(false);
       setMembersRevision((value) => value + 1);
       onReloaded(current);
@@ -120,23 +125,13 @@ export function MomentForm({
       );
       return;
     }
-    const photo = form.get("photo");
-    if (photo instanceof File && !photo.name) form.delete("photo");
-    else if (
-      photo instanceof File &&
-      (!photo.size || photo.size > 10 * 1024 * 1024)
-    ) {
-      setError("Alege o fotografie de cel mult 10 MB, cu conținut valid.");
-      return;
-    }
     Object.entries(body).forEach(([key, value]) => form.set(key, value ?? ""));
     people.forEach((id) => form.append("membership_ids[]", id));
     if (visibility === "selected")
       grants.forEach((id) => form.append("grant_membership_ids[]", id));
-    form.set(
-      "photo_action",
-      moment ? photoAction : form.has("photo") ? "replace" : "keep",
-    );
+    form.set("photos_mode", "edit");
+    photoIds.forEach((id) => form.append("photo_ids[]", id));
+    uploads.forEach((file) => form.append("photos[]", file));
     if (moment) form.set("_method", "PATCH");
     const controller = new AbortController();
     pending.current = controller;
@@ -168,6 +163,30 @@ export function MomentForm({
     } finally {
       if (!controller.signal.aborted) setBusy(false);
     }
+  }
+
+  function addPhotos(files: File[]) {
+    if (photoIds.length + uploads.length + files.length > 20) {
+      setError("O amintire poate avea cel mult 20 de fotografii.");
+      return;
+    }
+    const next = [...uploads, ...files];
+    if (
+      next.some(
+        (file) =>
+          !file.size ||
+          !["image/jpeg", "image/png", "image/webp"].includes(file.type),
+      )
+    ) {
+      setError("Alege fotografii JPG, PNG sau WebP cu conținut valid.");
+      return;
+    }
+    if (next.reduce((total, file) => total + file.size, 0) > 10 * 1024 * 1024) {
+      setError("Adaugă cel mult 10 MB de fotografii noi la o salvare.");
+      return;
+    }
+    setUploads(next);
+    setError("");
   }
 
   return (
@@ -226,48 +245,21 @@ export function MomentForm({
               defaultValue={moment?.body ?? ""}
             />
           </label>
-          {moment && (
-            <label className="field">
-              Fotografie
-              <select
-                value={photoAction}
-                onChange={(event) => setPhotoAction(event.target.value)}
-              >
-                <option value="keep">
-                  {moment.photo_status
-                    ? "Păstrează fotografia"
-                    : "Fără fotografie"}
-                </option>
-                <option value="replace">
-                  {moment.photo_status
-                    ? "Înlocuiește fotografia"
-                    : "Adaugă fotografie"}
-                </option>
-                {moment.photo_status && (
-                  <option value="remove">Elimină fotografia</option>
-                )}
-              </select>
-            </label>
-          )}
-          {(!moment || photoAction === "replace") && (
-            <div className="field">
-              <label htmlFor="moment-photo">
-                {moment ? "Fișier" : "Fotografie (opțional)"}
-              </label>
-              <input
-                id="moment-photo"
-                type="file"
-                name="photo"
-                accept="image/jpeg,image/png,image/webp"
-                required={!!moment}
-                aria-describedby="moment-photo-hint"
-              />
-              <small id="moment-photo-hint">
-                JPG, PNG sau WebP, maximum 10 MB și 16 megapixeli. Fotografia
-                apare după verificare.
-              </small>
-            </div>
-          )}
+          <MomentPhotoEditor
+            base={base}
+            moment={moment}
+            photoIds={photoIds}
+            uploads={uploads}
+            onAdd={addPhotos}
+            onRemove={(id) =>
+              setPhotoIds((current) => current.filter((value) => value !== id))
+            }
+            onRemoveUpload={(index) =>
+              setUploads((current) =>
+                current.filter((_, position) => position !== index),
+              )
+            }
+          />
           <div className="field">
             <label htmlFor="moment-access">Acces</label>
             <select
@@ -284,8 +276,8 @@ export function MomentForm({
             </select>
             {moment && (
               <small id="moment-access-hint">
-                Schimbarea accesului se aplică și fotografiei. Copiile deja
-                salvate nu pot fi retrase.
+                Schimbarea accesului se aplică tuturor fotografiilor. Copiile
+                deja salvate nu pot fi retrase.
               </small>
             )}
           </div>

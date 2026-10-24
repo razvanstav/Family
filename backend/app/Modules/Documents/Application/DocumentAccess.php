@@ -5,6 +5,7 @@ namespace App\Modules\Documents\Application;
 use App\Modules\Documents\Contracts\DocumentLinks;
 use App\Modules\Documents\Contracts\DocumentSummaries;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\Expression;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -24,7 +25,7 @@ final class DocumentAccess implements DocumentLinks, DocumentSummaries
     /** Authorized metadata for associations; access is evaluated on every read. */
     public function references(string $family, int $actor, string $membership): Builder
     {
-        return $this->visible($family, $actor, $membership)->join('media_assets as a', function ($join) {
+        return $this->visible($family, $actor, $membership)->leftJoin('media_assets as a', function ($join) {
             $join->on('a.id', '=', 'd.asset_id')->on('a.family_id', '=', 'd.family_id');
         })->select('d.id', 'd.title', 'd.visibility', 'a.mime', 'a.status');
     }
@@ -33,7 +34,7 @@ final class DocumentAccess implements DocumentLinks, DocumentSummaries
     public function recent(string $family, int $actor, string $membership): Collection
     {
         return $this->visible($family, $actor, $membership)
-            ->join('media_assets as a', function ($join) {
+            ->leftJoin('media_assets as a', function ($join) {
                 $join->on('a.id', '=', 'd.asset_id')->on('a.family_id', '=', 'd.family_id');
             })->orderByDesc('d.created_at')->orderByDesc('d.id')->limit(4)
             ->get(['d.id', 'd.title', 'd.category', 'd.visibility', 'd.owner_id', 'd.subject_membership_id', 'a.mime', 'a.status']);
@@ -41,19 +42,32 @@ final class DocumentAccess implements DocumentLinks, DocumentSummaries
 
     public function visible(string $family, int $actor, string $membership): Builder
     {
-        return DB::table('documents as d')->where('d.family_id', $family)
-            ->where(function (Builder $q) use ($family, $actor, $membership) {
-                $q->where('d.owner_id', $actor)->orWhere('d.visibility', 'family')
-                    ->orWhere(fn (Builder $adults) => $adults->where('d.visibility', 'adults')
-                        ->whereExists($this->adultMembers($family)->where('m.id', $membership)->selectRaw('1')))
-                    ->orWhere(function (Builder $selected) use ($membership) {
-                        $selected->where('d.visibility', 'selected')->whereExists(function (Builder $grant) use ($membership) {
-                            $grant->selectRaw('1')->from('document_grants as g')
-                                ->whereColumn('g.document_id', 'd.id')->whereColumn('g.family_id', 'd.family_id')
-                                ->where('g.membership_id', $membership);
-                        });
+        return $this->authorize(DB::table('documents as d')->where('d.family_id', $family), $family, $actor, $membership);
+    }
+
+    public function recipients(string $family): Builder
+    {
+        $query = DB::table('documents as d')->join('family_memberships as reader', function ($join) {
+            $join->on('reader.family_id', '=', 'd.family_id')->whereNull('reader.revoked_at')->whereNotNull('reader.user_id');
+        })->where('d.family_id', $family);
+
+        return $this->authorize($query, $family, DB::raw('reader.user_id'), DB::raw('reader.id'));
+    }
+
+    private function authorize(Builder $query, string $family, int|Expression $actor, string|Expression $membership): Builder
+    {
+        return $query->where(function (Builder $q) use ($family, $actor, $membership) {
+            $q->where('d.owner_id', $actor)->orWhere('d.visibility', 'family')
+                ->orWhere(fn (Builder $adults) => $adults->where('d.visibility', 'adults')
+                    ->whereExists($this->adultMembers($family)->where('m.id', $membership)->selectRaw('1')))
+                ->orWhere(function (Builder $selected) use ($membership) {
+                    $selected->where('d.visibility', 'selected')->whereExists(function (Builder $grant) use ($membership) {
+                        $grant->selectRaw('1')->from('document_grants as g')
+                            ->whereColumn('g.document_id', 'd.id')->whereColumn('g.family_id', 'd.family_id')
+                            ->where('g.membership_id', $membership);
                     });
-            });
+                });
+        });
     }
 
     public function adultMembers(string $family): Builder

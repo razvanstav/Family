@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { documentFileState } from "../../shared/documentFiles";
 import {
   Camera,
   CalendarDays,
@@ -56,6 +57,8 @@ export function Pets({
   onEntryOpened,
   onChanged,
   onExpired,
+  requestedProfile,
+  onProfileOpened,
 }: {
   family: Family;
   userId: number;
@@ -63,6 +66,8 @@ export function Pets({
   onEntryOpened: () => void;
   onChanged: () => void;
   onExpired: () => void;
+  requestedProfile: string | null;
+  onProfileOpened: () => void;
 }) {
   const base = `/families/${family.id}/pets`;
   const [items, setItems] = useState<Pet[]>([]);
@@ -82,11 +87,9 @@ export function Pets({
     })
       .then(async (rows) => {
         if (controller.signal.aborted) return;
-        if (
-          requestedEntry &&
-          !rows.some((pet) => pet.id === requestedEntry.petId)
-        ) {
-          const target = await api<Pet>(`${base}/${requestedEntry.petId}`, {
+        const requestedId = requestedEntry?.petId ?? requestedProfile;
+        if (requestedId && !rows.some((pet) => pet.id === requestedId)) {
+          const target = await api<Pet>(`${base}/${requestedId}`, {
             signal: controller.signal,
           });
           if (controller.signal.aborted) return;
@@ -100,10 +103,12 @@ export function Pets({
         setSelected(
           (current) =>
             requestedEntry?.petId ??
+            requestedProfile ??
             (rows.some((pet) => pet.id === current)
               ? current
               : (rows[0]?.id ?? "")),
         );
+        if (requestedProfile) onProfileOpened();
       })
       .catch((error) => {
         if (controller.signal.aborted) return;
@@ -118,6 +123,7 @@ export function Pets({
           [403, 404].includes(error.status)
         )
           onEntryOpened();
+        if (requestedProfile) onProfileOpened();
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -545,11 +551,7 @@ function PetProfile({
                       <strong>{document.title}</strong>
                     )}
                     {document.status !== "ready" && (
-                      <span>
-                        {document.status === "quarantine"
-                          ? "În verificare"
-                          : "Respins"}
-                      </span>
+                      <span>{documentFileState(document.status)}</span>
                     )}
                   </div>
                   {canManage && (

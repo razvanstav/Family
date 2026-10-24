@@ -30,9 +30,11 @@ import {
   type Invitation,
   type Family,
   type DocumentRequest,
+  type DocumentDetail,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { MemberProfile, type ProfileDocumentsSlot } from "./MemberProfile";
+import type { ProfileRequest } from "./profileData";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
@@ -360,6 +362,9 @@ export function FamilyPage({
   requestedDocument,
   onDocumentOpened,
   renderDocuments,
+  renderDocumentDetail,
+  requestedProfile,
+  onProfileOpened,
 }: {
   family: Family;
   userId: number;
@@ -369,11 +374,19 @@ export function FamilyPage({
   requestedDocument: DocumentRequest | null;
   onDocumentOpened: () => void;
   renderDocuments: ProfileDocumentsSlot;
+  renderDocumentDetail: (props: {
+    document: DocumentDetail;
+    onClose: () => void;
+  }) => ReactNode;
+  requestedProfile: ProfileRequest | null;
+  onProfileOpened: () => void;
 }) {
   const familyId = family.id;
   const isOwner = family.role === "owner";
   const [members, setMembers] = useState<Member[]>([]);
   const [profileMember, setProfileMember] = useState<Member | null>(null);
+  const [standaloneDocument, setStandaloneDocument] =
+    useState<DocumentDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -432,16 +445,31 @@ export function FamilyPage({
     };
   }, [familyId]);
   useEffect(() => {
-    if (!requestedDocument?.memberId || loading) return;
+    if (!requestedDocument || loading) return;
     const target = members.find(
       (member) => member.id === requestedDocument.memberId,
     );
     if (target) setProfileMember(target);
-    else {
+    else if (requestedDocument.document) {
+      setProfileMember(null);
+      setStandaloneDocument(requestedDocument.document);
+      onDocumentOpened();
+    } else {
       setError("Profilul documentului nu mai este disponibil.");
       onDocumentOpened();
     }
   }, [requestedDocument, members, loading]);
+  useEffect(() => {
+    if (!requestedProfile || loading) return;
+    const target = members.find(
+      (member) => member.id === requestedProfile.memberId,
+    );
+    if (target) setProfileMember(target);
+    else {
+      setError("Profilul nu mai este disponibil.");
+      onProfileOpened();
+    }
+  }, [requestedProfile, members, loading]);
 
   async function revoke() {
     if (!target || busy) return;
@@ -516,8 +544,19 @@ export function FamilyPage({
             ? requestedDocument.id
             : null
         }
+        initialDocument={
+          requestedDocument?.memberId === profileMember.id
+            ? requestedDocument.document
+            : undefined
+        }
         onDocumentOpened={onDocumentOpened}
         renderDocuments={renderDocuments}
+        requestedProfile={
+          requestedProfile?.memberId === profileMember.id
+            ? requestedProfile
+            : null
+        }
+        onProfileOpened={onProfileOpened}
         onBack={() => {
           setProfileMember(null);
           void load();
@@ -1060,6 +1099,11 @@ export function FamilyPage({
           </button>
         </Modal>
       )}
+      {standaloneDocument &&
+        renderDocumentDetail({
+          document: standaloneDocument,
+          onClose: () => setStandaloneDocument(null),
+        })}
     </div>
   );
 }

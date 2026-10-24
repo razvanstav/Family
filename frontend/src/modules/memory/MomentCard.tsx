@@ -67,6 +67,12 @@ export function MomentCard({
             )}
             {visibilityLabel[moment.visibility]}
           </span>
+          {moment.photos.length > 1 && (
+            <span className="moment-photo-count">
+              <Image size={14} aria-hidden="true" />
+              {moment.photos.length} fotografii
+            </span>
+          )}
           <span className="moment-card-author">{moment.owner_name}</span>
         </span>
       </div>

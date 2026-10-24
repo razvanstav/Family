@@ -11,7 +11,7 @@ Decizie la 22 octombrie 2026: instalare pe serverul Linux dedicat al utilizatoru
 - Construiește frontendul: rezultatul este `backend/public/app`, cu URL `/app/`. Configurează Nginx/PHP-FPM cu rădăcina web `backend/public` și API-ul pe aceeași origine. Nu publica rădăcina repository-ului.
 - Creează configurație, chei, bază și stocare private separate: `APP_ENV=staging`, `APP_DEBUG=false`, `MEMORIA_DEMO=false`, URL HTTPS și cookie de sesiune sigur. Nu rula seederele demo din instrucțiunile locale și nu copia `.env` sau datele calculatorului inițial. Provisionarea conturilor de test trebuie stabilită separat.
 - Păstrează fișierele private persistente, accesibile numai prin autorizarea aplicației. Configurează ClamAV local conform secțiunii 4 și actualizarea supravegheată a definițiilor.
-- Configurațiile systemd livrate execută `calendar:deliver-reminders` și `outbox:deliver` fără `--watch`, prin timere separate, la 15 secunde după încheierea trecerii anterioare. Nu porni în paralel și workerii `--watch` ori un cron pentru aceleași comenzi. Scripturile PowerShell locale nu instalează servicii Linux.
+- Configurațiile systemd livrate execută `calendar:deliver-reminders` și `outbox:deliver` fără `--watch`, prin timere separate, la 60 de secunde după încheierea trecerii anterioare. Nu porni în paralel și workerii `--watch` ori un cron pentru aceleași comenzi. Scripturile PowerShell locale nu instalează servicii Linux.
 - Verifică pe server autentificarea, izolarea familiilor, uploadul/scanarea/downloadul privat, granturile după migrații și execuția workerilor. Configurează și probează backupul DB + fișiere înainte de utilizarea datelor reale. Nu deduce acceptarea Linux din testele locale consemnate.
 
 ### O2a — configurații pentru instalator
@@ -231,9 +231,9 @@ Actualizarea manuală a semnăturilor și pornirea pe acest Windows, din rădăc
 .\ops\start-local.ps1
 ```
 
-Scriptul caută PHP în PATH, apoi în `~/php84/php.exe`; poți indica altă instalare prin `-PhpPath`. Pornește și workerul `calendar:deliver-reminders --watch`, care verifică reminderele in-app la fiecare 15 secunde. Logurile lui sunt `.runtime/reminders.out.log` și `.runtime/reminders.err.log`; pentru o singură verificare rulează `php -d extension=pdo_pgsql backend/artisan calendar:deliver-reminders`. În afara acestui mediu local, comanda trebuie ținută pornită de managerul de procese al serverului.
+Scriptul caută PHP în PATH, apoi în `~/php84/php.exe`; poți indica altă instalare prin `-PhpPath`. Pornește și workerul `calendar:deliver-reminders --watch`, care procesează reminderele o dată pe minut; sursele se reconciliază numai după schimbări sau la schimbarea zilei. Logurile lui sunt `.runtime/reminders.out.log` și `.runtime/reminders.err.log`; pentru o singură verificare rulează `php -d extension=pdo_pgsql backend/artisan calendar:deliver-reminders`. În afara acestui mediu local, comanda trebuie ținută pornită de managerul de procese al serverului.
 
-După migrațiile K4b/P3 și aplicarea `ops/grant-runtime.sql`, același script pornește ascuns și `outbox:deliver --watch`, la 15 s. Loguri: `.runtime/outbox.out.log` / `.runtime/outbox.err.log`; fără mesaje repetate când nu există lucru. Pentru o singură trecere, din rădăcina proiectului:
+După migrațiile K4b/P3 și aplicarea `ops/grant-runtime.sql`, același script pornește ascuns și `outbox:deliver --watch`, la un minut. Loguri: `.runtime/outbox.out.log` / `.runtime/outbox.err.log`; fără mesaje repetate când nu există lucru. Pentru o singură trecere, din rădăcina proiectului:
 
 ```sh
 php -d extension=pdo_pgsql backend/artisan outbox:deliver --family=11111111-1111-4111-8111-111111111111
@@ -277,3 +277,7 @@ La fiecare modificare UI, rulează `npm --prefix frontend run build` și reînca
 Ultima verificare pe calculatorul inițial: **45 teste / 274 aserțiuni**, inclusiv invitații, acceptare, anulare, schimbarea rolurilor, revocare și ClamAV real, și build TypeScript/Vite reușit. Designul a fost inspectat la 360 px, 390 px și desktop. Instalarea de la zero documentată aici nu a fost executată pe un al doilea calculator.
 
 Punctul de continuare: finisarea celorlalte pagini. Documente, detaliu, upload și gestionarea accesului sunt funcționale; arhitectura extinsă din `Memoria_Familiei_Review_v1.2` descrie și module încă neimplementate. Fișierele și datele private existente pe calculatorul inițial nu sunt incluse în clone; seederul recreează doar exemplele fictive.
+
+### Reconciliere notificări NR1
+
+Aplică migrația aditivă 2026_10_24_153519_create_calendar_reminder_syncs, apoi ops/grant-runtime.sql înainte de repornirea workerilor. Checkpointul Calendar este RLS și se marchează la modificări; trecerile fără schimbări nu reîncarcă sursele. În Linux, reinstalează timerele din ops/linux, rulează systemctl daemon-reload și repornește timerele după încheierea serviciilor curente. Un singur mecanism de pornire per comandă: timere oneshot sau --watch local, fără cron/scheduler suplimentar. Ambele au cadență de 60 s; o alertă poate apărea cu până la aproximativ un minut după momentul programat, plus timpul de procesare. Toate emailurile continuă prin mailerul amora și transportul Brevo comun, fără configurații în module.

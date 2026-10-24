@@ -54,7 +54,7 @@ export type VehicleDocument = {
   id: string;
   title: string;
   visibility: string;
-  mime: string;
+  mime: string | null;
   status: PhotoStatus;
 };
 export { money } from "../../shared/numbers";

@@ -44,6 +44,6 @@ export type PetDocument = {
   id: string;
   title: string;
   visibility: string;
-  mime: string;
-  status: Exclude<PhotoStatus, null>;
+  mime: string | null;
+  status: PhotoStatus;
 };

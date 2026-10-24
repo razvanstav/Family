@@ -4,6 +4,7 @@ import { api, ApiError, errorMessage, type Family } from "../../shared/api";
 import { DatePicker } from "../../shared/DatePicker";
 import { dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
+import { setTaskCompletion } from "./taskApi";
 import {
   recurrenceLabels,
   type Assignee,
@@ -125,11 +126,7 @@ export function TaskForm({
     setBusy(true);
     setError("");
     try {
-      const saved = await api<Task>(`${endpoint}/${source.id}/completion`, {
-        method: "PATCH",
-        headers: { "If-Match": `"${source.version}"` },
-        body: JSON.stringify({ completed: source.completed_at === null }),
-      });
+      const saved = await setTaskCompletion(family.id, source);
       onSaved(saved, "completion");
     } catch (error) {
       handleError(error);

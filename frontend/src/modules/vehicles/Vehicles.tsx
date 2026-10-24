@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { documentFileState } from "../../shared/documentFiles";
 import {
   CarFront,
   Plus,
@@ -594,11 +595,7 @@ function VehicleProfile({
                       <strong>{doc.title}</strong>
                     )}
                     {doc.status !== "ready" && (
-                      <span>
-                        {doc.status === "quarantine"
-                          ? "În verificare"
-                          : "Respins"}
-                      </span>
+                      <span>{documentFileState(doc.status)}</span>
                     )}
                   </div>
                   {canManage && (

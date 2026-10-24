@@ -1,5 +1,7 @@
 # Animale
 
+**DC1, 24 octombrie 2026:** nașterea animalului, data îngrijirii și scadența următoare, inclusiv încheiată, apar în Calendar prin `PetDatedRecords`, fără dubluri cu proiecțiile active. Arhivarea rămâne respectată; accesul documentelor asociate nu se lărgește, iar cele fără fișier au stare neutră. [Contract și verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
+
 Stare la 24 octombrie 2026: **implementat și verificat local**. Utilizatorul a cerut Animale după Sarcini recurente, fără întrebări sau feedback intermediar, apoi push. Modulul este în **Mai multe pe mobil și desktop**. Livrează un singur layout: fotografie și identitate, cu filele stabile **Prezentare / Îngrijire / Documente**. Acceptarea vizuală rămâne pentru utilizator.
 
 Identitatea animalului și istoricul aparțin modulului Pets, separat de profilurile umane. Membrii activi pot consulta; proprietarul și adulții pot administra. Membrii cu acces limitat consultă profilul, îngrijirea și numai documentele autorizate lor.

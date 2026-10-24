@@ -24,6 +24,7 @@ use App\Platform\Families\InvitationController;
 use App\Platform\Families\MemberProfileController;
 use App\Platform\Families\TenantContext;
 use App\Platform\Identity\AccountController;
+use App\Platform\Identity\NotificationSettingsController;
 use App\Platform\Identity\PrivateResponse;
 use App\Platform\Identity\RegistrationController;
 use App\Platform\Identity\SessionController;
@@ -36,6 +37,8 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::post('/register', RegistrationController::class)->middleware('throttle:6,1');
     Route::post('/logout', [SessionController::class, 'logout'])->middleware('auth');
     Route::patch('/account', [AccountController::class, 'update'])->middleware(['auth', 'throttle:20,1']);
+    Route::get('/account/notification-settings', [NotificationSettingsController::class, 'show'])->middleware('auth');
+    Route::put('/account/notification-settings', [NotificationSettingsController::class, 'update'])->middleware(['auth', 'throttle:20,1']);
     Route::prefix('/admin')->middleware(['auth', AdminContext::class])->group(function () {
         Route::get('/overview', AdminOverviewController::class);
         Route::get('/email-settings', [EmailSettingsController::class, 'show']);
@@ -106,6 +109,8 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::post('/moments/{moment}/restore', [MomentController::class, 'restore'])->whereUuid('moment')->middleware('throttle:20,1');
         Route::get('/moments/{moment}/photo', [MomentController::class, 'photo'])->whereUuid('moment');
         Route::post('/moments/{moment}/photo/scan', [MomentController::class, 'retryPhoto'])->whereUuid('moment')->middleware('throttle:10,1');
+        Route::get('/moments/{moment}/photos/{photo}', [MomentController::class, 'photo'])->whereUuid(['moment', 'photo']);
+        Route::post('/moments/{moment}/photos/{photo}/scan', [MomentController::class, 'retryPhoto'])->whereUuid(['moment', 'photo'])->middleware('throttle:10,1');
         Route::get('/home', HomeController::class);
         Route::get('/kitchen-activity', KitchenActivityController::class);
         Route::get('/meals', [MealController::class, 'index']);
@@ -145,6 +150,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
             Route::post('/photo', [MemberProfileController::class, 'uploadPhoto'])->middleware('throttle:20,1');
             Route::post('/photo/scan', [MemberProfileController::class, 'retryPhoto'])->middleware('throttle:10,1');
             Route::get('/entries', [MemberProfileController::class, 'entries']);
+            Route::get('/entries/{entry}', [MemberProfileController::class, 'showEntry'])->whereUuid('entry');
             Route::get('/story', [MemberProfileController::class, 'story']);
             Route::get('/relations', [FamilyGenealogyController::class, 'index']);
             Route::post('/relations', [FamilyGenealogyController::class, 'store'])->middleware('throttle:20,1');
@@ -163,6 +169,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::post('/documents', [DocumentController::class, 'store'])->middleware('throttle:20,1');
         Route::get('/documents/{document}', [DocumentController::class, 'show']);
         Route::patch('/documents/{document}', [DocumentController::class, 'update'])->whereUuid('document');
+        Route::post('/documents/{document}/file', [DocumentController::class, 'attachFile'])->whereUuid('document')->middleware('throttle:20,1');
         Route::put('/documents/{document}/sharing', [DocumentController::class, 'sharing']);
         Route::get('/documents/{document}/content', [DocumentController::class, 'download']);
         Route::post('/documents/{document}/scan', [DocumentController::class, 'retry'])->middleware('throttle:10,1');

@@ -10,6 +10,11 @@ import type { PhotoStatus } from "../../shared/PrivatePhoto";
 
 export type Category = "health" | "learning" | "activities";
 export type Tab = "overview" | "documents" | Category;
+export type ProfileRequest = {
+  memberId: string;
+  entryId?: string;
+  category?: Category;
+};
 export const categories = {
   health: { label: "Sănătate" },
   learning: { label: "Școală și cultură" },

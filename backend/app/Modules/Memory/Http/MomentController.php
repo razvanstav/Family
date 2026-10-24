@@ -2,7 +2,9 @@
 
 namespace App\Modules\Memory\Http;
 
+use App\Modules\Calendar\Contracts\ReminderReconciliation;
 use App\Modules\Memory\Application\MomentAccess;
+use App\Modules\Memory\Application\MomentPhotos;
 use App\Platform\Audit\Audit;
 use App\Platform\Contracts\Outbox;
 use App\Platform\Contracts\PrivateMedia;
@@ -17,7 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class MomentController
 {
-    public function __construct(private readonly MomentAccess $access, private readonly PrivateMedia $media, private readonly Outbox $outbox) {}
+    public function __construct(private readonly MomentAccess $access, private readonly PrivateMedia $media, private readonly Outbox $outbox, private readonly MomentPhotos $photos, private readonly ReminderReconciliation $reminders) {}
 
     private function visible(Request $request, string $family): Builder
     {
@@ -38,16 +40,18 @@ final class MomentController
             ->join('users as author', 'author.id', '=', 'memory_moments.owner_id')
             ->leftJoinSub($people, 'people', 'people.moment_id', '=', 'memory_moments.id')
             ->leftJoinSub($grants, 'grants', 'grants.moment_id', '=', 'memory_moments.id')
+            ->leftJoinSub($this->photos->summaries($family), 'gallery', 'gallery.moment_id', '=', 'memory_moments.id')
             ->leftJoin('media_assets as photo', function ($join) {
                 $join->on('photo.family_id', '=', 'memory_moments.family_id')->on('photo.id', '=', 'memory_moments.photo_asset_id');
-            })->select('memory_moments.*', 'author.name as owner_name', 'people.people_json', 'photo.status as photo_status')
+            })->select('memory_moments.*', 'author.name as owner_name', 'people.people_json', 'photo.status as photo_status', 'gallery.photos_json')
             ->selectRaw('CASE WHEN memory_moments.owner_id = ? THEN grants.grants_json ELSE NULL END as grants_json', [$request->user()->id]);
     }
 
     private function payload(Request $request, object $moment): array
     {
         $data = (array) $moment;
-        unset($data['family_id'], $data['people_json'], $data['grants_json'], $data['photo_asset_id']);
+        unset($data['family_id'], $data['people_json'], $data['grants_json'], $data['photo_asset_id'], $data['photos_json']);
+        $data['photos'] = json_decode($moment->photos_json ?? '[]', true);
         $data['people'] = json_decode($moment->people_json ?? '[]', true);
         $data['grants'] = json_decode($moment->grants_json ?? '[]', true);
         $data['can_manage'] = (int) $moment->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited';
@@ -119,6 +123,9 @@ final class MomentController
             'grant_membership_ids' => 'sometimes|array|max:100', 'grant_membership_ids.*' => 'required|uuid|distinct',
             'photo_action' => ['sometimes', Rule::in(['keep', 'replace', 'remove'])],
             'photo' => 'sometimes|file|max:10240',
+            'photos_mode' => ['sometimes', Rule::in(['edit'])],
+            'photo_ids' => 'sometimes|array|max:20', 'photo_ids.*' => 'required|uuid|distinct',
+            'photos' => 'sometimes|array|max:20', 'photos.*' => 'required|file|max:10240',
             'photo_asset_id' => 'prohibited', 'archived_at' => 'prohibited',
             'owner_id' => 'prohibited', 'family_id' => 'prohibited', 'version' => 'prohibited',
         ], [
@@ -143,12 +150,33 @@ final class MomentController
         if (($photoAction === 'replace') !== $request->hasFile('photo')) {
             throw ValidationException::withMessages(['photo' => 'Alege o fotografie numai pentru înlocuire.']);
         }
+        $gallery = isset($data['photos_mode']);
+        if (($gallery && ($request->hasFile('photo') || isset($data['photo_action']))) || (! $gallery && (isset($data['photo_ids']) || isset($data['photos'])))) {
+            throw ValidationException::withMessages(['photos' => 'Folosește un singur mod de editare a fotografiilor.']);
+        }
+        $uploads = $request->file('photos', []);
+        if (array_sum(array_map(fn ($file): int => $file->getSize(), $uploads)) > MomentPhotos::UPLOAD_BYTES) {
+            throw ValidationException::withMessages(['photos' => 'Adaugă cel mult 10 MB de fotografii noi la o salvare.']);
+        }
 
         return [
             'kind' => $data['kind'], 'title' => $data['title'], 'body' => $data['body'] ?? null,
             'occurred_on' => $data['occurred_on'], 'visibility' => $data['visibility'], 'membership_ids' => $memberships,
             'grant_membership_ids' => $grants, 'photo_action' => $photoAction,
+            'photos_mode' => $gallery, 'photo_ids' => array_values($data['photo_ids'] ?? []),
         ];
+    }
+
+    private function savePhotos(Request $request, string $family, string $moment, array $data, ?string $cover): ?string
+    {
+        if ($data['photos_mode']) {
+            return $this->photos->sync($family, $moment, $request->user()->id, $data['photo_ids'], $request->file('photos', []));
+        }
+        if ($data['photo_action'] === 'keep') {
+            return $cover;
+        }
+
+        return $this->photos->sync($family, $moment, $request->user()->id, [], $data['photo_action'] === 'replace' ? [$request->file('photo')] : []);
     }
 
     private function syncMemberships(string $table, string $family, string $moment, array $memberships): void
@@ -169,18 +197,21 @@ final class MomentController
         return DB::transaction(function () use ($request, $family, $data): JsonResponse {
             $memberships = $data['membership_ids'];
             $grants = $data['grant_membership_ids'];
-            unset($data['membership_ids'], $data['grant_membership_ids'], $data['photo_action']);
-            $asset = $request->hasFile('photo') ? $this->media->receiveImage($family, $request->user()->id, $request->file('photo')) : null;
+            $photos = $data;
+            unset($data['membership_ids'], $data['grant_membership_ids'], $data['photo_action'], $data['photos_mode'], $data['photo_ids']);
             $id = (string) Str::uuid();
             DB::table('memory_moments')->insert($data + [
                 'id' => $id, 'family_id' => $family, 'owner_id' => $request->user()->id,
-                'photo_asset_id' => $asset['id'] ?? null,
+                'photo_asset_id' => null,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
+            $cover = $this->savePhotos($request, $family, $id, $photos, null);
+            DB::table('memory_moments')->where('family_id', $family)->where('id', $id)->update(['photo_asset_id' => $cover]);
             $this->syncMemberships('memory_moment_people', $family, $id, $memberships);
             $this->syncMemberships('memory_moment_grants', $family, $id, $grants);
             Audit::record($family, $request->user()->id, 'memory.created', $id);
             $this->outbox->append($family, 'memory.moment.changed', 'memory.moment', $id, 1);
+            $this->reminders->invalidateFamily($family);
 
             return $this->show($request, $family, $id)->setStatusCode(201);
         });
@@ -195,12 +226,8 @@ final class MomentController
         return DB::transaction(function () use ($request, $family, $moment, $item, $data): JsonResponse {
             $memberships = $data['membership_ids'];
             $grants = $data['grant_membership_ids'];
-            $assetId = match ($data['photo_action']) {
-                'replace' => $this->media->receiveImage($family, $request->user()->id, $request->file('photo'))['id'],
-                'remove' => null,
-                default => $item->photo_asset_id,
-            };
-            unset($data['membership_ids'], $data['grant_membership_ids'], $data['photo_action']);
+            $assetId = $this->savePhotos($request, $family, $moment, $data, $item->photo_asset_id);
+            unset($data['membership_ids'], $data['grant_membership_ids'], $data['photo_action'], $data['photos_mode'], $data['photo_ids']);
             $updated = DB::table('memory_moments')->where('family_id', $family)->where('id', $moment)->where('version', $item->version)
                 ->update($data + ['photo_asset_id' => $assetId, 'version' => $item->version + 1, 'updated_at' => now()]);
             abort_unless($updated === 1, 412, 'Amintirea s-a schimbat. Reîncarc-o înainte de a salva.');
@@ -209,6 +236,7 @@ final class MomentController
             DB::table('families')->where('id', $family)->increment('authz_revision');
             Audit::record($family, $request->user()->id, 'memory.updated', $moment);
             $this->outbox->append($family, 'memory.moment.changed', 'memory.moment', $moment, $item->version + 1);
+            $this->reminders->invalidateFamily($family);
 
             return $this->show($request, $family, $moment);
         });
@@ -247,25 +275,28 @@ final class MomentController
             DB::table('families')->where('id', $family)->increment('authz_revision');
             Audit::record($family, $request->user()->id, $restore ? 'memory.restored' : 'memory.archived', $moment);
             $this->outbox->append($family, 'memory.moment.changed', 'memory.moment', $moment, $item->version + 1);
+            $this->reminders->invalidateFamily($family);
 
             return $this->show($request, $family, $moment);
         });
     }
 
-    public function photo(Request $request, string $family, string $moment): StreamedResponse
+    public function photo(Request $request, string $family, string $moment, ?string $photo = null): StreamedResponse
     {
         $item = $this->access->visible($family, $request->user()->id)->where('memory_moments.id', $moment)->firstOrFail();
-        abort_unless($item->photo_asset_id, 404);
+        $asset = $photo ? $this->photos->asset($family, $moment, $photo) : $item->photo_asset_id;
+        abort_unless($asset, 404);
 
-        return $this->media->image($family, $item->photo_asset_id);
+        return $this->media->image($family, $asset);
     }
 
-    public function retryPhoto(Request $request, string $family, string $moment): JsonResponse
+    public function retryPhoto(Request $request, string $family, string $moment, ?string $photo = null): JsonResponse
     {
         $item = $this->mutable($request, $family, $moment);
         abort_if($item->archived_at, 409, 'Restaurează amintirea înainte de a verifica fotografia.');
-        abort_unless($item->photo_asset_id, 404);
-        $this->media->retry($family, $item->photo_asset_id);
+        $asset = $photo ? $this->photos->asset($family, $moment, $photo) : $item->photo_asset_id;
+        abort_unless($asset, 404);
+        $this->media->retry($family, $asset);
         Audit::record($family, $request->user()->id, 'memory.photo_checked', $moment);
 
         return $this->show($request, $family, $moment);

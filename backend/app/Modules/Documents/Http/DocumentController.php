@@ -2,6 +2,7 @@
 
 namespace App\Modules\Documents\Http;
 
+use App\Modules\Calendar\Contracts\ReminderReconciliation;
 use App\Modules\Documents\Application\DocumentAccess;
 use App\Platform\Audit\Audit;
 use App\Platform\Contracts\PrivateMedia;
@@ -14,12 +15,12 @@ use Illuminate\Validation\Rule;
 
 final class DocumentController
 {
-    public function __construct(private DocumentAccess $access, private PrivateMedia $media) {}
+    public function __construct(private DocumentAccess $access, private PrivateMedia $media, private readonly ReminderReconciliation $reminders) {}
 
     public function index(Request $request, string $family)
     {
         return $this->access->visible($family, $request->user()->id, $request->attributes->get('membership')->id)
-            ->join('media_assets as a', function ($join) {
+            ->leftJoin('media_assets as a', function ($join) {
                 $join->on('a.id', '=', 'd.asset_id')->on('a.family_id', '=', 'd.family_id');
             })
             ->join('users as u', 'u.id', '=', 'd.owner_id')->orderByDesc('d.created_at')
@@ -35,10 +36,10 @@ final class DocumentController
     public function show(Request $request, string $family, string $document)
     {
         $doc = $this->find($request, $family, $document);
-        $asset = DB::table('media_assets')->where('family_id', $family)->where('id', $doc->asset_id)->firstOrFail();
+        $asset = $doc->asset_id === null ? null : DB::table('media_assets')->where('family_id', $family)->where('id', $doc->asset_id)->firstOrFail();
         $data = (array) $doc;
         unset($data['asset_id'], $data['family_id']);
-        $data += ['mime' => $asset->mime, 'bytes' => $asset->bytes, 'status' => $asset->status, 'original_name' => $asset->original_name,
+        $data += ['mime' => $asset?->mime, 'bytes' => $asset?->bytes, 'status' => $asset?->status, 'original_name' => $asset?->original_name,
             'owner_name' => DB::table('users')->where('id', $doc->owner_id)->value('name')];
         $data['grants'] = $doc->owner_id === $request->user()->id
             ? DB::table('document_grants')->where('family_id', $family)->where('document_id', $document)->pluck('membership_id') : [];
@@ -53,7 +54,7 @@ final class DocumentController
             'title' => 'required|string|max:160',
             'category' => ['required', Rule::in(['personal', 'home', 'health', 'memories'])],
             'subject_membership_id' => 'sometimes|nullable|uuid',
-            'file' => 'required|file|max:10240',
+            'file' => 'sometimes|nullable|file|max:10240',
             'expires_on' => $this->expirationRules(),
             'family_id' => 'prohibited', 'owner_id' => 'prohibited', 'visibility' => 'prohibited',
         ], $this->expirationMessages());
@@ -67,10 +68,10 @@ final class DocumentController
         } else {
             abort_if(! empty($validated['subject_membership_id']), 422, 'Casă și Amintiri sunt în dosarul familiei.');
         }
-        $asset = $this->media->receive($family, $request->user()->id, $request->file('file'));
+        $asset = $request->hasFile('file') ? $this->media->receive($family, $request->user()->id, $request->file('file')) : null;
         $id = (string) Str::uuid();
         DB::table('documents')->insert([
-            'id' => $id, 'family_id' => $family, 'owner_id' => $request->user()->id, 'asset_id' => $asset['id'],
+            'id' => $id, 'family_id' => $family, 'owner_id' => $request->user()->id, 'asset_id' => $asset['id'] ?? null,
             'title' => $validated['title'], 'category' => $validated['category'], 'subject_membership_id' => $subject,
             'visibility' => match ($validated['category']) {
                 'home' => 'adults', 'memories' => 'family', default => 'private'
@@ -79,8 +80,28 @@ final class DocumentController
             'version' => 1, 'created_at' => now(), 'updated_at' => now(),
         ]);
         Audit::record($family, $request->user()->id, 'document.created', $id);
+        $this->reminders->invalidateFamily($family);
 
         return $this->show($request, $family, $id)->setStatusCode(201);
+    }
+
+    public function attachFile(Request $request, string $family, string $document): JsonResponse
+    {
+        $doc = $this->find($request, $family, $document);
+        abort_unless($doc->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited', 403, 'Doar proprietarul poate adăuga fișierul documentului.');
+        abort_unless($request->header('If-Match'), 428, 'Versiunea documentului este necesară.');
+        abort_unless($request->header('If-Match') === '"'.$doc->version.'"', 412, 'Documentul s-a schimbat. Reîncarcă-l înainte de a salva.');
+        abort_if($doc->asset_id !== null, 409, 'Documentul are deja un fișier.');
+        $request->validate(['file' => 'required|file|max:10240', 'family_id' => 'prohibited', 'owner_id' => 'prohibited',
+            'title' => 'prohibited', 'category' => 'prohibited', 'visibility' => 'prohibited', 'subject_membership_id' => 'prohibited']);
+        $asset = $this->media->receive($family, $request->user()->id, $request->file('file'));
+        DB::table('documents')->where('family_id', $family)->where('id', $document)->update([
+            'asset_id' => $asset['id'], 'version' => $doc->version + 1, 'updated_at' => now(),
+        ]);
+        Audit::record($family, $request->user()->id, 'document.file_added', $document);
+        $this->reminders->invalidateFamily($family);
+
+        return $this->show($request, $family, $document);
     }
 
     public function update(Request $request, string $family, string $document): JsonResponse
@@ -100,6 +121,7 @@ final class DocumentController
                 'expires_on' => $data['expires_on'], 'version' => $doc->version + 1, 'updated_at' => now(),
             ]);
             Audit::record($family, $request->user()->id, 'document.expiration_changed', $document);
+            $this->reminders->invalidateFamily($family);
         }
 
         return $this->show($request, $family, $document);
@@ -154,6 +176,7 @@ final class DocumentController
         ]);
         DB::table('families')->where('id', $family)->increment('authz_revision');
         Audit::record($family, $request->user()->id, 'document.access_changed', $document);
+        $this->reminders->invalidateFamily($family);
 
         return $this->show($request, $family, $document);
     }
@@ -161,6 +184,7 @@ final class DocumentController
     public function download(Request $request, string $family, string $document)
     {
         $doc = $this->find($request, $family, $document);
+        abort_if($doc->asset_id === null, 404, 'Documentul nu are fișier.');
         Audit::record($family, $request->user()->id, 'document.download', $document);
 
         return $this->media->download($family, $doc->asset_id);
@@ -170,6 +194,7 @@ final class DocumentController
     {
         $doc = $this->find($request, $family, $document);
         abort_unless($doc->owner_id === $request->user()->id, 403);
+        abort_if($doc->asset_id === null, 404, 'Documentul nu are fișier.');
         $this->media->retry($family, $doc->asset_id);
         Audit::record($family, $request->user()->id, 'document.scan_retried', $document);
 

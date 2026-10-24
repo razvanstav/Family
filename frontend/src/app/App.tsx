@@ -8,8 +8,6 @@ import {
   Users,
   UtensilsCrossed,
   CarFront,
-  ChevronRight,
-  MoreHorizontal,
   Search,
   Wallet,
   PawPrint,
@@ -24,9 +22,14 @@ import {
   type VehicleRequest,
   type PetRequest,
   type DocumentRequest,
+  type DocumentDetail,
+  type Member,
   familyDocumentCategories,
 } from "../shared/api";
-import { Documents } from "../modules/documents/Documents";
+import {
+  Documents,
+  DocumentDetailDialog,
+} from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
 import { AcceptInvitation } from "../modules/families/AcceptInvitation";
 import { MobileNavigation } from "./MobileNavigation";
@@ -38,20 +41,27 @@ import {
   type AdministrationMemory,
 } from "../modules/administration/Administration";
 import { UserAvatar } from "../shared/UserAvatar";
-import type { Profile } from "../modules/families/profileData";
+import {
+  kinds,
+  type Kind,
+  type Profile,
+  type ProfileRequest,
+} from "../modules/families/profileData";
 import { SectionTabs } from "../shared/SectionTabs";
-import { Modal } from "../shared/Modal";
 import { observeSessionLifecycle } from "./sessionLifecycle";
 import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
 import { Home } from "../modules/home/Home";
 import { Kitchen } from "../modules/kitchen/Kitchen";
 import { MealViewer } from "../modules/kitchen/MealViewer";
-import { mealTypes } from "../modules/kitchen/mealTypes";
+import { mealTypes, type MealRequest } from "../modules/kitchen/mealTypes";
 import { Memories } from "../modules/memory/Memories";
 import { Vehicles } from "../modules/vehicles/Vehicles";
 import { Expenses } from "../modules/expenses/Expenses";
+import type { ExpenseRequest } from "../modules/expenses/expenseData";
 import { Tasks } from "../modules/tasks/Tasks";
+import { TaskHomeCard } from "../modules/tasks/TaskHomeCard";
+import type { Task } from "../modules/tasks/taskData";
 import { Pets } from "../modules/pets/Pets";
 import {
   FamilySearch,
@@ -80,8 +90,8 @@ export default function App() {
   const [familySection, setFamilySection] = useState<"members" | "documents">(
     "members",
   );
-  const [desktopMore, setDesktopMore] = useState(false);
   const [account, setAccount] = useState(false);
+  const accountReturnFocus = useRef<HTMLElement | null>(null);
   const [ownProfile, setOwnProfile] = useState<{
     familyId: string;
     profile: Profile;
@@ -104,6 +114,16 @@ export default function App() {
   );
   const [taskTarget, setTaskTarget] = useState<string | null>(null);
   const [petTarget, setPetTarget] = useState<PetRequest | null>(null);
+  const [profileTarget, setProfileTarget] = useState<ProfileRequest | null>(
+    null,
+  );
+  const [expenseTarget, setExpenseTarget] = useState<ExpenseRequest | null>(
+    null,
+  );
+  const [mealDateTarget, setMealDateTarget] = useState<MealRequest | null>(
+    null,
+  );
+  const [petProfileTarget, setPetProfileTarget] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionNotice, setSessionNotice] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
@@ -116,6 +136,10 @@ export default function App() {
   const [invitation, setInvitation] = useState(() =>
     new URLSearchParams(window.location.hash.slice(1)).get("invite"),
   );
+  function openAccount(returnFocus: HTMLElement | null) {
+    accountReturnFocus.current = returnFocus;
+    setAccount(true);
+  }
   useEffect(() => {
     if (session?.user && !session.user.is_admin && page === "admin")
       setPage("home");
@@ -129,14 +153,6 @@ export default function App() {
     return () => window.removeEventListener("hashchange", changed);
   }, []);
   useEffect(() => {
-    const mobile = window.matchMedia("(max-width: 700px)");
-    const close = () => {
-      if (mobile.matches) setDesktopMore(false);
-    };
-    mobile.addEventListener("change", close);
-    return () => mobile.removeEventListener("change", close);
-  }, []);
-  useEffect(() => {
     document.title = `${invitation ? "Invitație" : !session?.user || checkingSession ? (authMode === "register" ? "Creează cont" : "Autentificare") : page === "family" && familySection === "documents" ? "Documente · Familia mea" : pageLabels[page]} · ${!session?.user && !invitation ? "Amora" : "Memoria Familiei"}`;
   }, [
     page,
@@ -147,7 +163,6 @@ export default function App() {
     authMode,
   ]);
   function acceptSession(data: Session) {
-    setDesktopMore(false);
     sessionRevision.current++;
     if (knownActor.current !== (data.user?.id ?? null) || !data.user?.is_admin)
       adminMemory.current = { section: "overview" };
@@ -161,6 +176,10 @@ export default function App() {
     setVehicleTarget(null);
     setTaskTarget(null);
     setPetTarget(null);
+    setProfileTarget(null);
+    setExpenseTarget(null);
+    setMealDateTarget(null);
+    setPetProfileTarget(null);
     setRecipeTarget(null);
     setDocumentTarget(null);
     setSearchOpen(false);
@@ -257,6 +276,12 @@ export default function App() {
     };
   }, []);
   const family = session?.families.find((f) => f.id === familyId);
+  useEffect(() => {
+    setProfileTarget(null);
+    setExpenseTarget(null);
+    setMealDateTarget(null);
+    setPetProfileTarget(null);
+  }, [familyId]);
   useEffect(() => {
     setOwnProfile(null);
     setProfileError("");
@@ -415,16 +440,6 @@ export default function App() {
               Bucătărie
             </button>
             <button
-              className={page === "memory" ? "active" : ""}
-              aria-current={page === "memory" ? "page" : undefined}
-              onClick={() => setPage("memory")}
-            >
-              <span className="nav-symbol nav-symbol-memory" aria-hidden="true">
-                <BookHeart size={21} />
-              </span>
-              Amintiri
-            </button>
-            <button
               className={page === "expenses" ? "active" : ""}
               aria-current={page === "expenses" ? "page" : undefined}
               onClick={() => setPage("expenses")}
@@ -436,6 +451,16 @@ export default function App() {
                 <Wallet size={21} />
               </span>
               Cheltuieli
+            </button>
+            <button
+              className={page === "memory" ? "active" : ""}
+              aria-current={page === "memory" ? "page" : undefined}
+              onClick={() => setPage("memory")}
+            >
+              <span className="nav-symbol nav-symbol-memory" aria-hidden="true">
+                <BookHeart size={21} />
+              </span>
+              Amintiri
             </button>
             <button
               className={page === "vehicles" ? "active" : ""}
@@ -451,27 +476,37 @@ export default function App() {
               Auto
             </button>
             <button
-              className={
-                desktopMore ||
-                page === "calendar" ||
-                page === "tasks" ||
-                page === "pets"
-                  ? "active"
-                  : ""
-              }
-              aria-current={
-                page === "calendar" || page === "tasks" || page === "pets"
-                  ? "page"
-                  : undefined
-              }
-              aria-haspopup="dialog"
-              aria-expanded={desktopMore}
-              onClick={() => setDesktopMore(true)}
+              className={page === "calendar" ? "active" : ""}
+              aria-current={page === "calendar" ? "page" : undefined}
+              onClick={() => setPage("calendar")}
             >
-              <span className="nav-symbol" aria-hidden="true">
-                <MoreHorizontal size={21} />
+              <span
+                className="nav-symbol nav-symbol-calendar"
+                aria-hidden="true"
+              >
+                <CalendarDays size={21} />
               </span>
-              Mai multe
+              Calendar
+            </button>
+            <button
+              className={page === "tasks" ? "active" : ""}
+              aria-current={page === "tasks" ? "page" : undefined}
+              onClick={() => setPage("tasks")}
+            >
+              <span className="nav-symbol nav-symbol-tasks" aria-hidden="true">
+                <ListTodo size={21} />
+              </span>
+              Sarcini
+            </button>
+            <button
+              className={page === "pets" ? "active" : ""}
+              aria-current={page === "pets" ? "page" : undefined}
+              onClick={() => setPage("pets")}
+            >
+              <span className="nav-symbol nav-symbol-pets" aria-hidden="true">
+                <PawPrint size={21} />
+              </span>
+              Animale
             </button>
           </nav>
         )}
@@ -486,7 +521,10 @@ export default function App() {
               Administrare
             </button>
           )}
-          <button className="sidebar-profile" onClick={() => setAccount(true)}>
+          <button
+            className="sidebar-profile"
+            onClick={(event) => openAccount(event.currentTarget)}
+          >
             <UserAvatar name={session.user.name} photo={userPhoto} />
             <span>
               <strong>{session.user.name}</strong>
@@ -502,7 +540,7 @@ export default function App() {
             <button
               className="mobile-account-brand"
               aria-label="Contul meu"
-              onClick={() => setAccount(true)}
+              onClick={(event) => openAccount(event.currentTarget)}
             >
               <Brand compact />
             </button>
@@ -602,7 +640,7 @@ export default function App() {
             />
           ) : family ? (
             page === "home" ? (
-              <Home
+              <Home<Task>
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 onExpired={() => void refresh()}
@@ -611,6 +649,27 @@ export default function App() {
                   setPage("memory");
                 }}
                 onKitchen={() => setPage("kitchen")}
+                renderTasks={({ tasks, today, loading, onChanged }) => (
+                  <TaskHomeCard
+                    family={family}
+                    tasks={tasks}
+                    today={today}
+                    loading={loading}
+                    onChanged={() => {
+                      onChanged();
+                      setCalendarRevision((value) => value + 1);
+                    }}
+                    onNew={() => {
+                      setTaskTarget("new");
+                      setPage("tasks");
+                    }}
+                    onAll={() => {
+                      setTaskTarget(null);
+                      setPage("tasks");
+                    }}
+                    onExpired={() => void refresh()}
+                  />
+                )}
                 onCalendar={(target) => {
                   setCalendarTarget(target);
                   setPage("calendar");
@@ -623,6 +682,7 @@ export default function App() {
                 userId={session.user.id}
                 navigation={familyNavigation}
                 requestedDocument={documentTarget?.id}
+                initialDocument={documentTarget?.document}
                 onDocumentOpened={() => setDocumentTarget(null)}
                 onExpired={() => void refresh()}
               />
@@ -630,6 +690,8 @@ export default function App() {
               <Expenses
                 key={`${session.user.id}:${family.id}`}
                 family={family}
+                requestedExpense={expenseTarget}
+                onExpenseOpened={() => setExpenseTarget(null)}
                 onExpired={() => void refresh()}
               />
             ) : page === "tasks" ? (
@@ -648,6 +710,8 @@ export default function App() {
                 userId={session.user.id}
                 requestedRecipe={recipeTarget}
                 onRecipeOpened={() => setRecipeTarget(null)}
+                requestedMeal={mealDateTarget}
+                onMealOpened={() => setMealDateTarget(null)}
                 onExpired={() => void refresh()}
               />
             ) : page === "memory" ? (
@@ -686,6 +750,8 @@ export default function App() {
                 family={family}
                 userId={session.user.id}
                 requestedEntry={petTarget}
+                requestedProfile={petProfileTarget}
+                onProfileOpened={() => setPetProfileTarget(null)}
                 onEntryOpened={() => setPetTarget(null)}
                 onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
@@ -707,7 +773,65 @@ export default function App() {
                   setPage("tasks");
                 }}
                 onPet={(target) => {
+                  setPetProfileTarget(null);
                   setPetTarget(target);
+                  setPage("pets");
+                }}
+                onDocument={async (id, signal) => {
+                  const document = await api<DocumentDetail>(
+                    `/families/${family.id}/documents/${id}`,
+                    { signal },
+                  );
+                  const common = familyDocumentCategories.includes(
+                    document.category,
+                  );
+                  let memberId = common ? null : document.subject_membership_id;
+                  if (!common && !memberId) {
+                    const members = await api<Member[]>(
+                      `/families/${family.id}/members`,
+                      { signal },
+                    );
+                    memberId =
+                      members.find(
+                        (member) => member.user_id === document.owner_id,
+                      )?.id ?? null;
+                  }
+                  if (signal.aborted) return;
+                  setProfileTarget(null);
+                  setDocumentTarget({ id: document.id, memberId, document });
+                  setFamilySection(common ? "documents" : "members");
+                  setPage("family");
+                }}
+                onMemory={(id) => {
+                  setMemoryTarget(id);
+                  setPage("memory");
+                }}
+                onProfile={(memberId, entryId, kind) => {
+                  const category =
+                    kind && Object.hasOwn(kinds, kind)
+                      ? kinds[kind as Kind].category
+                      : undefined;
+                  setDocumentTarget(null);
+                  setProfileTarget({ memberId, entryId, category });
+                  setFamilySection("members");
+                  setPage("family");
+                }}
+                onExpense={(id, date, visibility) => {
+                  setExpenseTarget({
+                    id,
+                    date,
+                    visibility: visibility === "private" ? "private" : "family",
+                  });
+                  setPage("expenses");
+                }}
+                onMeal={(id, date) => {
+                  setRecipeTarget(null);
+                  setMealDateTarget({ id, date });
+                  setPage("kitchen");
+                }}
+                onPetProfile={(id) => {
+                  setPetTarget(null);
+                  setPetProfileTarget(id);
                   setPage("pets");
                 }}
                 onExpired={() => void refresh()}
@@ -720,6 +844,8 @@ export default function App() {
                 userId={session.user.id}
                 navigation={familyNavigation}
                 requestedDocument={documentTarget}
+                requestedProfile={profileTarget}
+                onProfileOpened={() => setProfileTarget(null)}
                 onDocumentOpened={() => setDocumentTarget(null)}
                 renderDocuments={(props) => (
                   <Documents
@@ -727,6 +853,18 @@ export default function App() {
                     family={family}
                     userId={authenticatedUser.id}
                     {...props}
+                  />
+                )}
+                renderDocumentDetail={({ document, onClose }) => (
+                  <DocumentDetailDialog
+                    key={document.id}
+                    id={document.id}
+                    initialDocument={document}
+                    endpoint={`/families/${family.id}`}
+                    userId={authenticatedUser.id}
+                    canEdit={family.role !== "limited"}
+                    onClose={onClose}
+                    onChanged={() => setCalendarRevision((value) => value + 1)}
                   />
                 )}
                 onMemory={(id) => {
@@ -756,49 +894,10 @@ export default function App() {
       <MobileNavigation
         page={page}
         onPage={setPage}
-        onAccount={() => setAccount(true)}
+        onAccount={openAccount}
         admin={session.user.is_admin}
         hasFamily={session.families.length > 0}
       />
-      {desktopMore && (
-        <Modal title="Mai multe" onClose={() => setDesktopMore(false)}>
-          <nav className="more-menu" aria-label="Mai multe secțiuni">
-            <button
-              aria-current={page === "calendar" ? "page" : undefined}
-              onClick={() => {
-                setDesktopMore(false);
-                setPage("calendar");
-              }}
-            >
-              <CalendarDays size={22} />
-              <span>Calendar</span>
-              <ChevronRight size={18} />
-            </button>
-            <button
-              aria-current={page === "tasks" ? "page" : undefined}
-              onClick={() => {
-                setDesktopMore(false);
-                setPage("tasks");
-              }}
-            >
-              <ListTodo size={22} />
-              <span>Sarcini</span>
-              <ChevronRight size={18} />
-            </button>
-            <button
-              aria-current={page === "pets" ? "page" : undefined}
-              onClick={() => {
-                setDesktopMore(false);
-                setPage("pets");
-              }}
-            >
-              <PawPrint size={22} />
-              <span>Animale</span>
-              <ChevronRight size={18} />
-            </button>
-          </nav>
-        </Modal>
-      )}
       {account && (
         <AccountDialog
           key={`${session.user.id}:${family?.id ?? "none"}`}
@@ -806,6 +905,7 @@ export default function App() {
           family={family}
           profile={currentProfile}
           profileError={profileError}
+          returnFocusTarget={accountReturnFocus.current}
           demo={session.demo}
           logoutBusy={logoutBusy}
           logoutError={logoutError}

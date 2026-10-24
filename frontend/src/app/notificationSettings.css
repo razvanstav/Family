@@ -1,0 +1,108 @@
+.account-settings-action {
+  margin-bottom: 12px;
+}
+.notification-settings-back {
+  margin: -8px 0 12px -8px;
+}
+.notification-settings h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 550;
+}
+.notification-settings-scope {
+  margin: 10px 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.notification-settings-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.notification-settings-table th,
+.notification-settings-table td {
+  padding: 12px 0;
+  text-align: left;
+  vertical-align: middle;
+}
+.notification-settings-table thead th {
+  width: 76px;
+  padding: 0 4px 10px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.notification-settings-table tbody tr {
+  border-top: 1px solid var(--line);
+}
+.notification-settings-table tbody th {
+  padding-right: 12px;
+  font-weight: 500;
+}
+.notification-setting-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+.notification-setting-name svg {
+  flex-shrink: 0;
+}
+.notification-setting-icon--calendar {
+  color: #b8753e;
+}
+.notification-setting-icon--tasks {
+  color: var(--accent);
+}
+.notification-setting-icon--birthdays {
+  color: #b16d82;
+}
+.notification-setting-icon--deadlines {
+  color: #9a7938;
+}
+.notification-setting-icon--memories {
+  color: #8c657d;
+}
+.notification-setting-hint {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.notification-setting-control {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  width: 44px;
+  margin-inline: auto;
+  cursor: pointer;
+  border-radius: 12px;
+}
+.notification-setting-control:hover {
+  background: var(--panel);
+}
+.notification-setting-control:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.notification-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+@media (max-width: 420px) {
+  .notification-settings-table thead th {
+    width: 64px;
+  }
+  .notification-settings-table tbody th {
+    padding-right: 8px;
+  }
+}

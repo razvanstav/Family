@@ -1,5 +1,7 @@
 # Familie
 
+**DC1, 24 octombrie 2026:** data completă de naștere (numai persoană/administrator) și datele însemnărilor active apar în Calendar prin `ProfileDatedRecords`, cu aceeași autorizare; aniversarea partajată rămâne opțiune separată. Vizitele deschid persoana, secțiunea și însemnarea canonică, inclusiv în afara primei pagini. Contractul GET de detaliu și verificările sunt în [Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
+
 **Integrare CH2, 24 octombrie:** [Cheltuieli](expenses.md#ch2--navigație-principală-și-etichete-24-octombrie-2026) este acum pagină principală, la cererea utilizatorului. Familia mea are numai Membri și Documente; fila Cheltuieli a fost eliminată. Modulele, datele și accesul sunt păstrate.
 
 Stare: **FS1 — Povestea profilului și arbore genealogic**, implementat și verificat local la 23 octombrie 2026; acceptarea vizuală așteaptă feedback. FW1, F3b și F4a/FD3 rămân existente. F4a închide numai adăugarea copilului sub 14 ani fără email; persoanele genealogice fără cont din FS1 sunt un registru separat, fără apartenență sau autentificare. Legarea ulterioară la cont și restul F4 rămân separate.

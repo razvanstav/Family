@@ -14,4 +14,7 @@ interface SourceItems
      * @param  array{offset:?int,recipients:list<string>,offsets?:array<string,int>}|null  $reminder
      */
     public function sync(string $family, array $source, ?array $reminder = null): void;
+
+    /** Batch equivalent of sync; reminders are indexed by source ID. */
+    public function syncMany(string $family, string $type, array $sources, array $reminders): void;
 }

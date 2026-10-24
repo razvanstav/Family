@@ -16,6 +16,7 @@ import { MomentForm } from "./MomentForm";
 import { Timeline } from "./Timeline";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
+import { observePageResume } from "../../shared/pageResume";
 import { type Moment, type MomentList } from "./memoryTypes";
 import "./memory.css";
 
@@ -144,11 +145,9 @@ export function Memories({
   }, [base, search, kind, visibility, year, archived, page, revision, section]);
   useEffect(() => {
     if (section !== "moments") return;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible")
-        setRevision((value) => value + 1);
-    }, 60000);
-    return () => window.clearInterval(timer);
+    return observePageResume(document, window, () =>
+      setRevision((value) => value + 1),
+    );
   }, [section]);
 
   function unavailable() {

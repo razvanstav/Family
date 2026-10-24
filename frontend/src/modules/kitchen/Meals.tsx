@@ -17,12 +17,14 @@ import {
 } from "../../shared/api";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
+import { observePageResume } from "../../shared/pageResume";
 import { KitchenPhoto } from "./KitchenPhoto";
 import { KitchenCard } from "./KitchenCard";
 import {
   mealTypes,
   type Meal,
   type MealList,
+  type MealRequest,
   type MealDetailData,
 } from "./mealTypes";
 import type { Recipe } from "./recipeTypes";
@@ -75,6 +77,8 @@ export function Meals({
   onChooseRecipe,
   onRecipe,
   onExpired,
+  requestedMeal,
+  onMealOpened,
 }: {
   active: boolean;
   family: Family;
@@ -83,9 +87,11 @@ export function Meals({
   onChooseRecipe: () => void;
   onRecipe: (recipe: Recipe) => void;
   onExpired: () => void;
+  requestedMeal: MealRequest | null;
+  onMealOpened: () => void;
 }) {
   const base = `/families/${family.id}/meals`;
-  const [date, setDate] = useState(bucharestToday);
+  const [date, setDate] = useState(requestedMeal?.date ?? bucharestToday());
   const [items, setItems] = useState<Meal[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -110,19 +116,14 @@ export function Meals({
         loadedPosition.current = position;
         setItems(data.items);
         setHasMore(data.has_more);
-        setSelected((current) =>
-          current && data.items.some((item) => item.id === current.id)
-            ? current
-            : null,
-        );
       })
       .catch((e) => {
         if (controller.signal.aborted) return;
         setItems([]);
-        setSelected(null);
-        if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status))
+        if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status)) {
+          setSelected(null);
           onExpired();
-        else setError("Mesele nu au putut fi încărcate. Reîncearcă.");
+        } else setError("Mesele nu au putut fi încărcate. Reîncearcă.");
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -130,13 +131,84 @@ export function Meals({
     return () => controller.abort();
   }, [active, base, date, page, revision]);
   useEffect(() => {
+    if (!requestedMeal || !active) return;
+    if (date !== requestedMeal.date) {
+      setDate(requestedMeal.date);
+      setPage(1);
+      return;
+    }
+    if (loading) return;
+    const controller = new AbortController();
+    function open(meal: Meal | MealDetailData) {
+      setSelected(meal);
+      onMealOpened();
+    }
+    const existing = items.find((meal) => meal.id === requestedMeal.id);
+    if (existing) open(existing);
+    else
+      api<MealDetailData>(`${base}/${requestedMeal.id}`, {
+        signal: controller.signal,
+      })
+        .then((meal) => {
+          if (!controller.signal.aborted) open(meal);
+        })
+        .catch((cause) => {
+          if (controller.signal.aborted) return;
+          setError(
+            cause instanceof ApiError
+              ? cause.message
+              : "Masa nu a putut fi încărcată. Reîncearcă.",
+          );
+          onMealOpened();
+          if (
+            cause instanceof ApiError &&
+            [401, 403, 404, 419].includes(cause.status)
+          )
+            onExpired();
+        });
+    return () => controller.abort();
+  }, [requestedMeal, active, date, loading, items, base]);
+  useEffect(() => {
     if (!active) return;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible")
+    const controller = new AbortController();
+    const unsubscribe = observePageResume(document, window, () => {
+      if (!selected) {
         setRevision((value) => value + 1);
-    }, 60000);
-    return () => window.clearInterval(timer);
-  }, [active]);
+        return;
+      }
+      const selectedId = selected.id;
+      const feedbackPage = "feedback" in selected ? selected.feedback_page : 1;
+      api<MealDetailData>(`${base}/${selectedId}?page=${feedbackPage}`, {
+        signal: controller.signal,
+      })
+        .then((meal) => {
+          if (controller.signal.aborted) return;
+          setSelected((current) =>
+            current?.id === selectedId ? meal : current,
+          );
+          setItems((current) =>
+            current.map((item) => (item.id === selectedId ? meal : item)),
+          );
+        })
+        .catch((cause) => {
+          if (controller.signal.aborted) return;
+          if (
+            cause instanceof ApiError &&
+            [401, 403, 404, 419].includes(cause.status)
+          ) {
+            setSelected((current) =>
+              current?.id === selectedId ? null : current,
+            );
+            setError(cause.message);
+            onExpired();
+          } else setError("Masa nu a putut fi reîncărcată. Reîncearcă.");
+        });
+    });
+    return () => {
+      controller.abort();
+      unsubscribe();
+    };
+  }, [active, base, selected]);
   function chooseDate(value: string) {
     if (value >= "1900-01-01" && value <= "2100-12-31") {
       setDate(value);

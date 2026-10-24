@@ -2,6 +2,7 @@
 
 namespace App\Modules\Tasks\Http;
 
+use App\Modules\Tasks\Application\TaskAccess;
 use App\Modules\Tasks\Application\TaskCalendar;
 use App\Modules\Tasks\Application\TaskRecurrence;
 use App\Platform\Audit\Audit;
@@ -16,40 +17,30 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class TaskController
 {
-    public function __construct(private readonly TaskCalendar $calendar, private readonly TaskRecurrence $recurrence) {}
+    public function __construct(private readonly TaskCalendar $calendar, private readonly TaskRecurrence $recurrence, private readonly TaskAccess $access) {}
 
     private function query(Request $request, string $family): Builder
     {
-        return DB::table('family_tasks as t')->where('t.family_id', $family)->whereNull('t.deleted_at')
-            ->where(function (Builder $query) use ($request) {
-                $query->where('t.visibility', 'family')->orWhere('t.owner_id', $request->user()->id);
-            });
+        return $this->access->query($family, $request->user()->id);
     }
 
     private function rows(Builder $query): Builder
     {
-        return $query->join('users as owner', 'owner.id', '=', 't.owner_id')
-            ->join('family_memberships as assignee', function ($join) {
-                $join->on('assignee.family_id', '=', 't.family_id')->on('assignee.id', '=', 't.assignee_membership_id');
-            })->join('users as assigned_to', 'assigned_to.id', '=', 'assignee.user_id')
-            ->select('t.*', 'owner.name as owner_name', 'assigned_to.name as assignee_name');
+        return $this->access->rows($query);
     }
 
     private function canComplete(Request $request, object $row): bool
     {
         $membership = $request->attributes->get('membership');
 
-        return $row->assignee_membership_id === $membership->id
-            || ($row->owner_id === $request->user()->id && $membership->role !== 'limited');
+        return $this->access->canComplete($row, $request->user()->id, $membership->id, $membership->role);
     }
 
     private function payload(Request $request, object $row): array
     {
-        return ['id' => $row->id, 'title' => $row->title, 'assignee_membership_id' => $row->assignee_membership_id,
-            'assignee_name' => $row->assignee_name, 'due_on' => $row->due_on, 'visibility' => $row->visibility,
-            'owner_name' => $row->owner_name, 'completed_at' => $row->completed_at, 'recurrence' => $row->recurrence, 'version' => (int) $row->version,
-            'can_edit' => $row->owner_id === $request->user()->id && $request->attributes->get('membership')->role !== 'limited',
-            'can_complete' => $this->canComplete($request, $row)];
+        $membership = $request->attributes->get('membership');
+
+        return $this->access->payload($row, $request->user()->id, $membership->id, $membership->role);
     }
 
     private function assignees(string $family): Builder

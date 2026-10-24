@@ -1,5 +1,7 @@
 # Cheltuieli
 
+**DC1, 24 octombrie 2026:** data cheltuielii apare în Calendar prin `ExpenseDatedRecords`, păstrând accesul Familie/Personal. Deschiderea păstrează luna și accesul și refolosește detaliul deja listat când este disponibil; ștergerea se reflectă imediat. [Contract și verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
+
 ## S1 — Calendar comun cu Sarcini, 24 octombrie 2026
 
 Implementat și verificat local: selectorul lunar și calendarul românesc din CH1-demo sunt mutate în `shared/MonthSelect.tsx`, `shared/DatePicker.tsx` și `shared/datePicker.css`, pentru al doilea consumator, Sarcini. Cheltuieli păstrează data obligatorie, aceeași limbă, interval și acțiuni. Sarcini folosește varianta opțională cu Fără termen. Fără importuri între module, schimbări API/date sau alt layout. Fișierele și selectorii vechi locali au fost eliminați. Cele 6 teste calendar/gărzi, build și browser 8000 trecute: 8 cheltuieli/762,80 lei păstrate, calendar cu Octombrie și zile românești, fără salvări de date noi. Poziționarea comună include gutterul stabil al dialogului, verificat la 390/320 px în Sarcini.

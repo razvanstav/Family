@@ -9,6 +9,11 @@ export const expenseCategories = [
 ] as const;
 export type ExpenseCategory = (typeof expenseCategories)[number]["value"];
 export type ExpenseVisibility = "family" | "private";
+export type ExpenseRequest = {
+  id: string;
+  date: string;
+  visibility: ExpenseVisibility;
+};
 export type Expense = {
   id: string;
   amount_bani: number;

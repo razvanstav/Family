@@ -5,10 +5,8 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Modules\Calendar\Contracts\SourceItems;
 use Carbon\CarbonImmutable;
-use Database\Seeders\DemoSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Mockery;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -27,6 +25,14 @@ final class TaskRecurrenceTest extends TestCase
 
     private string $base;
 
+    private string $family;
+
+    private string $otherFamily;
+
+    private array $families = [];
+
+    private array $fixtureUsers = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -34,28 +40,49 @@ final class TaskRecurrenceTest extends TestCase
         $admin = config('database.connections.pgsql');
         $admin['username'] = 'memoria_admin';
         $admin['password'] = env('DB_ADMIN_PASSWORD');
-        config(['database.connections.admin' => $admin, 'memoria.demo_enabled' => true]);
-        DB::connection('admin')->statement('TRUNCATE families, users RESTART IDENTITY CASCADE');
-        DB::setDefaultConnection('admin');
-        Storage::fake('local');
-        (new DemoSeeder)->run();
-        DB::setDefaultConnection('pgsql');
-        $this->ana = User::where('email', 'ana@example.test')->firstOrFail();
-        $this->mihai = User::where('email', 'mihai@example.test')->firstOrFail();
-        $members = DB::table('family_memberships')->where('family_id', DemoSeeder::POPESCU)->pluck('id', 'user_id');
-        $this->anaMember = $members[$this->ana->id];
-        $this->mihaiMember = $members[$this->mihai->id];
-        $this->base = '/api/v1/families/'.DemoSeeder::POPESCU;
-        $this->actingAs($this->ana);
+        config(['database.connections.admin' => $admin]);
         $this->travelTo(CarbonImmutable::parse('2026-10-24T10:00:00Z'));
+        $this->family = (string) Str::uuid();
+        $this->otherFamily = (string) Str::uuid();
+        $this->families = [$this->family, $this->otherFamily];
+        foreach ($this->families as $family) {
+            DB::connection('admin')->table('families')->insert(['id' => $family, 'name' => 'Task recurrence fixture']);
+        }
+        foreach (['ana' => 'Ana Popescu', 'mihai' => 'Mihai Popescu'] as $key => $name) {
+            $user = User::factory()->make(['name' => $name, 'email' => 'task-recurrence-'.$this->family.'-'.$key.'@example.test']);
+            $user->setConnection('admin')->save();
+            $this->fixtureUsers[] = $user;
+            $this->{$key} = $user;
+        }
+        $this->anaMember = (string) Str::uuid();
+        $this->mihaiMember = (string) Str::uuid();
+        DB::connection('admin')->table('family_memberships')->insert([
+            ['id' => $this->anaMember, 'family_id' => $this->family, 'user_id' => $this->ana->id, 'role' => 'owner'],
+            ['id' => $this->mihaiMember, 'family_id' => $this->family, 'user_id' => $this->mihai->id, 'role' => 'adult'],
+            ['id' => (string) Str::uuid(), 'family_id' => $this->otherFamily, 'user_id' => $this->ana->id, 'role' => 'owner'],
+        ]);
+        $this->base = '/api/v1/families/'.$this->family;
+        $this->actingAs($this->ana);
     }
 
     protected function tearDown(): void
     {
-        $this->travelBack();
-        DB::disconnect('pgsql');
-        DB::disconnect('admin');
-        parent::tearDown();
+        try {
+            foreach ($this->families as $family) {
+                foreach (['calendar_items', 'family_tasks', 'audit_events', 'member_profiles', 'family_memberships'] as $table) {
+                    DB::connection('admin')->table($table)->where('family_id', $family)->delete();
+                }
+                DB::connection('admin')->table('families')->where('id', $family)->delete();
+            }
+            foreach ($this->fixtureUsers as $user) {
+                DB::connection('admin')->table('users')->where('id', $user->id)->delete();
+            }
+        } finally {
+            $this->travelBack();
+            DB::disconnect('pgsql');
+            DB::disconnect('admin');
+            parent::tearDown();
+        }
     }
 
     private function create(array $changes = []): array
@@ -96,7 +123,9 @@ final class TaskRecurrenceTest extends TestCase
         $this->assertFalse($next['can_edit']);
         $this->assertSame('weekly', $next['recurrence']);
         $events = $this->getJson($this->base.'/calendar-items?month=2026-10')->assertOk();
-        $events->assertJsonCount(1)->assertJsonPath('0.source.id', $next['id'])->assertJsonPath('0.event_date', '2026-10-31');
+        $events->assertJsonCount(2)->assertJsonPath('0.source.type', 'task_date')->assertJsonPath('0.source.id', $task['id'])
+            ->assertJsonPath('0.event_date', '2026-10-24')->assertJsonPath('0.can_edit', false)->assertJsonPath('0.reminder', null)
+            ->assertJsonPath('1.source.type', 'task')->assertJsonPath('1.source.id', $next['id'])->assertJsonPath('1.event_date', '2026-10-31');
         $this->withHeader('If-Match', '"'.$task['version'].'"')->patchJson($this->base.'/tasks/'.$task['id'].'/completion', ['completed' => true])->assertStatus(412);
         $this->assertCount(1, $this->open());
     }
@@ -135,11 +164,11 @@ final class TaskRecurrenceTest extends TestCase
         $task = $this->complete($task, false);
         $task = $this->complete($task);
         $this->assertStringContainsString('creată deja', $task['recurrence_notice']);
-        $this->assertSame(2, DB::connection('admin')->table('family_tasks')->count());
+        $this->assertSame(2, DB::connection('admin')->table('family_tasks')->where('family_id', $this->family)->count());
         $this->withHeader('If-Match', '"'.$next['version'].'"')->deleteJson($this->base.'/tasks/'.$next['id'])->assertNoContent();
         $task = $this->complete($task, false);
         $this->complete($task);
-        $this->assertSame(2, DB::connection('admin')->table('family_tasks')->count());
+        $this->assertSame(2, DB::connection('admin')->table('family_tasks')->where('family_id', $this->family)->count());
         $this->assertSame([], $this->open());
     }
 
@@ -157,7 +186,7 @@ final class TaskRecurrenceTest extends TestCase
         $this->getJson($this->base.'/tasks/'.$next['id'])->assertNotFound();
         $this->assertSame([], $this->open('private'));
         $this->getJson($this->base.'/calendar-items?month=2026-10')->assertOk()->assertJsonCount(0);
-        $this->getJson('/api/v1/families/'.DemoSeeder::IONESCU.'/tasks/'.$next['id'])->assertNotFound();
+        $this->getJson('/api/v1/families/'.$this->otherFamily.'/tasks/'.$next['id'])->assertNotFound();
     }
 
     public function test_recurrence_requires_a_deadline_rejects_internal_fields_and_can_be_stopped_explicitly(): void
@@ -174,7 +203,7 @@ final class TaskRecurrenceTest extends TestCase
         $task = $this->edit($task, ['recurrence' => null, 'due_on' => null]);
         $this->assertNull($task['recurrence']);
         $this->assertArrayNotHasKey('recurrence_notice', $this->complete($task));
-        $this->assertSame(1, DB::connection('admin')->table('family_tasks')->count());
+        $this->assertSame(1, DB::connection('admin')->table('family_tasks')->where('family_id', $this->family)->count());
     }
 
     #[TestWith(['revoked'])]
@@ -189,7 +218,7 @@ final class TaskRecurrenceTest extends TestCase
         $this->assertNotNull($completed['completed_at']);
         $this->assertNull($completed['next_due_on']);
         $this->assertStringContainsString('autorul', $completed['recurrence_notice']);
-        $this->assertSame(1, DB::connection('admin')->table('family_tasks')->count());
+        $this->assertSame(1, DB::connection('admin')->table('family_tasks')->where('family_id', $this->family)->count());
     }
 
     public function test_revoked_assignee_and_end_of_supported_calendar_do_not_block_completion(): void
@@ -203,7 +232,7 @@ final class TaskRecurrenceTest extends TestCase
         $last = $this->complete($last);
         $this->assertNull($last['next_due_on']);
         $this->assertStringContainsString('2099', $last['recurrence_notice']);
-        $this->assertSame(2, DB::connection('admin')->table('family_tasks')->count());
+        $this->assertSame(2, DB::connection('admin')->table('family_tasks')->where('family_id', $this->family)->count());
     }
 
     public function test_successor_projection_failure_rolls_back_completion_successor_and_audit(): void
@@ -227,8 +256,8 @@ final class TaskRecurrenceTest extends TestCase
         $row = DB::connection('admin')->table('family_tasks')->where('id', $task['id'])->first();
         $this->assertNull($row->completed_at);
         $this->assertSame(1, $row->version);
-        $this->assertSame(1, DB::connection('admin')->table('family_tasks')->count());
-        $this->assertSame(0, DB::connection('admin')->table('audit_events')->where('action', 'task.completed')->count());
+        $this->assertSame(1, DB::connection('admin')->table('family_tasks')->where('family_id', $this->family)->count());
+        $this->assertSame(0, DB::connection('admin')->table('audit_events')->where('family_id', $this->family)->where('action', 'task.completed')->count());
     }
 
     public function test_database_constraints_reject_duplicate_successors_and_foreign_family_predecessors(): void
@@ -244,9 +273,9 @@ final class TaskRecurrenceTest extends TestCase
         } catch (QueryException $error) {
             $this->assertSame('23505', $error->errorInfo[0]);
         }
-        $otherMember = DB::connection('admin')->table('family_memberships')->where('family_id', DemoSeeder::IONESCU)->whereNotNull('user_id')->first();
+        $otherMember = DB::connection('admin')->table('family_memberships')->where('family_id', $this->otherFamily)->whereNotNull('user_id')->first();
         $otherId = (string) Str::uuid();
-        DB::connection('admin')->table('family_tasks')->insert(['id' => $otherId, 'family_id' => DemoSeeder::IONESCU,
+        DB::connection('admin')->table('family_tasks')->insert(['id' => $otherId, 'family_id' => $this->otherFamily,
             'owner_id' => $otherMember->user_id, 'assignee_membership_id' => $otherMember->id, 'title' => 'Altă familie', 'created_at' => now(), 'updated_at' => now()]);
         try {
             DB::connection('admin')->transaction(fn () => DB::connection('admin')->table('family_tasks')->where('id', $next->id)->update(['recurrence_parent_id' => $otherId]));

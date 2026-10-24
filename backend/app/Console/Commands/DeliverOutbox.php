@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
 
-#[Signature('outbox:deliver {--family= : Deliver only one family} {--limit=100 : Maximum deliveries per family per pass} {--watch : Poll every fifteen seconds} {--replay= : Requeue this handler for the selected family}')]
+#[Signature('outbox:deliver {--family= : Deliver only one family} {--limit=100 : Maximum deliveries per family per pass} {--watch : Poll once per minute} {--replay= : Requeue this handler for the selected family}')]
 #[Description('Deliver durable database events with per-handler receipts and retry')]
 final class DeliverOutbox extends Command
 {
@@ -46,7 +46,7 @@ final class DeliverOutbox extends Command
                 if (! $this->option('watch')) {
                     return $totals['failed'] ? self::FAILURE : self::SUCCESS;
                 }
-                sleep(15);
+                sleep(60);
             } while (true);
         } catch (Throwable) {
             $this->error('Livrarea s-a oprit. Evenimentele rămân în outbox pentru reîncercare.');

@@ -3,6 +3,7 @@ import { Bell, CalendarDays, Check, Circle, RefreshCw } from "lucide-react";
 import { api, ApiError } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { dateLabel } from "../../shared/calendarDates";
+import { observePageResume } from "../../shared/pageResume";
 import "./notifications.css";
 
 type Notification = {
@@ -35,9 +36,9 @@ export function CalendarNotifications({
   const [busy, setBusy] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [attempt, setAttempt] = useState(0);
-  const opened = useRef(false);
   const sequence = useRef(0);
   const mutating = useRef(false);
+  const pending = useRef(false);
   const endpoint = `/families/${familyId}/calendar-notifications`;
   function failed(e: unknown) {
     setError(
@@ -50,44 +51,56 @@ export function CalendarNotifications({
   }
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     async function load() {
       const request = ++sequence.current;
+      pending.current = true;
       setLoading(true);
       try {
-        const result = await api<Inbox>(endpoint);
+        const result = await api<Inbox>(endpoint, {
+          signal: controller.signal,
+        });
         if (active && request === sequence.current) {
           setData(result);
           setPage(1);
           setError("");
         }
       } catch (e) {
-        if (active && request === sequence.current) failed(e);
+        if (
+          !controller.signal.aborted &&
+          active &&
+          request === sequence.current
+        )
+          failed(e);
       } finally {
-        if (active && request === sequence.current) setLoading(false);
+        if (active && request === sequence.current) {
+          pending.current = false;
+          setLoading(false);
+        }
       }
     }
     void load();
-    const timer = window.setInterval(() => {
-      if (
-        document.visibilityState === "visible" &&
-        !opened.current &&
-        !mutating.current
-      )
-        void load();
-    }, 30000);
     return () => {
       active = false;
+      controller.abort();
       sequence.current++;
-      window.clearInterval(timer);
     };
   }, [endpoint, attempt, revision]);
+  useEffect(
+    () =>
+      observePageResume(document, window, () => {
+        if (!pending.current && !mutating.current)
+          setAttempt((value) => value + 1);
+      }),
+    [],
+  );
   function close() {
-    opened.current = false;
     setOpen(false);
   }
   async function more() {
-    if (loading) return;
+    if (pending.current || mutating.current) return;
     const request = ++sequence.current;
+    pending.current = true;
     setLoading(true);
     setError("");
     try {
@@ -107,11 +120,14 @@ export function CalendarNotifications({
     } catch (e) {
       if (request === sequence.current) failed(e);
     } finally {
-      if (request === sequence.current) setLoading(false);
+      if (request === sequence.current) {
+        pending.current = false;
+        setLoading(false);
+      }
     }
   }
   async function read(item: Notification, value: boolean, navigate = false) {
-    if (busy) return;
+    if (mutating.current || pending.current) return;
     const request = ++sequence.current;
     mutating.current = true;
     setBusy(item.id);
@@ -162,8 +178,9 @@ export function CalendarNotifications({
             : "Notificări"
         }
         onClick={() => {
-          opened.current = true;
           setOpen(true);
+          if (!pending.current && !mutating.current)
+            setAttempt((value) => value + 1);
         }}
       >
         <Bell size={20} />
@@ -200,7 +217,7 @@ export function CalendarNotifications({
                 <CalendarDays size={20} aria-hidden="true" />
                 <button
                   className="notification-source"
-                  disabled={Boolean(busy)}
+                  disabled={Boolean(busy) || loading}
                   onClick={() => void read(item, true, true)}
                 >
                   <strong>{item.title}</strong>
@@ -223,7 +240,7 @@ export function CalendarNotifications({
                 </button>
                 <button
                   className="icon-button"
-                  disabled={Boolean(busy)}
+                  disabled={Boolean(busy) || loading}
                   aria-label={`${item.read_at ? "Marchează necitit" : "Marchează citit"}: ${item.title}`}
                   onClick={() => void read(item, !item.read_at)}
                 >

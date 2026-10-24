@@ -20,6 +20,8 @@ import { RecipeMeta } from "./RecipeMeta";
 import { KitchenToday } from "./KitchenToday";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
+import { observePageResume } from "../../shared/pageResume";
+import type { MealRequest } from "./mealTypes";
 
 export function Kitchen({
   family,
@@ -27,15 +29,21 @@ export function Kitchen({
   onExpired,
   requestedRecipe,
   onRecipeOpened,
+  requestedMeal,
+  onMealOpened,
 }: {
   family: Family;
   userId: number;
   onExpired: () => void;
   requestedRecipe: string | null;
   onRecipeOpened: () => void;
+  requestedMeal: MealRequest | null;
+  onMealOpened: () => void;
 }) {
   const base = `/families/${family.id}/recipes`;
-  const [section, setSection] = useState<"recipes" | "meals">("recipes");
+  const [section, setSection] = useState<"recipes" | "meals">(
+    requestedMeal ? "meals" : "recipes",
+  );
   const [mealTarget, setMealTarget] = useState<Recipe | null>(null);
   const [items, setItems] = useState<Recipe[]>([]);
   const [query, setQuery] = useState("");
@@ -54,6 +62,9 @@ export function Kitchen({
   const [browsing, setBrowsing] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
   const loadedPosition = useRef("");
+  useEffect(() => {
+    if (requestedMeal) setSection("meals");
+  }, [requestedMeal]);
   useEffect(() => {
     if (!requestedRecipe) return;
     if (section !== "recipes") {
@@ -139,12 +150,11 @@ export function Kitchen({
   }, [base, search, category, visibility, archived, page, revision, section]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible")
-        setRevision((value) => value + 1);
-    }, 60000);
-    return () => window.clearInterval(timer);
-  }, []);
+    if (section !== "recipes") return;
+    return observePageResume(document, window, () =>
+      setRevision((value) => value + 1),
+    );
+  }, [section]);
 
   return (
     <div className="kitchen-page">
@@ -192,8 +202,8 @@ export function Kitchen({
         label="Secțiuni Bucătărie"
         value={section}
         options={[
-          { value: "recipes", label: "Rețete" },
           { value: "meals", label: "Mese" },
+          { value: "recipes", label: "Rețete" },
         ]}
         onChange={setSection}
       />
@@ -425,6 +435,8 @@ export function Kitchen({
           active={section === "meals"}
           family={family}
           requestedRecipe={mealTarget}
+          requestedMeal={requestedMeal}
+          onMealOpened={onMealOpened}
           onRecipeConsumed={() => setMealTarget(null)}
           onRecipe={setSelected}
           onChooseRecipe={() => {

@@ -2,6 +2,7 @@
 
 namespace App\Platform\Families;
 
+use App\Modules\Calendar\Contracts\ReminderReconciliation;
 use App\Platform\Audit\Audit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class FamilyController
 {
+    public function __construct(private readonly ReminderReconciliation $reminders) {}
+
     public function members(Request $request, string $family)
     {
         return DB::table('family_memberships as m')->leftJoin('users as u', 'u.id', '=', 'm.user_id')
@@ -42,6 +45,7 @@ final class FamilyController
         DB::table('member_profile_parents')->insert(array_map(fn (string $parent) => ['family_id' => $family, 'membership_id' => $member, 'parent_membership_id' => $parent], $data['parent_ids']));
         DB::table('families')->where('id', $family)->increment('authz_revision');
         Audit::record($family, $request->user()->id, 'profile.child_created', $member);
+        $this->reminders->invalidateFamily($family);
 
         return response()->json(['id' => $member, 'user_id' => null, 'name' => $data['name'], 'role' => 'limited', 'age' => $age, 'photo_status' => null, 'photo_version' => 1], 201);
     }
@@ -56,6 +60,7 @@ final class FamilyController
         DB::table('families')->where('id', $family)->increment('authz_revision');
         event(new MembershipRevoked($family, $member));
         Audit::record($family, $request->user()->id, 'membership.revoked', $member);
+        $this->reminders->invalidateFamily($family);
 
         return response()->noContent();
     }
@@ -78,6 +83,7 @@ final class FamilyController
         DB::table('family_memberships')->where('family_id', $family)->where('id', $member)->update(['role' => $data['role']]);
         DB::table('families')->where('id', $family)->increment('authz_revision');
         Audit::record($family, $request->user()->id, 'membership.role_changed', $member);
+        $this->reminders->invalidateFamily($family);
 
         return response()->noContent();
     }

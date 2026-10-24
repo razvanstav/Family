@@ -6,7 +6,7 @@ use Illuminate\Database\Query\Builder;
 
 interface DocumentLinks
 {
-    /** Authorized metadata projection: id, title, visibility, mime and status. Caller supplies the tenant transaction. */
+    /** Authorized metadata projection: id, title, visibility, nullable mime/status for documents without a file. Caller supplies the tenant transaction. */
     public function references(string $family, int $actor, string $membership): Builder;
 
     /** Recheck canonical access without exposing document persistence to the caller. */

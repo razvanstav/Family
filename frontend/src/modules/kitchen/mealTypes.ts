@@ -4,6 +4,7 @@ export const mealTypes = {
   dinner: "Cină",
   snack: "Gustare",
 };
+export type MealRequest = { id: string; date: string };
 export type MealVote = {
   liked: boolean | null;
   comment: string | null;

@@ -25,7 +25,15 @@ import { Modal } from "../../shared/Modal";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
-import type { CalendarItem } from "./calendarTypes";
+import {
+  calendarSourceLabel,
+  calendarMatchesAccess,
+  calendarSourceActions,
+  calendarSourceDestination,
+  type CalendarItem,
+  type CalendarVisibility,
+} from "./calendarTypes";
+import { reminderDeliveryStatus } from "./calendarReminderStatus";
 import { CalendarMonth } from "../../shared/CalendarMonth";
 import "./calendar.css";
 import { ReminderFields } from "../../shared/ReminderFields";
@@ -45,6 +53,12 @@ export function CalendarPage({
   onVehicle,
   onTask,
   onPet,
+  onDocument,
+  onMemory,
+  onProfile,
+  onExpense,
+  onMeal,
+  onPetProfile,
   onExpired,
 }: {
   family: Family;
@@ -55,6 +69,12 @@ export function CalendarPage({
   onVehicle: (target: VehicleRequest) => void;
   onTask: (id: string) => void;
   onPet: (target: PetRequest) => void;
+  onDocument: (id: string, signal: AbortSignal) => Promise<void>;
+  onMemory: (id: string) => void;
+  onProfile: (memberId: string, entryId?: string, kind?: string) => void;
+  onExpense: (id: string, date: string, visibility: CalendarVisibility) => void;
+  onMeal: (id: string, date: string) => void;
+  onPetProfile: (id: string) => void;
   onExpired: () => void;
 }) {
   const today = bucharestToday();
@@ -164,7 +184,7 @@ export function CalendarPage({
   }
   const matching = items.filter(
     (item) =>
-      (!access || item.visibility === access) &&
+      calendarMatchesAccess(item.visibility, access) &&
       (!query.trim() ||
         `${item.title} ${item.notes ?? ""}`
           .toLocaleLowerCase("ro")
@@ -179,7 +199,9 @@ export function CalendarPage({
   );
   const markers: Record<string, ("family" | "private")[]> = {};
   for (const item of matching)
-    (markers[item.event_date] ??= []).push(item.visibility);
+    (markers[item.event_date] ??= []).push(
+      item.visibility === "private" ? "private" : "family",
+    );
   const agendaTitle =
     view === "week"
       ? "Evenimentele săptămânii"
@@ -206,6 +228,8 @@ export function CalendarPage({
     if (item?.source?.type === "task") onTask(item.source.id);
     else if (item?.source?.type === "pet_entry")
       onPet({ petId: item.source.parent_id, entryId: item.source.id });
+    else if (item?.source?.type === "memory_anniversary")
+      onMemory(item.source.parent_id);
     else setEditor(id);
   }
   return (
@@ -465,6 +489,13 @@ export function CalendarPage({
           onVehicle={onVehicle}
           onTask={onTask}
           onPet={onPet}
+          onDocument={onDocument}
+          onMemory={onMemory}
+          onProfile={onProfile}
+          onExpense={onExpense}
+          onMeal={onMeal}
+          onPetProfile={onPetProfile}
+          onExpired={onExpired}
           onUnavailable={() => {
             setEditor(null);
             setRevision((value) => value + 1);
@@ -488,6 +519,13 @@ function EventEditor({
   onVehicle,
   onTask,
   onPet,
+  onDocument,
+  onMemory,
+  onProfile,
+  onExpense,
+  onMeal,
+  onPetProfile,
+  onExpired,
 }: {
   familyId: string;
   userId: number;
@@ -501,6 +539,13 @@ function EventEditor({
   onVehicle: (target: VehicleRequest) => void;
   onTask: (id: string) => void;
   onPet: (target: PetRequest) => void;
+  onDocument: (id: string, signal: AbortSignal) => Promise<void>;
+  onMemory: (id: string) => void;
+  onProfile: (memberId: string, entryId?: string, kind?: string) => void;
+  onExpense: (id: string, date: string, visibility: CalendarVisibility) => void;
+  onMeal: (id: string, date: string) => void;
+  onPetProfile: (id: string) => void;
+  onExpired: () => void;
 }) {
   const [item, setItem] = useState<CalendarItem | null>(initialItem);
   const [loading, setLoading] = useState(id !== "new" && !initialItem);
@@ -524,46 +569,55 @@ function EventEditor({
   const [recipients, setRecipients] = useState<string[]>(
     initialItem?.reminder?.recipients ?? [],
   );
+  const sourceRequest = useRef<AbortController | null>(null);
+  useEffect(() => () => sourceRequest.current?.abort(), []);
   const [visibility, setVisibility] = useState<"private" | "family">(
-    initialItem?.visibility ?? "private",
+    initialItem?.visibility && initialItem.visibility !== "private"
+      ? "family"
+      : "private",
   );
   useEffect(() => {
-    if (initialItem?.source?.type === "task") {
-      onTask(initialItem.source.id);
-      return;
-    }
-    if (initialItem?.source?.type === "pet_entry") {
-      onPet({
-        petId: initialItem.source.parent_id,
-        entryId: initialItem.source.id,
-      });
-      return;
-    }
-    if (id === "new" || (initialItem && attempt === 0)) return;
+    if (id === "new") return;
     let active = true;
+    const controller = new AbortController();
     setLoading(true);
     setError("");
     setStale(false);
     setConfirmArchive(false);
-    api<CalendarItem>(`${endpoint}/${id}`)
-      .then((data) => {
+    const request =
+      initialItem && attempt === 0
+        ? Promise.resolve(initialItem)
+        : api<CalendarItem>(`${endpoint}/${id}`, { signal: controller.signal });
+    request
+      .then(async (data) => {
         if (!active) return;
-        if (data.source?.type === "task") {
+        setItem(data);
+        if (!data.source?.virtual && data.source?.type === "task") {
           onTask(data.source.id);
           return;
         }
-        if (data.source?.type === "pet_entry") {
+        if (!data.source?.virtual && data.source?.type === "pet_entry") {
           onPet({ petId: data.source.parent_id, entryId: data.source.id });
           return;
         }
-        setItem(data);
+        if (!data.source?.virtual && data.source?.type === "document_expiry") {
+          await onDocument(data.source.parent_id, controller.signal);
+          return;
+        }
+        if (
+          !data.source?.virtual &&
+          data.source?.type === "memory_anniversary"
+        ) {
+          onMemory(data.source.parent_id);
+          return;
+        }
         setTitle(data.title);
         setDate(data.event_date);
         setAllDay(data.all_day);
         setTime(data.time ?? "10:00");
         setNotes(data.notes ?? "");
         setBirthdayOffset(data.my_reminder_offset_minutes);
-        setVisibility(data.visibility);
+        setVisibility(data.visibility === "private" ? "private" : "family");
         setReminderOffset(data.reminder?.offset_minutes ?? null);
         setRecipients(data.reminder?.recipients ?? []);
       })
@@ -575,15 +629,69 @@ function EventEditor({
       });
     return () => {
       active = false;
+      controller.abort();
     };
   }, [id, endpoint, attempt]);
+  async function openSource() {
+    if (!item?.source || busy) return;
+    const destination = calendarSourceDestination(item.source);
+    const controller = new AbortController();
+    sourceRequest.current = controller;
+    setBusy(true);
+    setError("");
+    try {
+      switch (destination.type) {
+        case "document":
+          await onDocument(destination.id, controller.signal);
+          break;
+        case "profile":
+          onProfile(
+            destination.memberId,
+            destination.entryId,
+            destination.kind,
+          );
+          break;
+        case "expense":
+          onExpense(destination.id, item.event_date, item.visibility);
+          break;
+        case "meal":
+          onMeal(destination.id, item.event_date);
+          break;
+        case "memory":
+          onMemory(destination.id);
+          break;
+        case "task":
+          onTask(destination.id);
+          break;
+        case "vehicle":
+          onVehicle({
+            vehicleId: destination.vehicleId,
+            entryId: destination.entryId,
+          });
+          break;
+        case "petProfile":
+          onPetProfile(destination.id);
+          break;
+        case "pet":
+          onPet({ petId: destination.petId, entryId: destination.entryId });
+          break;
+      }
+    } catch (cause) {
+      if (!controller.signal.aborted) handleError(cause, true);
+    } finally {
+      if (sourceRequest.current === controller) sourceRequest.current = null;
+      if (!controller.signal.aborted) setBusy(false);
+    }
+  }
   function handleError(e: unknown, reading = false) {
+    if (e instanceof ApiError && [401, 419].includes(e.status)) {
+      onExpired();
+      return;
+    }
     if (e instanceof ApiError && [403, 404].includes(e.status)) {
       setItem(null);
       setUnavailable(true);
-      setError(
-        "Evenimentul nu mai este disponibil sau nu mai ai drept de modificare.",
-      );
+      setError("Elementul nu mai este disponibil sau nu mai ai acces.");
       return;
     }
     if (e instanceof ApiError && [409, 412].includes(e.status)) setStale(true);
@@ -768,21 +876,15 @@ function EventEditor({
                 />
                 {item?.reminder && (
                   <div className="calendar-reminder-state" role="status">
-                    {item.reminder.deliveries
-                      .map(
-                        (delivery) =>
-                          ({
-                            pending: "Programat",
-                            delivered: "Livrat",
-                            cancelled: "Anulat",
-                            expired: "Moment depășit",
-                          })[delivery.state],
-                      )
-                      .filter(
-                        (value, index, values) =>
-                          values.indexOf(value) === index,
-                      )
-                      .join(" · ")}
+                    {reminderDeliveryStatus(item.reminder.deliveries).join(
+                      " · ",
+                    )}
+                    {item.reminder.deliveries.some(
+                      (delivery) => delivery.email_state === "sent",
+                    ) && <p>Livrarea în inbox nu este confirmată.</p>}
+                    {item.reminder.deliveries.some(
+                      (delivery) => delivery.email_state === "uncertain",
+                    ) && <p>Trimiterea neconfirmată nu se reia automat.</p>}
                   </div>
                 )}
                 <label className="field">
@@ -818,20 +920,29 @@ function EventEditor({
                   {item.all_day ? "Toată ziua" : item.time}
                 </p>
                 <p>
-                  {visibilityLabel[item.visibility]}
-                  {item.source?.type === "vehicle_entry"
-                    ? " · Auto"
-                    : item.source?.type === "birthday"
-                      ? " · Zi de naștere"
-                      : item.source?.type === "task"
-                        ? " · Sarcină"
-                        : item.source?.type === "pet_entry"
-                          ? " · Animale"
-                          : ` · ${item.owner_name}`}
+                  {[
+                    visibilityLabel[item.visibility],
+                    item.source
+                      ? calendarSourceLabel(item.source)
+                      : item.owner_name,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </p>
                 {item.notes && <p className="calendar-notes">{item.notes}</p>}
                 {item.archived_at && (
                   <p className="notice">Eveniment arhivat.</p>
+                )}
+                {item.source?.virtual && (
+                  <button
+                    className="button primary full"
+                    disabled={busy}
+                    onClick={() => void openSource()}
+                  >
+                    {busy
+                      ? "Se deschide…"
+                      : (calendarSourceActions[item.source.type] ?? "Deschide")}
+                  </button>
                 )}
                 {item.source?.type === "vehicle_entry" && (
                   <button
@@ -844,6 +955,14 @@ function EventEditor({
                     }
                   >
                     Deschide în Auto
+                  </button>
+                )}
+                {item.source?.type === "document_expiry" && (
+                  <button
+                    className="button primary full"
+                    onClick={() => setAttempt((value) => value + 1)}
+                  >
+                    Deschide documentul
                   </button>
                 )}
                 {item.source?.type === "birthday" && (

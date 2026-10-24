@@ -17,12 +17,14 @@ import {
   visibilityLabel,
   type Member,
   type Family,
+  type DocumentDetail,
 } from "../../shared/api";
 import { ProfilePhotoEditor } from "../../shared/ProfilePhotoEditor";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
+import { observePageResume } from "../../shared/pageResume";
 import {
   categories,
   kinds,
@@ -32,6 +34,7 @@ import {
   type Profile,
   type Entry,
   type EntryList,
+  type ProfileRequest,
 } from "./profileData";
 import { ProfileSettings, ProfileEntryModal } from "./ProfileForms";
 import { ProfileStory } from "./ProfileStory";
@@ -42,6 +45,7 @@ export type ProfileDocumentsSlot = (props: {
   member: Member;
   canCreate: boolean;
   requestedDocument: string | null;
+  initialDocument?: DocumentDetail;
   onDocumentOpened: () => void;
   onExpired: () => void;
 }) => ReactNode;
@@ -55,8 +59,11 @@ export function MemberProfile({
   onMember,
   onMemory,
   requestedDocument,
+  initialDocument,
   onDocumentOpened,
   renderDocuments,
+  requestedProfile,
+  onProfileOpened,
 }: {
   family: Family;
   member: Member;
@@ -66,13 +73,18 @@ export function MemberProfile({
   onMember: (id: string) => void;
   onMemory: (id: string) => void;
   requestedDocument: string | null;
+  initialDocument?: DocumentDetail;
   onDocumentOpened: () => void;
   renderDocuments: ProfileDocumentsSlot;
+  requestedProfile: ProfileRequest | null;
+  onProfileOpened: () => void;
 }) {
   const base = `/families/${family.id}/members/${member.id}/profile`;
   const [profile, setProfile] = useState<Profile | null>(null);
   const [tab, setTab] = useState<Tab>(
-    requestedDocument ? "documents" : "overview",
+    requestedDocument
+      ? "documents"
+      : (requestedProfile?.category ?? "overview"),
   );
   useEffect(() => {
     if (requestedDocument) setTab("documents");
@@ -123,7 +135,7 @@ export function MemberProfile({
         setHasMore(data.has_more);
         setDialog((current) =>
           current && typeof current === "object" && !current.can_manage
-            ? (data.items.find((item) => item.id === current.id) ?? null)
+            ? (data.items.find((item) => item.id === current.id) ?? current)
             : current,
         );
       })
@@ -148,17 +160,86 @@ export function MemberProfile({
     return () => controller.abort();
   }, [base, tab, page, revision]);
   useEffect(() => {
+    if (!requestedProfile) return;
+    if (!requestedProfile.entryId) {
+      setTab("overview");
+      onProfileOpened();
+      return;
+    }
+    if (requestedProfile.category && tab !== requestedProfile.category) {
+      setTab(requestedProfile.category);
+      setPage(1);
+      return;
+    }
+    if (!profile || (tab !== "overview" && tab !== "documents" && loading))
+      return;
+    const controller = new AbortController();
+    function open(entry: Entry) {
+      setTab(entry.category);
+      setDialog(entry);
+      onProfileOpened();
+    }
+    const existing = items.find(
+      (entry) => entry.id === requestedProfile.entryId,
+    );
+    if (existing) open(existing);
+    else
+      api<Entry>(`${base}/entries/${requestedProfile.entryId}`, {
+        signal: controller.signal,
+      })
+        .then((entry) => {
+          if (!controller.signal.aborted) open(entry);
+        })
+        .catch((cause) => {
+          if (controller.signal.aborted) return;
+          setError(message(cause));
+          onProfileOpened();
+          if (cause instanceof ApiError && [401, 419].includes(cause.status))
+            onExpired();
+        });
+    return () => controller.abort();
+  }, [requestedProfile, profile, loading, items, tab, base]);
+  useEffect(() => {
     if (tab === "documents") return;
-    const timer = window.setInterval(() => {
+    const controller = new AbortController();
+    const unsubscribe = observePageResume(document, window, () => {
       if (
-        document.visibilityState === "visible" &&
-        (dialog === null || (typeof dialog === "object" && !dialog.can_manage))
+        dialog === null ||
+        (typeof dialog === "object" && !dialog.can_manage)
       ) {
-        setRevision((value) => value + 1);
+        if (dialog && typeof dialog === "object" && !dialog.can_manage) {
+          const currentId = dialog.id;
+          api<Entry>(`${base}/entries/${currentId}`, {
+            signal: controller.signal,
+          })
+            .then((entry) => {
+              if (!controller.signal.aborted)
+                setDialog((current) =>
+                  current &&
+                  typeof current === "object" &&
+                  current.id === currentId
+                    ? entry
+                    : current,
+                );
+            })
+            .catch((cause) => {
+              if (controller.signal.aborted) return;
+              setDialog(null);
+              setError(message(cause));
+              if (
+                cause instanceof ApiError &&
+                [401, 419].includes(cause.status)
+              )
+                onExpired();
+            });
+        } else setRevision((value) => value + 1);
         setMetadataRevision((value) => value + 1);
       }
-    }, 60_000);
-    return () => window.clearInterval(timer);
+    });
+    return () => {
+      controller.abort();
+      unsubscribe();
+    };
   }, [base, dialog, tab]);
   function refresh() {
     setRevision((v) => v + 1);
@@ -297,6 +378,7 @@ export function MemberProfile({
               member,
               canCreate: profile.can_write,
               requestedDocument,
+              initialDocument,
               onDocumentOpened,
               onExpired,
             })

@@ -3,7 +3,7 @@ Description=Run Memoria Familiei durable event delivery periodically
 
 [Timer]
 OnBootSec=30s
-OnUnitInactiveSec=15s
+OnUnitInactiveSec=60s
 AccuracySec=1s
 
 [Install]

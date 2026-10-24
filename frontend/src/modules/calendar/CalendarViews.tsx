@@ -1,6 +1,18 @@
 import {
   CalendarDays,
   ClipboardList,
+  FileText,
+  BookHeart,
+  CarFront,
+  Cake,
+  Stethoscope,
+  Pill,
+  BookOpen,
+  Landmark,
+  Activity,
+  Award,
+  Wallet,
+  UtensilsCrossed,
   PawPrint,
   ChevronLeft,
   ChevronRight,
@@ -10,9 +22,22 @@ import {
 } from "lucide-react";
 import { dateLabel } from "../../shared/calendarDates";
 import { visibilityLabel } from "../../shared/api";
-import type { CalendarItem } from "./calendarTypes";
+import { calendarSourceLabel, type CalendarItem } from "./calendarTypes";
 
 export type CalendarView = "month" | "week" | "agenda";
+
+function ProfileEntryIcon({ kind }: { kind?: string }) {
+  const icons: Record<string, typeof Stethoscope> = {
+    visit: Stethoscope,
+    medication: Pill,
+    book: BookOpen,
+    culture: Landmark,
+    activity: Activity,
+    achievement: Award,
+  };
+  const Icon = icons[kind ?? ""] ?? ClipboardList;
+  return <Icon size={21} />;
+}
 
 export function moveDay(day: string, delta: number): string {
   const date = new Date(`${day}T12:00:00Z`);
@@ -127,7 +152,7 @@ export function CalendarEvents({
           key={item.id}
           className={`calendar-event calendar-event--${item.visibility}`}
           onClick={() => onOpen(item.id)}
-          aria-label={`${item.title} · ${dateLabel(item.event_date)} · ${item.source?.type === "task" ? "Sarcină" : item.all_day ? "Toată ziua" : item.time} · ${visibilityLabel[item.visibility]}`}
+          aria-label={`${item.title} · ${dateLabel(item.event_date)}${item.source ? ` · ${calendarSourceLabel(item.source)}` : ""} · ${item.all_day ? "Toată ziua" : item.time} · ${visibilityLabel[item.visibility]}`}
         >
           {timeline ? (
             <span className="calendar-time">
@@ -149,10 +174,33 @@ export function CalendarEvents({
           )}
           <span className="calendar-event-card">
             <span className="calendar-event-symbol" aria-hidden="true">
-              {item.source?.type === "task" ? (
+              {item.source?.type === "task" ||
+              item.source?.type === "task_date" ? (
                 <ClipboardList size={21} />
-              ) : item.source?.type === "pet_entry" ? (
+              ) : ["pet_entry", "pet_birth", "pet_record", "pet_due"].includes(
+                  item.source?.type ?? "",
+                ) ? (
                 <PawPrint size={21} />
+              ) : ["document_expiry", "document_date"].includes(
+                  item.source?.type ?? "",
+                ) ? (
+                <FileText size={21} />
+              ) : ["memory_anniversary", "memory_date"].includes(
+                  item.source?.type ?? "",
+                ) ? (
+                <BookHeart size={21} />
+              ) : item.source?.type === "expense" ? (
+                <Wallet size={21} />
+              ) : item.source?.type === "meal" ? (
+                <UtensilsCrossed size={21} />
+              ) : item.source?.type === "profile_entry" ? (
+                <ProfileEntryIcon kind={item.source.kind} />
+              ) : item.source?.type === "member_birth" ||
+                item.source?.type === "birthday" ? (
+                <Cake size={21} />
+              ) : item.source?.type === "vehicle_date" ||
+                item.source?.type === "vehicle_entry" ? (
+                <CarFront size={21} />
               ) : item.visibility === "family" ? (
                 <Users size={21} />
               ) : (
@@ -163,11 +211,16 @@ export function CalendarEvents({
               <strong>{item.title}</strong>
               {!timeline && (
                 <span>
-                  {item.source?.type !== "task" && (
-                    <Clock3 size={13} aria-hidden="true" />
-                  )}
-                  {item.source?.type === "task"
-                    ? "Sarcină"
+                  {!item.source?.virtual &&
+                    !["task", "document_expiry", "memory_anniversary"].includes(
+                      item.source?.type ?? "",
+                    ) && <Clock3 size={13} aria-hidden="true" />}
+                  {item.source &&
+                  (item.source.virtual ||
+                    ["task", "document_expiry", "memory_anniversary"].includes(
+                      item.source.type,
+                    ))
+                    ? calendarSourceLabel(item.source)
                     : item.all_day
                       ? "Toată ziua"
                       : item.time}
@@ -176,7 +229,7 @@ export function CalendarEvents({
               <span className="calendar-event-meta">
                 <span className="calendar-event-owner">{item.owner_name}</span>
                 <span className="calendar-event-access">
-                  {item.visibility === "family" ? (
+                  {item.visibility !== "private" ? (
                     <Users size={12} aria-hidden="true" />
                   ) : (
                     <LockKeyhole size={12} aria-hidden="true" />

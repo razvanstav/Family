@@ -15,6 +15,7 @@ import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { TaskForm } from "./TaskForm";
+import { setTaskCompletion } from "./taskApi";
 import {
   recurrenceLabels,
   taskCompletionMessage,
@@ -107,6 +108,14 @@ export function Tasks({
   }, [endpoint, revision]);
   useEffect(() => {
     if (!requestedTask || loading || !current) return;
+    if (requestedTask === "new") {
+      if (canCreate) {
+        setMessage("");
+        setEditor({ task: null });
+      }
+      onTaskOpened();
+      return;
+    }
     const controller = new AbortController();
     function open(task: Task) {
       setMessage("");
@@ -196,14 +205,7 @@ export function Tasks({
     setError("");
     setMessage("");
     try {
-      const saved = await api<Task>(
-        `/families/${family.id}/tasks/${task.id}/completion`,
-        {
-          method: "PATCH",
-          headers: { "If-Match": `"${task.version}"` },
-          body: JSON.stringify({ completed: task.completed_at === null }),
-        },
-      );
+      const saved = await setTaskCompletion(family.id, task);
       onChanged();
       if (request === sequence.current) {
         setMessage(taskCompletionMessage(saved));

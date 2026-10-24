@@ -1,8 +1,16 @@
 # Bucătărie
 
+**DC1, 24 octombrie 2026:** data mesei apare în Calendar prin `MealDatedRecords`, cu accesul mesei; rețeta/fotografia nu primesc acces suplimentar. Deschiderea păstrează ziua și fila Mese, inclusiv pentru un element din afara primei pagini, cu revalidarea detaliului la actualizare. [Contract și verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
+
 **P1a.1, 24 octombrie 2026:** App compune `MealViewer` și transmite `mealTypes` către Amintiri prin punctele de extensie ale acestuia. Bucătărie nu a fost mutată în shared și nu este importată de alt modul; componentele mesei/rețetei și endpointurile rămân existente. [Probe P1a](platform.md#p1a--eliminarea-cuplărilor-24-octombrie-2026).
 
-Stare: **KH3 — Mesele de azi înaintea rețetelor**, implementat și verificat local la 23 octombrie 2026. KH2, K1, K2, K3a și K4a–K4b rămân implementate și verificate anterior. Preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
+Stare: **KH4 — Mese în stânga**, implementat și verificat local la 24 octombrie 2026. KH3, KH2, K1, K2, K3a și K4a–K4b rămân implementate și verificate anterior. Preparările libere/participanții K3b rămân separate, iar M05 nu este închis integral.
+
+## KH4 — Mese în stânga, 24 octombrie 2026
+
+- Cerere explicită, însoțită de captură: fila Mese să fie în stânga, înainte de Rețete. Ordinea opțiunilor `SectionTabs` din `Kitchen.tsx` este acum Mese → Rețete, pe desktop și mobil. Selecția inițială Rețete și conținutul/acțiunile existente sunt păstrate.
+- Verificate: build TypeScript/Vite, Prettier și `git diff --check`; browser desktop și 390×844, ordine DOM și poziții vizuale corecte, selectarea Mese funcțională și fără overflow orizontal. Captură `.runtime/kh4-kitchen-tabs-mobile.png`. Fără teste noi sau suite repetate pentru această inversare de ordine; fără modificări backend/date/CSS, commit/push/deploy.
+- Bucătărie → Mese lăsat deschis pe Ana/Popescu; viewportul temporar resetat. Acest pas înregistrează cererea de ordine, fără a declara acceptat layoutul MP1 din Amintiri.
 
 ## KH3 — Mesele de azi primele, 23 octombrie 2026
 
@@ -10,7 +18,6 @@ Stare: **KH3 — Mesele de azi înaintea rețetelor**, implementat și verificat
 - Schimbare numai de ordine JSX în `Kitchen.tsx`, fără CSS, requesturi noi, date sau modificări de API. Titlurile, cardurile, deschiderea meselor și filtrele existente sunt păstrate.
 - Verificate: TypeScript/Vite build și Prettier trecute; Vite a necesitat acces în afara sandboxului din cauza permisiunilor Windows. Browser Mihai/Popescu, desktop 1395 px și mobil 390 × 844: Mesele de azi sunt prima secțiune de conținut, cu 3 mese demo încărcate și Rețete dedesubt, fără overflow orizontal. Viewportul temporar resetat, Bucătărie lăsată deschisă. Fără teste noi sau suite repetate pentru mutarea secțiunii.
 - Utilizatorul a corectat cererea de deploy: dorește numai commit și push pe Git. Fără publicare pe server sau transfer al bazei locale.
-
 
 ## KH2 — Carduri Mese, 23 octombrie 2026
 

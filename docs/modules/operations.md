@@ -1,5 +1,9 @@
 # Operare și verificare
 
+**NR1, 24 octombrie 2026:** reminderele și outbox rulează la un minut. Sursele automate se reconciliază numai după modificări sau schimbarea zilei, prin checkpointul Calendar; fără scanări complete repetate la 15 secunde. Migrația aditivă `2026_10_24_153519`, granturile runtime și repornirea workerilor sunt obligatorii. Timerele systemd se reinstalează cu noile fișiere și `daemon-reload`; nu porni simultan timere și `--watch`. Emailurile folosesc același contract și transport Brevo centralizat, cu autorizarea finală păstrată. [Contracte și verificări NR1](calendar.md#nr1--reconciliere-la-schimbări-și-email-comun-24-octombrie-2026).
+
+**NS1, 24 octombrie 2026:** workerul existent `calendar:deliver-reminders` livrează și emailuri pentru canalele activate personal în Contul meu → Setări. Migrațiile aditive `2026_10_24_141611`, `141721`, `170100`, granturile runtime și repornirea proceselor `--watch` sunt necesare la instalare; nu se adaugă cron/worker separat. Brevo trebuie configurat și activat în Administrare, iar emailul este implicit debifat. SMTP indisponibil produce amânare înaintea trimiterii; răspunsul incert nu este retrimis automat. Stările și verificările cu transport fals sunt în [NS1](calendar.md#ns1--setări-personale-și-emailuri-automate-24-octombrie-2026). Acceptarea SMTP nu confirmă inboxul.
+
 ## Lucru pe mai multe calculatoare
 
 Codul este comun prin Git; bazele locale, media și fișierele de mediu rămân separate pe fiecare calculator. Înainte de o sesiune, verifică starea locală și preia ramura remote. Pentru lucru simultan, folosește ramuri distincte cu prefixul codex/ și integrează schimbările după verificare. Un push refuzat cere fetch și compararea istoriilor; nu se rezolvă prin force push. Migrațiile aditive și granturile se aplică separat fiecărui mediu, fără copierea sau resetarea bazei altui PC.
@@ -82,7 +86,7 @@ Decizie de găzduire la 22 octombrie 2026: utilizatorul predă instalarea pe ser
 - Intrări: [ops/linux](../../ops/linux/) și [procedura de predare](../../ops/SETUP.md#o2a--configurații-pentru-instalator). Nu se schimbă aplicația, schema sau dependențele.
 - Modelele folosesc un release identificat prin commit, `current` și `.env`/storage persistente. Migrațiile folosesc temporar rolul administrativ, iar cache-ul, HTTP și serviciile folosesc `memoria_app`, cu RLS. Parolele și cheia nu sunt completate în Git.
 - HTML-ul aplicației trece prin ruta Laravel existentă pentru CSP și cache; numai asseturile sunt servite direct. Nginx publică exclusiv `backend/public`. Poolul FPM păstrează limitele 10 MiB pentru fișier și 12 MiB pentru request.
-- Serviciile `Type=oneshot` sunt pornite prin timere la 15 s după încheierea trecerii anterioare, fără `--watch`, cron sau scheduler suplimentar. La upgrade se opresc timerele și se așteaptă terminarea serviciilor, apoi se schimbă release-ul.
+- Serviciile `Type=oneshot` sunt pornite prin timere la 60 s după încheierea trecerii anterioare, fără `--watch`, cron sau scheduler suplimentar. La upgrade se opresc timerele și se așteaptă terminarea serviciilor, apoi se schimbă release-ul.
 - La cererea utilizatorului, nu se scriu și nu se rulează teste. Revizia statică include comenzile existente, rutele, căile, linkurile locale și `git diff --check`. Pe acest checkout macOS nu sunt disponibile Nginx, PHP-FPM sau systemd pentru validarea nativă a configurațiilor; nu s-au pornit servicii, builduri sau migrații.
 - Limite: exemplele cer adaptare la server și certificat existent; provisionarea conturilor staging nu este implementată. Scanarea rămâne sincronă; cleanupul, backupul/restaurarea și alertarea rămân deschise. Nu sunt probate deployul, rebootul, autentificarea ori lucrul cu date pe Linux.
 

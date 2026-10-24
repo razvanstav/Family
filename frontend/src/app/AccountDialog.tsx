@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from "react";
-import { Camera, LogOut } from "lucide-react";
+import { useRef, useState, type FormEvent } from "react";
+import { Camera, LogOut, Settings } from "lucide-react";
 import {
   api,
   ApiError,
@@ -11,6 +11,7 @@ import { Modal } from "../shared/Modal";
 import { UserAvatar } from "../shared/UserAvatar";
 import { ProfilePhotoEditor } from "../shared/ProfilePhotoEditor";
 import type { Profile } from "../modules/families/profileData";
+import { NotificationSettings } from "./NotificationSettings";
 
 type User = Pick<NonNullable<Session["user"]>, "id" | "name" | "email">;
 
@@ -28,6 +29,7 @@ export function AccountDialog({
   onLogout,
   onClose,
   onExpired,
+  returnFocusTarget,
 }: {
   user: User;
   family?: Family;
@@ -42,10 +44,17 @@ export function AccountDialog({
   onLogout: () => void;
   onClose: () => void;
   onExpired: () => void;
+  returnFocusTarget?: HTMLElement | null;
 }) {
+  const returnFocus = useRef(
+    returnFocusTarget === undefined
+      ? (document.activeElement as HTMLElement | null)
+      : returnFocusTarget,
+  );
   const [name, setName] = useState(user.name);
   const [expectedName, setExpectedName] = useState(user.name);
   const [editingPhoto, setEditingPhoto] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -101,6 +110,15 @@ export function AccountDialog({
       setBusy(false);
     }
   }
+  if (settingsOpen)
+    return (
+      <NotificationSettings
+        returnFocus={returnFocus.current}
+        onBack={() => setSettingsOpen(false)}
+        onClose={onClose}
+        onExpired={onExpired}
+      />
+    );
   if (editingPhoto && profile)
     return (
       <ProfilePhotoEditor
@@ -120,6 +138,7 @@ export function AccountDialog({
     );
   return (
     <Modal
+      returnFocus={returnFocus.current}
       title="Contul meu"
       onClose={() => {
         if (!busy && !logoutBusy) onClose();
@@ -241,6 +260,14 @@ export function AccountDialog({
           </button>
         )}
       </form>
+      <button
+        className="button secondary full account-settings-action"
+        disabled={busy || logoutBusy}
+        onClick={() => setSettingsOpen(true)}
+      >
+        <Settings size={18} aria-hidden="true" />
+        Setări
+      </button>
       {demo && <p className="demo-note">Cont demo · date fictive.</p>}
       {logoutError && (
         <p className="error" role="alert">

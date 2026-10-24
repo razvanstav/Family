@@ -6,16 +6,21 @@ export function Modal({
   children,
   onClose,
   wide = false,
+  returnFocus,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
+  returnFocus?: HTMLElement | null;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const dialog = ref.current!;
-    const previous = document.activeElement as HTMLElement | null;
+    const previous =
+      returnFocus === undefined
+        ? (document.activeElement as HTMLElement | null)
+        : returnFocus;
     dialog.showModal();
     return () => {
       dialog.close();

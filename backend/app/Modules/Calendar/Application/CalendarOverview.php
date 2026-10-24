@@ -5,10 +5,11 @@ namespace App\Modules\Calendar\Application;
 use App\Modules\Calendar\Contracts\Overview;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\DB;
 
 final class CalendarOverview implements Overview
 {
-    public function __construct(private readonly CalendarAccess $access, private readonly CalendarReminders $reminders, private readonly BirthdayCalendar $birthdays) {}
+    public function __construct(private readonly CalendarAccess $access, private readonly CalendarReminders $reminders, private readonly BirthdayCalendar $birthdays, private readonly DatedCalendarItems $dated) {}
 
     public function home(string $family, int $actor, string $month): array
     {
@@ -20,6 +21,11 @@ final class CalendarOverview implements Overview
             ->where(fn (Builder $query) => $query->whereNull('calendar_items.source_type')->orWhere('calendar_items.source_type', '!=', 'task'));
         $days = (clone $visible)->whereBetween('event_date', [$first->toDateString(), $first->endOfMonth()->toDateString()])
             ->distinct()->orderBy('event_date')->pluck('event_date');
+        $membership = DB::table('family_memberships')->where('family_id', $family)->where('user_id', $actor)->whereNull('revoked_at')->value('id');
+        if ($membership !== null) {
+            $days = $days->merge($this->dated->month($family, $actor, $membership, $first->toDateString(), $first->endOfMonth()->toDateString())
+                ->pluck('event_date'))->unique()->sort()->values();
+        }
         $events = $visible->whereBetween('event_date', [$today->toDateString(), $today->addDays(29)->toDateString()])
             ->where(function (Builder $query) use ($now) {
                 $query->where('all_day', true)->orWhere('starts_at', '>=', $now->toIso8601String());

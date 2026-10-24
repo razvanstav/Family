@@ -84,6 +84,9 @@ html {
 html:has(dialog[open]) {
   overflow: hidden;
 }
+html:has(dialog.fullscreen-dialog[open]) {
+  scrollbar-gutter: auto;
+}
 button,
 input,
 textarea,
@@ -339,6 +342,7 @@ input[type="radio"] {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .sidebar-family {
+  flex-shrink: 0;
   margin-top: 27px;
   display: flex;
   align-items: center;
@@ -365,6 +369,9 @@ input[type="radio"] {
   margin-top: 22px;
   display: grid;
   gap: 6px;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
 }
 .sidebar nav button {
   display: flex;
@@ -413,6 +420,15 @@ input[type="radio"] {
 .nav-symbol-vehicles {
   background: #e9eef3;
 }
+.nav-symbol-calendar {
+  color: #b8753e;
+}
+.nav-symbol-tasks {
+  color: var(--accent);
+}
+.nav-symbol-pets {
+  color: #956645;
+}
 .sidebar nav button:hover {
   background: #f1f0e7;
 }
@@ -426,6 +442,7 @@ input[type="radio"] {
 }
 .sidebar-bottom {
   margin-top: auto;
+  flex-shrink: 0;
 }
 .sidebar-profile {
   display: flex;
@@ -1285,6 +1302,22 @@ button.avatar > .avatar {
 }
 .danger-button:hover:not(:disabled) {
   background: #91362e;
+}
+@media (min-width: 701px) and (max-height: 800px) {
+  .sidebar {
+    padding-top: 20px;
+  }
+  .sidebar-family {
+    margin-top: 16px;
+  }
+  .sidebar nav {
+    margin-top: 16px;
+    gap: 3px;
+  }
+  .sidebar nav button {
+    min-height: 44px;
+    padding-block: 6px;
+  }
 }
 @media (max-width: 1050px) {
   .sidebar {

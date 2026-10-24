@@ -84,7 +84,8 @@
 .task-copy {
   min-width: 0;
 }
-.task-copy h2 {
+.task-copy h2,
+.task-copy h3 {
   margin: 0;
   font-family: var(--font-body);
   font-size: 15px;
@@ -152,6 +153,34 @@
 .tasks-loading {
   color: var(--muted);
   padding: 24px 0;
+}
+.task-home-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  color: var(--accent);
+  background: #edf1e7;
+}
+.task-home-list {
+  border: 0;
+  border-radius: 0;
+}
+.task-home-list .task-row {
+  grid-template-columns: 44px minmax(0, 1fr);
+  padding: 10px 0;
+}
+.task-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+.task-home-empty {
+  margin: 4px 0 12px;
+  color: var(--muted);
+  font-size: 13px;
 }
 .tasks-error {
   margin-bottom: 20px;

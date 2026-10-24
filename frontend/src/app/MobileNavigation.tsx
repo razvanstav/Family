@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BookHeart,
   CalendarDays,
@@ -37,11 +37,12 @@ export function MobileNavigation({
 }: {
   page: Page;
   onPage: (page: Page) => void;
-  onAccount: () => void;
+  onAccount: (returnFocus: HTMLElement | null) => void;
   admin: boolean;
   hasFamily: boolean;
 }) {
   const [more, setMore] = useState(false);
+  const moreTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 701px)");
     const close = () => {
@@ -63,7 +64,7 @@ export function MobileNavigation({
             <span>Administrare</span>
           </button>
         )}
-        <button onClick={onAccount}>
+        <button onClick={(event) => onAccount(event.currentTarget)}>
           <UserRound size={21} aria-hidden="true" />
           <span>Contul meu</span>
         </button>
@@ -92,6 +93,7 @@ export function MobileNavigation({
           </button>
         ))}
         <button
+          ref={moreTrigger}
           className={
             more ||
             page === "calendar" ||
@@ -196,7 +198,7 @@ export function MobileNavigation({
             <button
               onClick={() => {
                 setMore(false);
-                onAccount();
+                onAccount(moreTrigger.current);
               }}
             >
               <UserRound size={22} />

@@ -1,5 +1,17 @@
 # Sarcini
 
+## H5 — Sarcini pe Acasă, 24 octombrie 2026
+
+**Backend implementat și verificat local**, la cererea explicită de a aduce lista de sarcini sub Evenimente și Remindere. `GET /families/{family}/home` returnează `tasks`: cel mult cinci sarcini nefinalizate autorizate, cu termenele în ordine crescătoare (întârziate → azi → viitoare), apoi fără termen. La același termen, ordinea este `created_at DESC, id DESC`. Sunt incluse sarcinile comune și cele personale ale utilizatorului; accesul personal nu este extins administratorului familiei. Șterse/finalizate sunt excluse.
+
+Integrarea folosește exclusiv `Tasks/Contracts/TaskSummaries`, legat în provider la `TaskAccess`. Serviciul deține query-ul cu JOIN pentru autor/responsabil, payloadul canonic și drepturile; `TaskController` reutilizează aceeași implementare. Home nu citește tabela Tasks și nu are o politică de acces duplicată. Payloadul este identic cu detaliul Sarcini, inclusiv versiune, responsabil, termen, recurență și `can_edit/can_complete`. Finalizarea reutilizează endpointul existent cu If-Match, inclusiv succesorul recurenței; fără rută, migrație, worker sau polling nou.
+
+**Backend verificat:** HomeTasksTest **6 teste/67 aserțiuni**; împreună cu TaskCalendarTest, TaskRecurrenceTest și ModuleBoundaries, **27 teste/356 aserțiuni** trecute serial numai pe memoria_test. Fixture-uri UUID și cleanup limitat la familiile proprii, fără TRUNCATE/reset sau SMTP real. Acoperă ordinea/limita, includerea fără termen, ACL/izolarea/revocarea, payload canonic, responsabil limitat și versiunile 428/412, finalizare/recurență și query count constant la 1 versus 21 de sarcini; lista Home folosește un singur query, limit 5, fără N+1. Pint și diff check trecute. Integrarea finală a trecut: 98 backend/1189 aserțiuni, 45 frontend, build BswbLztS/BxAVmUyW. UI desktop/390/320, butoane și bifare cu înlocuirea rândului/focus și succesor săptămânal verificate; salvările numai în familia de test H5, curățată ulterior. Fără overflow sau erori de consolă observate; publicarea rămâne în lucru în pasul comun Acasă.
+
+**DC1, 24 octombrie 2026:** termenul rămâne vizibil în Calendar și pentru sarcina finalizată, prin citirea canonică `TaskDatedRecords`; alerta este în continuare numai pentru nefinalizate, conform Setări. Ștergerea și accesul se reverifică, fără copii întârziate; [verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
+
+**NS1, 24 octombrie 2026:** responsabilul activ poate activa În aplicație / Email în Contul meu → Setări → Sarcini; reminder în ziua termenului la 09:00 România, numai pentru sarcini nefinalizate și autorizate. Se reutilizează proiecția Calendar existentă, fără dubluri; detalii și verificări în [NS1](calendar.md#ns1--setări-personale-și-emailuri-automate-24-octombrie-2026).
+
 ## S3 — Sarcini recurente, 24 octombrie 2026
 
 **Implementat și verificat local**, la cererea explicită de a livra S3 și apoi Animale fără întrebări intermediare, cu push după încheierea ambelor. S3 păstrează pagina și accesul existente. Repetare opțională zilnic/săptămânal/lunar/anual, cu termen obligatoriu; finalizarea creează cel mult o următoare sarcină, la primul termen viitor după data curentă/termen. Ziua inițială se păstrează pentru lunile scurte și anii bisecți. Redeschiderea nu șterge următoarea sarcină și nu creează duplicate la o nouă finalizare, nici după ștergerea succesorului.

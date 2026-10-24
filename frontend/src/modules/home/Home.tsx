@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Bell,
   CalendarDays,
@@ -25,6 +25,7 @@ import { CalendarMonth } from "../../shared/CalendarMonth";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto, type PhotoStatus } from "../../shared/PrivatePhoto";
 import { PageBackdrop } from "../../shared/PageBackdrop";
+import { observePageResume } from "../../shared/pageResume";
 import "./home.css";
 
 type EventSummary = {
@@ -42,13 +43,14 @@ type ReminderSummary = {
   event_date: string;
   due_at: string;
 };
-type Overview = {
+type Overview<Task> = {
   today: string;
   month: string;
   days: string[];
   memories: MemorySummary[];
   events: EventSummary[];
   reminders: ReminderSummary[];
+  tasks: Task[];
 };
 
 type MemorySummary = {
@@ -61,39 +63,48 @@ type MemorySummary = {
   photo_status: PhotoStatus;
 };
 
-export function Home({
+export function Home<Task>({
   family,
   onExpired,
   onCalendar,
   onMemories,
   onKitchen,
+  renderTasks,
 }: {
   family: Family;
   onExpired: () => void;
   onCalendar: (target: CalendarRequest) => void;
   onMemories: (id?: string) => void;
   onKitchen: () => void;
+  renderTasks: (props: {
+    tasks: Task[] | null;
+    today: string;
+    loading: boolean;
+    onChanged: () => void;
+  }) => ReactNode;
 }) {
   const [month, setMonth] = useState(bucharestToday().slice(0, 7));
-  const [data, setData] = useState<Overview | null>(null);
+  const [data, setData] = useState<Overview<Task> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const sequence = useRef(0);
+  const pending = useRef(false);
   const endpoint = `/families/${family.id}/home?month=${month}`;
   useEffect(() => {
     const request = ++sequence.current;
+    const controller = new AbortController();
+    pending.current = true;
     setLoading(true);
     setError("");
-    api<Overview>(endpoint)
+    api<Overview<Task>>(endpoint, { signal: controller.signal })
       .then((result) => {
         if (request === sequence.current) setData(result);
       })
       .catch((e) => {
-        if (request !== sequence.current) return;
+        if (controller.signal.aborted || request !== sequence.current) return;
         setData(null);
         if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status)) {
-          setData(null);
           onExpired();
         }
         setError(
@@ -103,18 +114,20 @@ export function Home({
         );
       })
       .finally(() => {
-        if (request === sequence.current) setLoading(false);
+        if (request === sequence.current) {
+          pending.current = false;
+          setLoading(false);
+        }
       });
     return () => {
+      controller.abort();
       sequence.current++;
     };
   }, [endpoint, revision]);
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible")
-        setRevision((value) => value + 1);
-    }, 60000);
-    return () => window.clearInterval(timer);
+    return observePageResume(document, window, () => {
+      if (!pending.current) setRevision((value) => value + 1);
+    });
   }, []);
   const today = data?.today ?? bucharestToday();
   const featured =
@@ -302,6 +315,14 @@ export function Home({
               ))}
           </section>
         </div>
+        <section className="home-section home-tasks" aria-label="Sarcini">
+          {renderTasks({
+            tasks: data?.tasks ?? null,
+            today,
+            loading,
+            onChanged: () => setRevision((value) => value + 1),
+          })}
+        </section>
         <nav className="home-shortcuts" aria-label="Acces rapid">
           <button onClick={() => onCalendar({ date: today, monthOnly: true })}>
             <span className="home-shortcut-icon home-icon--calendar">

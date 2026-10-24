@@ -1,5 +1,7 @@
 # Autentificare
 
+**NS1, 24 octombrie 2026:** Contul meu → Setări editează preferințele proprii În aplicație / Email pentru cele cinci categorii, comune tuturor familiilor contului. API versionat, activare explicită, conflicte și contracte în [Setări personale și emailuri automate](calendar.md#ns1--setări-personale-și-emailuri-automate-24-octombrie-2026). Configurarea expeditorului rămâne în Administrare; verificarea adresei și recuperarea parolei rămân separate.
+
 Extensie AP1, 24 octombrie 2026: `/session` include `user.is_admin`, calculat din grantul explicit și lista de adrese permisă, separat de rolurile familiei. Loginul/reîncărcarea contului admin deschid Administrare; restul conturilor păstrează Acasă. `/account` nu poate modifica acest acces. Implementarea, instalarea și verificările sunt în [Administrare Amora](operations.md#ap1--administrare-amora-24-octombrie-2026). Brevo este furnizorul ales; recuperarea parolei și verificarea emailului rămân pași separați.
 
 Stare: **AL1 — landing Amora cu autentificare implicită implementat și verificat local**, la 24 octombrie 2026; acceptarea vizuală așteaptă feedback. AR1, A1 și A1b rămân implementate. A2–A3 rămân planificate în M03, fără pornire automată; confirmarea emailului este exclusă explicit din fluxul AR1.

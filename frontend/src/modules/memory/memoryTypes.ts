@@ -14,11 +14,14 @@ export type Moment = {
   can_manage: boolean;
   grants: string[];
   photo_status: PhotoStatus;
+  photos: MomentPhoto[];
   archived_at: string | null;
   people: { id: string; name: string }[];
   created_at: string;
   updated_at: string;
 };
+
+export type MomentPhoto = { id: string; status: Exclude<PhotoStatus, null> };
 
 export type MomentList = {
   items: Moment[];

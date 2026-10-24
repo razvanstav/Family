@@ -36,12 +36,13 @@ export type Document = {
   version: number;
   created_at: string;
   expires_on: string | null;
-  mime: string;
-  bytes: number;
-  status: "ready" | "quarantine" | "rejected";
-  original_name?: string;
+  mime: string | null;
+  bytes: number | null;
+  status: "ready" | "quarantine" | "rejected" | null;
+  original_name?: string | null;
   grants?: string[];
 };
+export type DocumentDetail = Document & { grants: string[] };
 export type DocumentSummary = Pick<
   Document,
   | "id"
@@ -65,7 +66,11 @@ export type CalendarRequest = {
 };
 export type VehicleRequest = { vehicleId: string; entryId: string };
 export type PetRequest = { petId: string; entryId: string };
-export type DocumentRequest = { id: string; memberId: string | null };
+export type DocumentRequest = {
+  id: string;
+  memberId: string | null;
+  document?: DocumentDetail;
+};
 let csrf = "";
 const sessionListeners = new Set<() => void>();
 export function onSessionInvalidated(listener: () => void) {

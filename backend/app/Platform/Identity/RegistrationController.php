@@ -3,6 +3,7 @@
 namespace App\Platform\Identity;
 
 use App\Models\User;
+use App\Modules\Calendar\Contracts\ReminderReconciliation;
 use App\Platform\Audit\Audit;
 use App\Platform\Families\InvitationCodes;
 use Illuminate\Http\JsonResponse;
@@ -14,7 +15,7 @@ use Illuminate\Validation\ValidationException;
 
 final class RegistrationController
 {
-    public function __invoke(Request $request, InvitationCodes $codes): JsonResponse
+    public function __invoke(Request $request, InvitationCodes $codes, ReminderReconciliation $reminders): JsonResponse
     {
         abort_if($request->user(), 409, 'Ești deja autentificat. Deconectează-te înainte de a crea alt cont.');
         $data = $request->validate([
@@ -32,7 +33,7 @@ final class RegistrationController
             'invitation_code.max' => 'Numele familiei sau codul de invitație nu este valid. Cere un cod nou administratorului.',
         ]);
         $email = Str::lower(trim($data['email']));
-        $user = DB::transaction(function () use ($data, $email, $codes): User {
+        $user = DB::transaction(function () use ($data, $email, $codes, $reminders): User {
             $invitation = isset($data['invitation_code']) ? $codes->lockValid($data['family_name'], $data['invitation_code']) : null;
             DB::select('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [$email]);
             if (User::whereRaw('lower(email) = ?', [$email])->exists()) {
@@ -55,6 +56,7 @@ final class RegistrationController
                 Audit::record($family, $user->id, 'family.created', $family);
             }
             Audit::record($family, $user->id, 'membership.added', $membership);
+            $reminders->invalidateFamily($family);
 
             return $user;
         });

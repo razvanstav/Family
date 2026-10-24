@@ -3,6 +3,7 @@
 namespace App\Platform\Families;
 
 use App\Modules\Calendar\Contracts\Birthdays;
+use App\Modules\Calendar\Contracts\ReminderReconciliation;
 use App\Modules\Memory\Contracts\MomentSummaries;
 use App\Platform\Audit\Audit;
 use App\Platform\Contracts\PrivateMedia;
@@ -22,7 +23,7 @@ final class MemberProfileController
 {
     private const KINDS = ['visit' => 'health', 'medication' => 'health', 'book' => 'learning', 'culture' => 'learning', 'activity' => 'activities', 'achievement' => 'activities'];
 
-    public function __construct(private MemberProfileAccess $access, private PrivateMedia $media) {}
+    public function __construct(private MemberProfileAccess $access, private PrivateMedia $media, private readonly ReminderReconciliation $reminders) {}
 
     public function show(Request $request, string $family, string $member): JsonResponse
     {
@@ -79,6 +80,7 @@ final class MemberProfileController
                 $birthdays->unshare($family, $member);
             }
             $birthdays->syncFamily($family);
+            $this->reminders->invalidateFamily($family);
             DB::table('member_profile_parents')->where('family_id', $family)->where('membership_id', $member)->delete();
             if ($parents !== []) {
                 DB::table('member_profile_parents')->insert(array_map(fn (string $parent) => ['family_id' => $family, 'membership_id' => $member, 'parent_membership_id' => $parent], $parents));
@@ -150,6 +152,16 @@ final class MemberProfileController
         $canWrite = $this->access->canWrite($request, $family, $subject);
 
         return response()->json(['items' => $rows->take(12)->map(fn (object $entry) => $this->entryPayload($request, $entry, $canWrite))->values(), 'page' => $page, 'has_more' => $rows->count() > 12]);
+    }
+
+    public function showEntry(Request $request, string $family, string $member, string $entry): JsonResponse
+    {
+        abort_unless(Str::isUuid($entry), 404);
+        $subject = $this->access->subject($family, $member);
+        $row = $this->visibleEntries($request, $family, $member)->where('e.id', $entry)->whereNull('e.archived_at')->firstOrFail();
+
+        return response()->json($this->entryPayload($request, $row, $this->access->canWrite($request, $family, $subject)))
+            ->header('ETag', '"'.$row->version.'"');
     }
 
     private function entryPayload(Request $request, object $entry, bool $canWrite): array

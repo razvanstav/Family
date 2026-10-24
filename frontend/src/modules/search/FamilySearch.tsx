@@ -9,6 +9,7 @@ import {
 import { api, ApiError } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { dateLabel } from "../../shared/calendarDates";
+import { observePageResume } from "../../shared/pageResume";
 import "./familySearch.css";
 
 export type SearchResult = {
@@ -111,12 +112,7 @@ export function FamilySearch({
         setRevision((v) => v + 1);
       }
     };
-    const timer = window.setInterval(refresh, 30000);
-    document.addEventListener("visibilitychange", refresh);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", refresh);
-    };
+    return observePageResume(document, window, refresh);
   }, [ready]);
   return (
     <Modal title="Caută" onClose={onClose}>

@@ -5,6 +5,7 @@ namespace App\Modules\Calendar\Http;
 use App\Modules\Calendar\Application\BirthdayCalendar;
 use App\Modules\Calendar\Application\CalendarAccess;
 use App\Modules\Calendar\Application\CalendarReminders;
+use App\Modules\Calendar\Application\DatedCalendarItems;
 use App\Platform\Audit\Audit;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -20,7 +21,7 @@ final class CalendarController
 {
     private const TIMEZONE = 'Europe/Bucharest';
 
-    public function __construct(private readonly CalendarReminders $reminders, private readonly CalendarAccess $access, private readonly BirthdayCalendar $birthdays) {}
+    public function __construct(private readonly CalendarReminders $reminders, private readonly CalendarAccess $access, private readonly BirthdayCalendar $birthdays, private readonly DatedCalendarItems $dated) {}
 
     private function visible(Request $request, string $family): Builder
     {
@@ -31,7 +32,7 @@ final class CalendarController
                     ->where('preference.recipient_membership_id', $request->attributes->get('membership')->id);
             })
             ->leftJoinSub(DB::table('calendar_reminder_recipients')->selectRaw('calendar_item_id, json_agg(membership_id ORDER BY membership_id) as recipients_json, json_object_agg(membership_id, offset_minutes) as offsets_json')->groupBy('calendar_item_id'), 'r', 'r.calendar_item_id', '=', 'calendar_items.id')
-            ->leftJoinSub(DB::table('calendar_reminder_deliveries')->selectRaw("calendar_item_id, source_version, json_agg(json_build_object('membership_id', membership_id, 'state', state) ORDER BY membership_id) as deliveries_json")
+            ->leftJoinSub(DB::table('calendar_reminder_deliveries')->selectRaw("calendar_item_id, source_version, json_agg(json_build_object('membership_id', membership_id, 'state', state, 'in_app_enabled', CASE WHEN membership_id = ? THEN in_app_enabled ELSE NULL END, 'email_state', CASE WHEN membership_id = ? THEN email_state ELSE NULL END) ORDER BY membership_id) as deliveries_json", [$request->attributes->get('membership')->id, $request->attributes->get('membership')->id])
                 ->groupBy('calendar_item_id', 'source_version'), 'd', function ($join) {
                     $join->on('d.calendar_item_id', '=', 'calendar_items.id')->on('d.source_version', '=', 'calendar_items.version');
                 })
@@ -70,13 +71,24 @@ final class CalendarController
         $query = $this->visible($request, $family)->whereBetween('event_date', [$first->format('Y-m-d'), $first->format('Y-m-t')]);
         $request->boolean('archived') ? $query->whereNotNull('archived_at') : $query->whereNull('archived_at');
 
-        return response()->json($query->orderBy('event_date')->orderByDesc('all_day')->orderBy('starts_at')->orderBy('calendar_items.id')->get()
-            ->map(fn (object $event): array => $this->payload($request, $event)));
+        $stored = $query->orderBy('event_date')->orderByDesc('all_day')->orderBy('starts_at')->orderBy('calendar_items.id')->get()
+            ->map(fn (object $event): array => $this->payload($request, $event));
+        $dated = $request->boolean('archived') ? collect() : $this->dated->month($family, $request->user()->id,
+            $request->attributes->get('membership')->id, $first->format('Y-m-d'), $first->format('Y-m-t'));
+
+        return response()->json($this->dated->merge($stored, $dated));
     }
 
     public function show(Request $request, string $family, string $event): JsonResponse
     {
-        $item = $this->visible($request, $family)->where('calendar_items.id', $event)->firstOrFail();
+        abort_unless(Str::isUuid($event), 404);
+        $item = $this->visible($request, $family)->where('calendar_items.id', $event)->first();
+        if ($item === null) {
+            $dated = $this->dated->find($family, $request->user()->id, $request->attributes->get('membership')->id, $event);
+            abort_unless($dated, 404);
+
+            return response()->json($dated)->header('ETag', '"'.$dated['version'].'"');
+        }
 
         return response()->json($this->payload($request, $item))->header('ETag', '"'.$item->version.'"');
     }

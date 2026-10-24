@@ -9,14 +9,13 @@ import {
   ArrowDownToLine,
   Check,
   ChevronDown,
-  FileText,
   FolderHeart,
   LockKeyhole,
   Plus,
   Search,
   SlidersHorizontal,
-  UploadCloud,
   Users,
+  UploadCloud,
   X,
   Clock3,
   RefreshCw,
@@ -32,6 +31,7 @@ import {
   familyDocumentCategories,
   personalDocumentCategories,
   type Document,
+  type DocumentDetail,
   type Family,
   type Member,
 } from "../../shared/api";
@@ -39,6 +39,8 @@ import { Modal } from "../../shared/Modal";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { filterDocuments } from "./documentFilters";
 import { ExpirationField } from "./ExpirationField";
+import { DocumentFileField } from "./DocumentFileField";
+import { documentFileType } from "../../shared/documentFiles";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import {
   categories,
@@ -55,6 +57,7 @@ export function Documents({
   canCreate = member === undefined,
   navigation,
   requestedDocument = null,
+  initialDocument,
   onDocumentOpened,
   onExpired,
 }: {
@@ -64,6 +67,7 @@ export function Documents({
   canCreate?: boolean;
   navigation?: ReactNode;
   requestedDocument?: string | null;
+  initialDocument?: DocumentDetail;
   onDocumentOpened?: () => void;
   onExpired: () => void;
 }) {
@@ -78,10 +82,17 @@ export function Documents({
   const [privacy, setPrivacy] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
   const [upload, setUpload] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<{
+    id: string;
+    document: DocumentDetail | null;
+  } | null>(null);
   useEffect(() => {
     if (!requestedDocument) return;
-    setSelected(requestedDocument);
+    setSelected({
+      id: requestedDocument,
+      document:
+        initialDocument?.id === requestedDocument ? initialDocument : null,
+    });
     onDocumentOpened?.();
   }, [requestedDocument]);
   const [notice, setNotice] = useState("");
@@ -280,7 +291,11 @@ export function Documents({
         ) : (
           <div className="document-grid">
             {visible.map((doc) => (
-              <DocumentCard document={doc} key={doc.id} onOpen={setSelected} />
+              <DocumentCard
+                document={doc}
+                key={doc.id}
+                onOpen={(id) => setSelected({ id, document: null })}
+              />
             ))}
           </div>
         )}
@@ -306,7 +321,7 @@ export function Documents({
           onSaved={(doc) => {
             setUpload(false);
             setNotice(
-              doc.status === "ready"
+              doc.status === null || doc.status === "ready"
                 ? `Document salvat. Acces: ${visibilityLabel[doc.visibility]}.`
                 : doc.status === "quarantine"
                   ? "Document salvat în carantină. Descărcarea rămâne blocată până la verificare."
@@ -317,8 +332,10 @@ export function Documents({
         />
       )}
       {selected && (
-        <Detail
-          id={selected}
+        <DocumentDetailDialog
+          key={selected.id}
+          id={selected.id}
+          initialDocument={selected.document}
           endpoint={endpoint}
           userId={userId}
           canEdit={family.role !== "limited"}
@@ -355,32 +372,14 @@ function UploadModal({
   const [expiresOn, setExpiresOn] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const input = useRef<HTMLInputElement>(null);
-  function choose(chosen?: File) {
-    if (!chosen) return;
-    if (
-      chosen.size > 10 * 1024 * 1024 ||
-      chosen.size === 0 ||
-      !["application/pdf", "image/jpeg", "image/png", "image/webp"].includes(
-        chosen.type,
-      )
-    ) {
-      setFile(null);
-      setError("Alege un PDF, JPG, PNG sau WebP de cel mult 10 MB.");
-      return;
-    }
-    setFile(chosen);
-    setError("");
-    if (!title) setTitle(chosen.name.replace(/\.[^.]+$/, "").slice(0, 160));
-  }
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!file || busy) return;
+    if (!title.trim() || busy) return;
     setBusy(true);
     setError("");
     const data = new FormData();
-    data.set("file", file);
-    data.set("title", title);
+    if (file) data.set("file", file);
+    data.set("title", title.trim());
     data.set("category", category);
     if (subjectId) data.set("subject_membership_id", subjectId);
     data.set("expires_on", expiresOn);
@@ -396,7 +395,9 @@ function UploadModal({
         onAccessChanged(e.status);
         return;
       }
-      setError(e instanceof Error ? e.message : "Uploadul nu a reușit.");
+      setError(
+        e instanceof Error ? e.message : "Nu am putut salva documentul.",
+      );
     } finally {
       setBusy(false);
     }
@@ -409,41 +410,6 @@ function UploadModal({
       }}
     >
       <form onSubmit={submit}>
-        <button
-          type="button"
-          disabled={busy}
-          className={`dropzone ${file ? "has-file" : ""}`}
-          onClick={() => input.current?.click()}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            if (!busy) choose(e.dataTransfer.files[0]);
-          }}
-        >
-          {file ? (
-            <FileText size={32} />
-          ) : (
-            <UploadCloud size={34} strokeWidth={1.4} />
-          )}
-          <strong>
-            {file ? file.name : "Alege un fișier sau trage-l aici"}
-          </strong>
-          {file && <span>Apasă pentru a înlocui</span>}
-        </button>
-        <p className="upload-limits">
-          PDF, JPG, PNG, WebP · maximum 10 MB/fișier și 100 MB/familie. Imagini
-          de maximum 16 megapixeli.
-        </p>
-        <input
-          ref={input}
-          hidden
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.webp"
-          onChange={(e) => {
-            choose(e.target.files?.[0]);
-            e.target.value = "";
-          }}
-        />
         <label className="field">
           Numele documentului
           <input
@@ -475,6 +441,17 @@ function UploadModal({
           onChange={setExpiresOn}
           disabled={busy}
         />
+        <DocumentFileField
+          file={file}
+          onChange={(chosen) => {
+            setFile(chosen);
+            if (chosen && !title)
+              setTitle(chosen.name.replace(/\.[^.]+$/, "").slice(0, 160));
+          }}
+          onError={setError}
+          disabled={busy}
+          optional
+        />
         <div className="privacy-hint">
           {familyDocumentCategories.includes(category) ? (
             <Users size={20} />
@@ -497,12 +474,12 @@ function UploadModal({
         <button
           className="button primary full"
           type="submit"
-          disabled={!file || !title.trim() || busy}
+          disabled={!title.trim() || busy}
         >
           {busy ? (
             <>
-              <RefreshCw className="spin" size={18} /> Se încarcă și se
-              verifică…
+              <RefreshCw className="spin" size={18} />{" "}
+              {file ? "Se încarcă și se verifică…" : "Se salvează…"}
             </>
           ) : (
             <>
@@ -515,8 +492,9 @@ function UploadModal({
   );
 }
 
-function Detail({
+export function DocumentDetailDialog({
   id,
+  initialDocument,
   endpoint,
   userId,
   canEdit,
@@ -524,20 +502,22 @@ function Detail({
   onChanged,
 }: {
   id: string;
+  initialDocument: DocumentDetail | null;
   endpoint: string;
   userId: number;
   canEdit: boolean;
   onClose: () => void;
   onChanged: () => void;
 }) {
-  const [doc, setDoc] = useState<Document | null>(null);
+  const [doc, setDoc] = useState<Document | null>(initialDocument);
   const [error, setError] = useState("");
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [canRetryLoad, setCanRetryLoad] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
-  const [visibility, setVisibility] =
-    useState<Document["visibility"]>("private");
-  const [grants, setGrants] = useState<string[]>([]);
+  const [visibility, setVisibility] = useState<Document["visibility"]>(
+    initialDocument?.visibility ?? "private",
+  );
+  const [grants, setGrants] = useState<string[]>(initialDocument?.grants ?? []);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [sharing, setSharing] = useState(false);
@@ -545,6 +525,17 @@ function Detail({
   const [editingExpiration, setEditingExpiration] = useState(false);
   const [expirationStale, setExpirationStale] = useState(false);
   const [expiresOn, setExpiresOn] = useState("");
+  const [attachingFile, setAttachingFile] = useState(false);
+  const [attachment, setAttachment] = useState<File | null>(null);
+  const [attachmentStale, setAttachmentStale] = useState(false);
+  const primaryAction = useRef<HTMLButtonElement>(null);
+  const attachmentWasOpen = useRef(false);
+  useEffect(() => {
+    if (attachmentWasOpen.current && !attachingFile) {
+      primaryAction.current?.focus();
+    }
+    attachmentWasOpen.current = attachingFile;
+  }, [attachingFile]);
   const path = `${endpoint}/documents/${id}`;
   function assign(data: Document) {
     setDoc(data);
@@ -552,6 +543,7 @@ function Detail({
     setGrants(data.grants ?? []);
   }
   useEffect(() => {
+    if (initialDocument && loadAttempt === 0) return;
     let active = true;
     setDoc(null);
     setError("");
@@ -689,6 +681,84 @@ function Detail({
       setBusy(false);
     }
   }
+  function openAttachment() {
+    if (!doc || busy) return;
+    setAttachment(null);
+    setAttachmentStale(false);
+    setError("");
+    setMessage("");
+    setAttachingFile(true);
+  }
+  function attachmentError(error: unknown) {
+    if (
+      error instanceof ApiError &&
+      [401, 403, 404, 419].includes(error.status)
+    ) {
+      setDoc(null);
+      setAttachingFile(false);
+      onChanged();
+      setError(
+        "Documentul nu mai este disponibil sau nu mai ai permisiunea de a adăuga un fișier.",
+      );
+    } else if (
+      error instanceof ApiError &&
+      [409, 412, 428].includes(error.status)
+    ) {
+      setAttachmentStale(true);
+      setError(
+        "Documentul s-a schimbat. Reîncarcă-l înainte de a adăuga fișierul.",
+      );
+    } else {
+      setError(
+        error instanceof Error ? error.message : "Nu am putut adăuga fișierul.",
+      );
+    }
+  }
+  async function reloadAttachment() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const current = await api<DocumentDetail>(path);
+      assign(current);
+      setAttachmentStale(false);
+      if (current.status !== null) {
+        setAttachingFile(false);
+        setAttachment(null);
+        setMessage("Fișierul a fost deja adăugat.");
+        onChanged();
+      }
+    } catch (error) {
+      attachmentError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function saveAttachment(event: FormEvent) {
+    event.preventDefault();
+    if (!doc || !attachment || busy || attachmentStale) return;
+    setBusy(true);
+    setError("");
+    const data = new FormData();
+    data.set("file", attachment);
+    try {
+      assign(
+        await api<DocumentDetail>(`${path}/file`, {
+          method: "POST",
+          headers: { "If-Match": `"${doc.version}"` },
+          body: data,
+        }),
+      );
+      setAttachingFile(false);
+      setAttachment(null);
+      setMessage("Fișierul a fost adăugat.");
+      onChanged();
+    } catch (error) {
+      attachmentError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function download() {
     setBusy(true);
     setError("");
@@ -738,7 +808,9 @@ function Detail({
           ? "Acces"
           : editingExpiration
             ? "Expirare"
-            : (doc?.title ?? "Document")
+            : attachingFile
+              ? "Adaugă fișier"
+              : (doc?.title ?? "Document")
       }
       onClose={() => {
         if (!busy) onClose();
@@ -746,7 +818,7 @@ function Detail({
       wide
     >
       {!doc && !error && <p className="loading-text">Se încarcă…</p>}
-      {doc && !sharing && !editingExpiration && (
+      {doc && !sharing && !editingExpiration && !attachingFile && (
         <>
           <div className="detail-art">
             <span className="category-label">{categoryName(doc.category)}</span>
@@ -756,9 +828,7 @@ function Detail({
               {visibilityLabel[doc.visibility]}
             </span>
           </div>
-          <p className="document-meta">
-            {doc.mime === "application/pdf" ? "PDF" : "Imagine"}
-          </p>
+          <p className="document-meta">{documentFileType(doc.mime)}</p>
           <div className="owner-row">
             <span className="avatar small">{initials(doc.owner_name)}</span>
             <div>
@@ -808,7 +878,7 @@ function Detail({
               </button>
             )}
           </div>
-          {doc.status !== "ready" && (
+          {(doc.status === "quarantine" || doc.status === "rejected") && (
             <div className="status-box">
               <Clock3 size={22} />
               <div>
@@ -826,13 +896,26 @@ function Detail({
             </div>
           )}
           <div className="detail-actions">
-            <button
-              className="button primary"
-              disabled={busy || doc.status !== "ready"}
-              onClick={() => void download()}
-            >
-              <ArrowDownToLine size={18} /> Descarcă
-            </button>
+            {doc.status !== null && (
+              <button
+                ref={primaryAction}
+                className="button primary"
+                disabled={busy || doc.status !== "ready"}
+                onClick={() => void download()}
+              >
+                <ArrowDownToLine size={18} /> Descarcă
+              </button>
+            )}
+            {doc.status === null && doc.owner_id === userId && canEdit && (
+              <button
+                ref={primaryAction}
+                className="button primary"
+                disabled={busy}
+                onClick={openAttachment}
+              >
+                <UploadCloud size={18} aria-hidden="true" /> Adaugă fișier
+              </button>
+            )}
             {doc.owner_id === userId &&
               !familyDocumentCategories.includes(doc.category) && (
                 <button
@@ -854,6 +937,35 @@ function Detail({
             </button>
           )}
         </>
+      )}
+      {doc && attachingFile && (
+        <form onSubmit={saveAttachment}>
+          <p className="modal-lead">{doc.title}</p>
+          <DocumentFileField
+            file={attachment}
+            onChange={setAttachment}
+            onError={setError}
+            disabled={busy || attachmentStale}
+          />
+          <button
+            className="button primary full"
+            disabled={busy || attachmentStale || !attachment}
+          >
+            {busy ? "Se încarcă și se verifică…" : "Salvează"}
+          </button>
+          <button
+            type="button"
+            className="text-button full center"
+            disabled={busy}
+            onClick={() => {
+              setAttachingFile(false);
+              setAttachment(null);
+              setError("");
+            }}
+          >
+            Înapoi la document
+          </button>
+        </form>
       )}
       {doc && editingExpiration && (
         <form onSubmit={saveExpiration}>
@@ -1003,6 +1115,15 @@ function Detail({
           className="button secondary full"
           disabled={busy}
           onClick={() => void reloadExpiration()}
+        >
+          {busy ? "Se încarcă…" : "Reîncarcă documentul"}
+        </button>
+      )}
+      {attachingFile && attachmentStale && (
+        <button
+          className="button secondary full"
+          disabled={busy}
+          onClick={() => void reloadAttachment()}
         >
           {busy ? "Se încarcă…" : "Reîncarcă documentul"}
         </button>
