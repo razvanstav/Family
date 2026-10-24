@@ -1,4 +1,5 @@
 import { clampCalendarValue, dateLabel } from "./calendarDates";
+import { SelectMenu } from "./SelectMenu";
 import "./datePicker.css";
 
 const months = Array.from({ length: 12 }, (_, index) => {
@@ -25,42 +26,27 @@ export function MonthSelect({
   );
   return (
     <div className="month-selects">
-      <select
-        aria-label="Luna"
+      <SelectMenu
+        label="Luna"
         value={number}
-        onChange={(event) =>
-          onChange(
-            clampCalendarValue(`${year}-${event.target.value}`, min, max),
-          )
+        onChange={(value) =>
+          onChange(clampCalendarValue(`${year}-${value}`, min, max))
         }
-      >
-        {months.map((item) => (
-          <option
-            value={item.value}
-            key={item.value}
-            disabled={
-              `${year}-${item.value}` < min || `${year}-${item.value}` > max
-            }
-          >
-            {item.name}
-          </option>
-        ))}
-      </select>
-      <select
-        aria-label="Anul"
+        options={months.map((item) => ({
+          value: item.value,
+          label: item.name,
+          disabled:
+            `${year}-${item.value}` < min || `${year}-${item.value}` > max,
+        }))}
+      />
+      <SelectMenu
+        label="Anul"
         value={year}
-        onChange={(event) =>
-          onChange(
-            clampCalendarValue(`${event.target.value}-${number}`, min, max),
-          )
+        onChange={(value) =>
+          onChange(clampCalendarValue(`${value}-${number}`, min, max))
         }
-      >
-        {years.map((item) => (
-          <option value={item} key={item}>
-            {item}
-          </option>
-        ))}
-      </select>
+        options={years.map((item) => ({ value: item, label: item }))}
+      />
     </div>
   );
 }

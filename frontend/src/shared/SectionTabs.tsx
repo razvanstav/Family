@@ -28,6 +28,48 @@ export function SectionTabs<Value extends string>({
     before: false,
     after: false,
   });
+  const [selection, setSelection] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+  useLayoutEffect(() => {
+    const rail = railRef.current;
+    const active = rail?.querySelector<HTMLButtonElement>(
+      '[aria-pressed="true"]',
+    );
+    if (!rail || !active) {
+      setSelection(null);
+      return;
+    }
+    const update = () => {
+      if (!active.offsetWidth) {
+        setSelection(null);
+        return;
+      }
+      const next = {
+        left: active.offsetLeft,
+        top: active.offsetTop,
+        width: active.offsetWidth,
+        height: active.offsetHeight,
+      };
+      setSelection((current) =>
+        current &&
+        current.left === next.left &&
+        current.top === next.top &&
+        current.width === next.width &&
+        current.height === next.height
+          ? current
+          : next,
+      );
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(rail);
+    observer.observe(active);
+    return () => observer.disconnect();
+  }, [value, options]);
   useLayoutEffect(() => {
     const container = containerRef.current;
     const rail = railRef.current;
@@ -114,7 +156,22 @@ export function SectionTabs<Value extends string>({
           <ChevronLeft size={20} aria-hidden="true" />
         </button>
       )}
-      <div className="section-tabs-rail" ref={railRef} id={railId}>
+      <div
+        className={`section-tabs-rail${selection ? " section-tabs-rail--selected" : ""}`}
+        ref={railRef}
+        id={railId}
+      >
+        {selection && (
+          <span
+            className="section-tabs-selection"
+            aria-hidden="true"
+            style={{
+              width: selection.width,
+              height: selection.height,
+              transform: `translate(${selection.left}px, ${selection.top}px)`,
+            }}
+          />
+        )}
         {options.map((option) => (
           <button
             key={option.value}

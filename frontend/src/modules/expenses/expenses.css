@@ -280,13 +280,15 @@
   .expense-month-picker .month-selects {
     flex: 1;
   }
-  .expense-month-picker .month-selects select {
+  .expense-month-picker .month-selects > .select-menu {
     flex: 1;
     width: 0;
+  }
+  .expense-month-picker .select-menu-trigger {
     padding-inline: 6px;
     font-size: 13px;
   }
-  .expense-month-picker .month-selects select:last-child {
+  .expense-month-picker .month-selects > .select-menu:last-child {
     flex: 0 0 70px;
     width: 70px;
   }
@@ -352,10 +354,10 @@
   .expense-month-picker {
     flex: 1 0 100%;
   }
-  .expense-month-picker .month-selects select {
+  .expense-month-picker .select-menu-trigger {
     padding-inline: 4px;
   }
-  .expense-month-picker .month-selects select:last-child {
+  .expense-month-picker .month-selects > .select-menu:last-child {
     flex-basis: 64px;
     width: 64px;
   }

@@ -1,6 +1,8 @@
 # Punct de reluare
 
-Actualizat: 24 octombrie 2026, Europe/Bucharest.
+Actualizat: 25 octombrie 2026, Europe/Bucharest.
+
+- **SB2/DS1 — implementate și verificate local; push/deploy cerute explicit:** Abonamente separat de Cheltuieli, file comune SectionTabs în aceeași poziție cu Bucătărie/Cheltuieli, 12 iconițe oficiale locale, listă stabilă la actualizare și tranziții comune. MonthSelect are meniuri crem/verde comune pentru lună/an, tastatură, căutare și viewport, inclusiv în DatePicker/Modal și cu anul 2100 păstrat. **73 teste frontend**, **4 backend/32 aserțiuni modulare**, TypeScript/Vite, Prettier/diff trecute; build final `BrH9asnZ/DJO_Wuan`. Browser desktop/390/320/landscape 844: geometrie egală, iconițe încărcate local, refresh întârziat 1.500 ms fără golirea grilei, tastatură/scroll/selectare 2100/Escape/Tab și încadrare dropdown. API fictiv numai GET pe 8002, fără DB, SMTP sau formulare salvate. Capturi ignorate `.runtime/sb2-subscriptions-desktop.png`, `.runtime/ds1-month-mobile.png`. Urmează commit/push, urmărirea deployului și confirmarea bundle-ului public. Detalii și limite: [Interfață DS1/SB2](modules/interface.md#ds1--meniuri-pentru-lună-și-an-25-octombrie-2026), [Abonamente SB2](modules/subscriptions.md#sb2--pagină-separată-și-navigare-fluidă-25-octombrie-2026). Nu începe alt modul.
 
 - **MT1/SB1 — implementate, verificate și publicate:** Amintiri păstrează albumul fără Cronologie; componenta, stilurile, props, endpointul și cititorul fără apelanți eliminate. Proiecția/outboxul istoric rămân pentru compatibilitatea evenimentelor existente. Abonamente este în Cheltuieli, cu catalog/custom, cost/scadență opționale, secrete criptate și acces de familie sau individual prin email + cod unic7zile. 27 teste backend/400 aserțiuni și56frontend trecute; build/browser desktop/390/320: creare, revelare, invitație/cod greșit/corect, izolare față de familia destinatarului, Calendar și revocare. Migrația202023/granturi aplicate aditiv în ambele baze, amprentele datelor păstrate. Fixture-urile și server8001 eliminate/oprit, viewport resetat; fără SMTP sau date reale de acces. Detalii în [Abonamente](modules/subscriptions.md), [Interfață SB1](modules/interface.md#sb1--abonamente-24-octombrie-2026) și [Amintiri MT1](modules/memory.md#mt1--album-fără-cronologie-24-octombrie-2026). Buildul final btuOof81/BB7XjicJ este trecut. Publicate în c5c81a2; deploy40130862434 reușit, migrația202023 DONE, cinci GRANT executate, HTTPS200 și bundle btuOof81/BB7XjicJ confirmate. Nu au fost create date reale de acces pe server. Urmează feedbackul utilizatorului; limita diagnosticului Docker este păstrată în Operare.
 
@@ -72,6 +74,10 @@ Actualizat: 24 octombrie 2026, Europe/Bucharest.
 - **Git SC1 (anterior):** commitul implementării `7e79d71` este publicat pe `origin/codex/documente-design` (push confirmat la 24 octombrie 2026); include SC1 și modificările locale VC1/BC1/CD1/P1a/CH1/CH2/S1/S2 anterioare. Acest pas actualizează evidența după push. Baza aplicației, media privată, secretele, buildul, capturile și utilitarele temporare rămân ignorate. Fără deploy.
 
 ## Următoarea acțiune
+
+Publică SB2/DS1 prin commit/push/deploy conform cererii explicite, apoi verifică starea Actions și bundle-ul HTTPS și actualizează această evidență. Nu începe alt layout; păstrează A1 și toate datele reale. Prioritățile mai vechi de mai jos sunt istoric.
+
+SB2 este finalizat local împreună cu DS1; prioritatea este publicarea cerută explicit, apoi feedbackul pentru acest singur layout. Pașii anteriori de mai jos rămân istoric și nu înlocuiesc cererea curentă.
 
 MT1/SB1 sunt publicate în c5c81a2, deploy40130862434 verificat. Așteaptă feedbackul utilizatorului pentru Abonamente și albumul fără Cronologie; nu începe alt modul. Înscrierea nu verifică emailul; accesul individual cere codul trimis de autor persoanei invitate. Fără emailuri sau parole reale de probă. La reluare citește fișa Abonamente și numai dependența concretă necesară.
 

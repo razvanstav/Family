@@ -1,18 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import {
-  CalendarDays,
-  KeyRound,
-  Plus,
-  RefreshCw,
-  Tv,
-  Users,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { CalendarDays, KeyRound, Plus, RefreshCw, Tv } from "lucide-react";
 import { api, ApiError, errorMessage, type Family } from "../../shared/api";
 import { dateLabel } from "../../shared/calendarDates";
 import { PageBackdrop } from "../../shared/PageBackdrop";
+import { SectionTabs } from "../../shared/SectionTabs";
 import { observePageResume } from "../../shared/pageResume";
 import { SubscriptionForm } from "./SubscriptionForm";
 import { SubscriptionDetail } from "./SubscriptionDetail";
+import { SubscriptionServiceIcon } from "./SubscriptionServiceIcon";
 import {
   subscriptionFrequency,
   subscriptionMoney,
@@ -28,15 +23,12 @@ type View =
 
 export function Subscriptions({
   family,
-  sectionTabs,
   requestedSubscription = null,
   onSubscriptionOpened,
   onExpired,
   onChanged,
 }: {
   family: Family;
-  actorId: number;
-  sectionTabs?: ReactNode;
   requestedSubscription?: string | null;
   onSubscriptionOpened?: () => void;
   onExpired: () => void;
@@ -45,6 +37,8 @@ export function Subscriptions({
   const base = `/families/${family.id}/subscriptions`;
   const [scope, setScope] = useState<"family" | "shared">("family");
   const [items, setItems] = useState<Subscription[]>([]);
+  const [loadedScope, setLoadedScope] = useState<typeof scope | null>(null);
+  const currentItems = loadedScope === scope ? items : [];
   const [nextPage, setNextPage] = useState<number | null>(null);
   const [revision, setRevision] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -71,7 +65,6 @@ export function Subscriptions({
     setMoreBusy(false);
     setLoading(true);
     setError("");
-    setItems([]);
     setNextPage(null);
     api<SubscriptionList>(`${base}?scope=${scope}`, {
       signal: controller.signal,
@@ -79,6 +72,7 @@ export function Subscriptions({
       .then((data) => {
         if (!controller.signal.aborted) {
           setItems(data.items);
+          setLoadedScope(scope);
           setNextPage(data.next_page);
         }
       })
@@ -89,6 +83,8 @@ export function Subscriptions({
           error instanceof ApiError &&
           [401, 403, 404, 419].includes(error.status)
         ) {
+          setItems([]);
+          setLoadedScope(null);
           setView(null);
           onExpired();
         }
@@ -189,48 +185,41 @@ export function Subscriptions({
       <PageBackdrop image="calendar">
         <section className="page-heading">
           <h1>Abonamente</h1>
-          {family.role !== "limited" && (
+          <div className="page-heading-actions">
             <button
-              className="button primary"
-              aria-label="Adaugă abonament"
-              onClick={() => setView({ mode: "form", subscription: null })}
+              className="icon-button"
+              disabled={loading || moreBusy}
+              aria-label="Actualizează abonamentele"
+              onClick={() => setRevision((value) => value + 1)}
             >
-              <Plus size={19} aria-hidden="true" />
-              <span>Adaugă abonament</span>
+              <RefreshCw
+                className={loading ? "subscription-refreshing" : undefined}
+                size={19}
+                aria-hidden="true"
+              />
             </button>
-          )}
+            {family.role !== "limited" && (
+              <button
+                className="button primary"
+                aria-label="Adaugă abonament"
+                onClick={() => setView({ mode: "form", subscription: null })}
+              >
+                <Plus size={19} aria-hidden="true" />
+                <span>Adaugă abonament</span>
+              </button>
+            )}
+          </div>
         </section>
       </PageBackdrop>
-      {sectionTabs}
-      <div className="subscriptions-toolbar">
-        <div
-          className="subscription-scopes"
-          role="group"
-          aria-label="Acces abonamente"
-        >
-          <button
-            aria-pressed={scope === "family"}
-            onClick={() => setScope("family")}
-          >
-            <Users size={17} aria-hidden="true" />
-            Familie
-          </button>
-          <button
-            aria-pressed={scope === "shared"}
-            onClick={() => setScope("shared")}
-          >
-            Partajate cu mine
-          </button>
-        </div>
-        <button
-          className="icon-button"
-          disabled={loading || moreBusy}
-          aria-label="Actualizează abonamentele"
-          onClick={() => setRevision((value) => value + 1)}
-        >
-          <RefreshCw size={19} aria-hidden="true" />
-        </button>
-      </div>
+      <SectionTabs
+        label="Acces abonamente"
+        value={scope}
+        onChange={setScope}
+        options={[
+          { value: "family", label: "Familie" },
+          { value: "shared", label: "Partajate cu mine" },
+        ]}
+      />
       {notice && (
         <p className="notice" role="status">
           {notice}
@@ -250,106 +239,113 @@ export function Subscriptions({
           </button>
         </div>
       )}
-      {loading ? (
-        <p role="status">Se încarcă abonamentele…</p>
-      ) : items.length ? (
-        <ul
-          className="subscription-grid"
-          aria-label={
-            scope === "family"
-              ? "Abonamentele familiei"
-              : "Abonamente partajate cu mine"
-          }
-        >
-          {items.map((item) => {
-            const money = subscriptionMoney(item);
-            return (
-              <li key={item.id}>
-                <button
-                  className="subscription-card"
-                  onClick={() =>
-                    setView({ mode: "detail", subscription: item })
-                  }
-                >
-                  <span
-                    className="subscription-service-icon"
-                    aria-hidden="true"
-                  >
-                    <Tv size={23} />
-                  </span>
-                  <span className="subscription-card-copy">
-                    <strong>{item.service_name}</strong>
-                    <span>
-                      {item.access === "invited"
-                        ? `Invitație de la ${item.owner_name}`
-                        : item.access === "shared"
-                          ? `Partajat de ${item.owner_name}`
-                          : item.owner_name}
-                    </span>
-                    {money && (
-                      <span className="subscription-cost">
-                        {money}
-                        {item.recurrence && (
-                          <> · {subscriptionFrequency(item.recurrence)}</>
-                        )}
-                      </span>
-                    )}
-                    {item.next_due_on && (
-                      <span className="subscription-due">
-                        <CalendarDays size={15} aria-hidden="true" />
-                        <time dateTime={item.next_due_on}>
-                          {dateLabel(item.next_due_on, {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </time>
-                      </span>
-                    )}
-                  </span>
-                  {item.access === "invited" ? (
-                    <span className="subscription-pending">Invitație</span>
-                  ) : item.has_credentials ? (
-                    <KeyRound
-                      className="subscription-key"
-                      size={18}
-                      aria-label="Date de acces salvate"
-                    />
-                  ) : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        !error && (
-          <div className="subscription-empty">
-            <Tv size={32} aria-hidden="true" />
-            <p>
-              {scope === "family"
-                ? "Niciun abonament adăugat."
-                : "Niciun abonament partajat cu tine."}
-            </p>
-            {scope === "family" && family.role !== "limited" && (
-              <button
-                className="button secondary"
-                onClick={() => setView({ mode: "form", subscription: null })}
+      <div className="subscription-results" aria-busy={loading}>
+        {loadedScope !== scope && !error ? (
+          <p role="status">Se încarcă abonamentele…</p>
+        ) : (
+          <div className="subscription-list" key={scope}>
+            {currentItems.length ? (
+              <ul
+                className="subscription-grid"
+                aria-label={
+                  scope === "family"
+                    ? "Abonamentele familiei"
+                    : "Abonamente partajate cu mine"
+                }
               >
-                Adaugă abonament
+                {currentItems.map((item) => {
+                  const money = subscriptionMoney(item);
+                  return (
+                    <li key={item.id}>
+                      <button
+                        className="subscription-card"
+                        onClick={() =>
+                          setView({ mode: "detail", subscription: item })
+                        }
+                      >
+                        <SubscriptionServiceIcon
+                          serviceKey={item.service_key}
+                        />
+                        <span className="subscription-card-copy">
+                          <strong>{item.service_name}</strong>
+                          <span>
+                            {item.access === "invited"
+                              ? `Invitație de la ${item.owner_name}`
+                              : item.access === "shared"
+                                ? `Partajat de ${item.owner_name}`
+                                : item.owner_name}
+                          </span>
+                          {money && (
+                            <span className="subscription-cost">
+                              {money}
+                              {item.recurrence && (
+                                <> · {subscriptionFrequency(item.recurrence)}</>
+                              )}
+                            </span>
+                          )}
+                          {item.next_due_on && (
+                            <span className="subscription-due">
+                              <CalendarDays size={15} aria-hidden="true" />
+                              <time dateTime={item.next_due_on}>
+                                {dateLabel(item.next_due_on, {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              </time>
+                            </span>
+                          )}
+                        </span>
+                        {item.access === "invited" ? (
+                          <span className="subscription-pending">
+                            Invitație
+                          </span>
+                        ) : item.has_credentials ? (
+                          <KeyRound
+                            className="subscription-key"
+                            size={18}
+                            aria-label="Date de acces salvate"
+                          />
+                        ) : null}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              !error && (
+                <div className="subscription-empty">
+                  <Tv size={32} aria-hidden="true" />
+                  <p>
+                    {scope === "family"
+                      ? "Niciun abonament adăugat."
+                      : "Niciun abonament partajat cu tine."}
+                  </p>
+                  {scope === "family" && family.role !== "limited" && (
+                    <button
+                      className="button secondary"
+                      onClick={() =>
+                        setView({ mode: "form", subscription: null })
+                      }
+                    >
+                      Adaugă abonament
+                    </button>
+                  )}
+                </div>
+              )
+            )}
+            {nextPage && (
+              <button
+                className="button secondary subscription-more"
+                disabled={loading || moreBusy}
+                onClick={() => void loadMore()}
+              >
+                {moreBusy ? "Se încarcă…" : "Mai multe abonamente"}
               </button>
             )}
           </div>
-        )
-      )}
-      {nextPage && (
-        <button
-          className="button secondary subscription-more"
-          disabled={loading || moreBusy}
-          onClick={() => void loadMore()}
-        >
-          {moreBusy ? "Se încarcă…" : "Mai multe abonamente"}
-        </button>
-      )}
+        )}
+      </div>
       {view?.mode === "form" && (
         <SubscriptionForm
           base={base}

@@ -1,40 +1,22 @@
-.subscriptions-toolbar,
-.subscription-scopes,
 .subscription-actions {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
-.subscriptions-toolbar {
-  justify-content: space-between;
-  margin-bottom: 22px;
+.subscription-results {
+  min-height: 220px;
 }
-.subscription-scopes {
-  padding: 4px;
-  gap: 4px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
+.subscription-list {
+  animation: page-enter 180ms var(--ease-out);
 }
-.subscription-scopes button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
+.subscription-refreshing {
+  animation: subscription-refresh 850ms linear infinite;
 }
-.subscription-scopes button[aria-pressed="true"] {
-  background: var(--accent);
-  color: white;
-}
-.subscription-scopes button[aria-pressed="true"] svg {
-  color: inherit;
+@keyframes subscription-refresh {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .subscription-grid {
   display: grid;
@@ -71,6 +53,11 @@
   background: #f3f1e9;
   border-radius: 14px;
   color: #9c7b36;
+}
+.subscription-service-icon img {
+  display: block;
+  object-fit: contain;
+  border-radius: 5px;
 }
 .subscription-card-copy {
   display: flex;
@@ -262,12 +249,6 @@
   .subscription-card {
     padding: 18px;
   }
-  .subscription-scopes {
-    flex: 1;
-  }
-  .subscription-scopes button {
-    padding-inline: 9px;
-  }
 }
 @media (max-width: 400px) {
   .subscription-form-pair {
@@ -279,13 +260,6 @@
   }
   .subscription-share-form > .field {
     flex-basis: 100%;
-  }
-  .subscription-scopes {
-    gap: 0;
-  }
-  .subscription-scopes button {
-    font-size: 12px;
-    padding-inline: 7px;
   }
   .subscription-card {
     gap: 10px;

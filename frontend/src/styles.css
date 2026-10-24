@@ -117,6 +117,38 @@ button:disabled:active {
 .page-view {
   animation: page-enter 200ms var(--ease-out);
 }
+:root[data-page-navigation] {
+  view-transition-name: none;
+}
+:root[data-page-navigation] .page-view {
+  view-transition-name: page-navigation;
+}
+.page-view[data-native-navigation] {
+  animation: none;
+}
+:root[data-page-navigation]::view-transition {
+  pointer-events: none;
+}
+::view-transition-group(page-navigation) {
+  animation: none;
+}
+::view-transition-old(page-navigation),
+::view-transition-new(page-navigation) {
+  height: auto;
+  mix-blend-mode: normal;
+}
+::view-transition-old(page-navigation) {
+  animation: page-exit 140ms var(--ease-out) both;
+}
+::view-transition-new(page-navigation) {
+  animation: page-enter 220ms var(--ease-out) both;
+}
+@keyframes page-exit {
+  to {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
 @keyframes page-enter {
   from {
     opacity: 0;
@@ -417,6 +449,10 @@ input[type="radio"] {
   background: #edf1e7;
   color: var(--accent);
 }
+.nav-symbol-subscriptions,
+.lucide-tv {
+  color: #9c7b36;
+}
 .nav-symbol-vehicles {
   background: #e9eef3;
 }
@@ -575,10 +611,25 @@ main {
   background: #eeece580;
 }
 .section-tabs-rail {
+  position: relative;
+  isolation: isolate;
   display: flex;
   flex: 1;
   gap: 6px;
   min-width: 0;
+}
+.section-tabs-selection {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 12px;
+  background: var(--accent);
+  box-shadow: var(--shadow);
+  transition:
+    transform 180ms var(--ease-out),
+    width 180ms var(--ease-out),
+    height 180ms var(--ease-out);
 }
 .section-tabs button {
   flex: 1;
@@ -597,6 +648,11 @@ main {
   border-color: var(--accent);
   color: white;
   box-shadow: var(--shadow);
+}
+.section-tabs-rail--selected button[aria-pressed="true"] {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
 }
 .section-tabs.section-tabs--scroll {
   max-width: none;
@@ -1517,7 +1573,10 @@ button.avatar > .avatar {
   }
   *,
   *::before,
-  *::after {
+  *::after,
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;

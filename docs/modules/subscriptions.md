@@ -1,5 +1,15 @@
 # Abonamente
 
+## SB2 — Pagină separată și navigare fluidă, 25 octombrie 2026
+
+**Implementat și verificat local, după feedbackul utilizatorului; publicarea este cerută explicit.** Abonamente are intrare proprie după Cheltuieli în meniul desktop și în Mai multe pe mobil; bara mobilă păstrează cele cinci poziții. Calendar deschide direct pagina Abonamente. Compoziția intermediară `ExpensesWorkspace` și sloturile de file rămase fără apelanți sunt eliminate; Cheltuieli își păstrează filtrele proprii.
+
+Familie / Partajate cu mine folosesc direct `shared/SectionTabs`, imediat după `PageBackdrop`, la aceeași poziție și cu aceleași dimensiuni ca Bucătărie/Cheltuieli: maximum 480 px pe desktop, întreaga lățime pe mobil, înălțime 54 px. Actualizarea este în acțiunile antetului. Bara proprie cu padding separat și toate stilurile ei au fost eliminate. La actualizarea aceluiași filtru, lista rămâne vizibilă și suprafața expune `aria-busy`; iconița de actualizare indică cererea în curs. Schimbarea filtrului ascunde rândurile celuilalt filtru. Încărcarea inițială are o singură apariție discretă a rezultatelor, fără animații pe fiecare card. Erorile de autorizare golesc lista și închid detaliul, iar mecanismul A1 de suspendare/reautorizare rămâne activ.
+
+Cei 12 furnizori predefiniți au iconițe oficiale locale de 28 px, alese după `service_key`; numele rămâne în textul alăturat. Serviciile necunoscute/personalizate păstrează iconița generică. Proveniența este în `frontend/src/assets/subscriptions/README.md`. Asseturile rămân fișiere distincte, nu imagini inline în JavaScript, și nu generează cereri către furnizori la consultare.
+
+Dependența comună de navigare și verificările sunt în [Interfață SB2](interface.md#sb2--abonamente-și-tranziții-25-octombrie-2026). Previzualizarea folosește buildul real cu un server API fictiv, numai GET, separat de baze și de serverul aplicației. Nu confirmă backendul, migrațiile ori performanța rețelei de producție. Nu s-au creat abonamente sau date de acces reale.
+
 ## SB1 — Abonamente și acces partajat, 24 octombrie 2026
 
 **Publicare:** commit `c5c81a2`, [deploy 40130862434](https://github.com/razvanstav/Family/actions/runs/40130862434) reușit. Migrația202023 apare efectiv `DONE`, cinci operațiuni GRANT executate; HTTPS `/up`, `/app/` și JS200, bundle `btuOof81/BB7XjicJ` confirmat. Diagnosticul suplimentar al granturilor runtime/workerilor rămâne limitat de accesul Docker refuzat; nu este declarat verificat independent. Nu au fost create conturi, parole de serviciu sau abonamente de probă pe server.
@@ -8,7 +18,7 @@
 
 ### Scop și acces
 
-- Abonamente apare în Cheltuieli prin compoziția din App. Modulul are lista Familiei și Partajate cu mine, detaliu și formular; nu importă modulele Cheltuieli sau Calendar în frontend.
+- Inițial, Abonamente apărea în Cheltuieli prin compoziția din App; poziționarea este înlocuită explicit de SB2. Modulul are lista Familiei și Partajate cu mine, detaliu și formular; nu importă modulele Cheltuieli sau Calendar în frontend.
 - Serviciu predefinit sau nume liber, link, cost opțional în RON/EUR/USD, frecvență și următoarea plată opțională. Datele introduse apar și în Calendar prin contractul său public. Nu se creează automat cheltuieli achitate sau tranzacții bancare.
 - Familia în care este creat vede abonamentul automat. Numai autorul cu drept de scriere modifică, invită, revocă sau arhivează. Conturile limitate consultă. O invitație externă se adresează unui cont existent, normalizat după email; destinatarul acceptă explicit înainte de a vedea detaliile și datele de acces. Membrii familiei destinatarului nu primesc acces.
 - Loginul, parola și PIN-ul sunt opționale, criptate prin infrastructura Laravel cu cheia aplicației. Metadatele/lista/auditul nu conțin secrete. Dezvăluirea este o cerere separată, reautorizată și fără cache; clientul le șterge din starea vizibilă la ascundere/plecare/închiderea detaliului. Editarea păstrează secretul existent până la înlocuire sau eliminare explicită.
@@ -18,7 +28,7 @@
 
 ### Intrări și contracte
 
-Backend `Modules/Subscriptions`, tabele proprii și adaptor `Calendar/Contracts/DatedRecords`; rute sub `/families/{family}/subscriptions`. Frontend `modules/subscriptions`, slot comun de file în App și deschidere din Calendar. Catalogul conține numai nume și linkuri oficiale, fără tarife inventate; opțiunea liberă permite alte servicii.
+Backend `Modules/Subscriptions`, tabele proprii și adaptor `Calendar/Contracts/DatedRecords`; rute sub `/families/{family}/subscriptions`. Frontend `modules/subscriptions`, pagină compusă direct în App și deschidere din Calendar (poziționare SB2). Catalogul conține numai nume și linkuri oficiale, fără tarife inventate; opțiunea liberă permite alte servicii.
 
 `subscriptions` păstrează metadatele, ciphertextul și versiunea, iar `subscription_shares` destinatarul, starea, hashul și expirarea codului. Migrația aditivă `2026_10_24_202023` are RLS forțat, FK în aceeași familie, unicitate abonament/destinatar și gărzi DB: destinatarul poate răspunde invitației și incrementa numai versiunea părintelui, fără schimbarea conținutului. `TenantContext` setează actorul numai din sesiunea autentificată, în tranzacția existentă. Endpointurile folosesc If-Match, cu cod unic returnat numai creatorului la POST shares; citirile normale nu returnează cod, hash sau secrete. Ștergerea abonamentului păstrează rândul istoric și golește ciphertextul, cu consecința explicită în confirmare.
 

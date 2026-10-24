@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   ChevronDown,
   House,
@@ -10,6 +11,7 @@ import {
   CarFront,
   Search,
   Wallet,
+  Tv,
   PawPrint,
   Settings,
 } from "lucide-react";
@@ -49,6 +51,7 @@ import {
 } from "../modules/families/profileData";
 import { SectionTabs } from "../shared/SectionTabs";
 import { observeSessionLifecycle } from "./sessionLifecycle";
+import { createPageNavigation } from "./pageNavigation";
 import { observeVisualViewport } from "../shared/visualViewport";
 import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
@@ -57,7 +60,8 @@ import { Kitchen } from "../modules/kitchen/Kitchen";
 import type { MealRequest } from "../modules/kitchen/mealTypes";
 import { Memories } from "../modules/memory/Memories";
 import { Vehicles } from "../modules/vehicles/Vehicles";
-import { ExpensesWorkspace } from "./ExpensesWorkspace";
+import { Expenses } from "../modules/expenses/Expenses";
+import { Subscriptions } from "../modules/subscriptions/Subscriptions";
 import { UpcomingPaymentsCard } from "../modules/expenses/UpcomingPaymentsCard";
 import type { Expense, ExpenseRequest } from "../modules/expenses/expenseData";
 import { Tasks } from "../modules/tasks/Tasks";
@@ -75,6 +79,7 @@ const pageLabels = {
   kitchen: "Bucătărie",
   memory: "Amintiri",
   expenses: "Cheltuieli",
+  subscriptions: "Abonamente",
   calendar: "Calendar",
   tasks: "Sarcini",
   vehicles: "Auto",
@@ -89,6 +94,26 @@ export default function App() {
   const [familyId, setFamilyId] = useState("");
   const [error, setError] = useState("");
   const [page, setPage] = useState<keyof typeof pageLabels>("home");
+  const [nativeNavigation, setNativeNavigation] = useState(false);
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  const pageNavigation = useRef<ReturnType<
+    typeof createPageNavigation<keyof typeof pageLabels>
+  > | null>(null);
+  if (!pageNavigation.current)
+    pageNavigation.current = createPageNavigation(
+      document,
+      () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      (nextPage, native) =>
+        flushSync(() => {
+          pageRef.current = nextPage;
+          setNativeNavigation(native);
+          setPage(nextPage);
+        }),
+      () => pageRef.current,
+    );
+  const navigatePage = pageNavigation.current.navigate;
+  useEffect(() => () => pageNavigation.current?.stop(), []);
   const [familySection, setFamilySection] = useState<"members" | "documents">(
     "members",
   );
@@ -168,6 +193,8 @@ export default function App() {
     authMode,
   ]);
   function acceptSession(data: Session) {
+    pageNavigation.current?.stop();
+    setNativeNavigation(false);
     sessionRevision.current++;
     if (knownActor.current !== (data.user?.id ?? null) || !data.user?.is_admin)
       adminMemory.current = { section: "overview" };
@@ -197,6 +224,7 @@ export default function App() {
     sessionChannel.current?.postMessage("changed");
   }
   function refresh(): Promise<void> {
+    pageNavigation.current?.stop();
     if (sessionRequest.current) return sessionRequest.current;
     const revision = ++sessionRevision.current;
     setCheckingSession(true);
@@ -248,6 +276,7 @@ export default function App() {
         void refresh();
       },
       suspend: () => {
+        pageNavigation.current?.stop();
         sessionRevision.current++;
         sessionRequest.current = null;
         setCheckingSession(true);
@@ -283,6 +312,7 @@ export default function App() {
   }, []);
   const family = session?.families.find((f) => f.id === familyId);
   useEffect(() => {
+    pageNavigation.current?.stop();
     setProfileTarget(null);
     setExpenseTarget(null);
     setSubscriptionTarget(null);
@@ -416,7 +446,7 @@ export default function App() {
             <button
               className={page === "home" ? "active" : ""}
               aria-current={page === "home" ? "page" : undefined}
-              onClick={() => setPage("home")}
+              onClick={() => navigatePage("home")}
             >
               <span className="nav-symbol nav-symbol-home" aria-hidden="true">
                 <House size={21} />
@@ -426,7 +456,7 @@ export default function App() {
             <button
               className={page === "family" ? "active" : ""}
               aria-current={page === "family" ? "page" : undefined}
-              onClick={() => setPage("family")}
+              onClick={() => navigatePage("family")}
             >
               <span className="nav-symbol nav-symbol-family" aria-hidden="true">
                 <Users size={21} />
@@ -436,7 +466,7 @@ export default function App() {
             <button
               className={page === "kitchen" ? "active" : ""}
               aria-current={page === "kitchen" ? "page" : undefined}
-              onClick={() => setPage("kitchen")}
+              onClick={() => navigatePage("kitchen")}
             >
               <span
                 className="nav-symbol nav-symbol-kitchen"
@@ -449,7 +479,7 @@ export default function App() {
             <button
               className={page === "expenses" ? "active" : ""}
               aria-current={page === "expenses" ? "page" : undefined}
-              onClick={() => setPage("expenses")}
+              onClick={() => navigatePage("expenses")}
             >
               <span
                 className="nav-symbol nav-symbol-expenses"
@@ -460,9 +490,22 @@ export default function App() {
               Cheltuieli
             </button>
             <button
+              className={page === "subscriptions" ? "active" : ""}
+              aria-current={page === "subscriptions" ? "page" : undefined}
+              onClick={() => navigatePage("subscriptions")}
+            >
+              <span
+                className="nav-symbol nav-symbol-subscriptions"
+                aria-hidden="true"
+              >
+                <Tv size={21} />
+              </span>
+              Abonamente
+            </button>
+            <button
               className={page === "memory" ? "active" : ""}
               aria-current={page === "memory" ? "page" : undefined}
-              onClick={() => setPage("memory")}
+              onClick={() => navigatePage("memory")}
             >
               <span className="nav-symbol nav-symbol-memory" aria-hidden="true">
                 <BookHeart size={21} />
@@ -472,7 +515,7 @@ export default function App() {
             <button
               className={page === "vehicles" ? "active" : ""}
               aria-current={page === "vehicles" ? "page" : undefined}
-              onClick={() => setPage("vehicles")}
+              onClick={() => navigatePage("vehicles")}
             >
               <span
                 className="nav-symbol nav-symbol-vehicles"
@@ -485,7 +528,7 @@ export default function App() {
             <button
               className={page === "calendar" ? "active" : ""}
               aria-current={page === "calendar" ? "page" : undefined}
-              onClick={() => setPage("calendar")}
+              onClick={() => navigatePage("calendar")}
             >
               <span
                 className="nav-symbol nav-symbol-calendar"
@@ -498,7 +541,7 @@ export default function App() {
             <button
               className={page === "tasks" ? "active" : ""}
               aria-current={page === "tasks" ? "page" : undefined}
-              onClick={() => setPage("tasks")}
+              onClick={() => navigatePage("tasks")}
             >
               <span className="nav-symbol nav-symbol-tasks" aria-hidden="true">
                 <ListTodo size={21} />
@@ -508,7 +551,7 @@ export default function App() {
             <button
               className={page === "pets" ? "active" : ""}
               aria-current={page === "pets" ? "page" : undefined}
-              onClick={() => setPage("pets")}
+              onClick={() => navigatePage("pets")}
             >
               <span className="nav-symbol nav-symbol-pets" aria-hidden="true">
                 <PawPrint size={21} />
@@ -522,7 +565,7 @@ export default function App() {
             <button
               className="sidebar-admin"
               aria-current={page === "admin" ? "page" : undefined}
-              onClick={() => setPage("admin")}
+              onClick={() => navigatePage("admin")}
             >
               <Settings size={20} aria-hidden="true" />
               Administrare
@@ -575,6 +618,7 @@ export default function App() {
                   aria-label="Familia activă"
                   value={familyId}
                   onChange={(e) => {
+                    pageNavigation.current?.stop();
                     setFamilyId(e.target.value);
                     setCalendarTarget(null);
                     setVehicleTarget(null);
@@ -612,7 +656,7 @@ export default function App() {
                 onExpired={() => void refresh()}
                 onOpenEvent={(event) => {
                   setCalendarTarget(event);
-                  setPage("calendar");
+                  navigatePage("calendar");
                 }}
               />
             )}
@@ -627,6 +671,7 @@ export default function App() {
         </header>
         <main
           className="page-view"
+          data-native-navigation={nativeNavigation || undefined}
           key={`${session.user.id}:${family?.id ?? "none"}:${page}:${contentRevision}`}
         >
           {sessionNotice && (
@@ -653,9 +698,9 @@ export default function App() {
                 onExpired={() => void refresh()}
                 onMemories={(id) => {
                   setMemoryTarget(id ?? null);
-                  setPage("memory");
+                  navigatePage("memory");
                 }}
-                onKitchen={() => setPage("kitchen")}
+                onKitchen={() => navigatePage("kitchen")}
                 renderTasks={({ tasks, today, loading, onChanged }) => (
                   <TaskHomeCard
                     family={family}
@@ -668,11 +713,11 @@ export default function App() {
                     }}
                     onNew={() => {
                       setTaskTarget("new");
-                      setPage("tasks");
+                      navigatePage("tasks");
                     }}
                     onAll={() => {
                       setTaskTarget(null);
-                      setPage("tasks");
+                      navigatePage("tasks");
                     }}
                     onExpired={() => void refresh()}
                   />
@@ -695,14 +740,14 @@ export default function App() {
                         payment_status: "planned",
                         expense,
                       });
-                      setPage("expenses");
+                      navigatePage("expenses");
                     }}
                     onExpired={() => void refresh()}
                   />
                 )}
                 onCalendar={(target) => {
                   setCalendarTarget(target);
-                  setPage("calendar");
+                  navigatePage("calendar");
                 }}
               />
             ) : page === "family" && familySection === "documents" ? (
@@ -717,13 +762,18 @@ export default function App() {
                 onExpired={() => void refresh()}
               />
             ) : page === "expenses" ? (
-              <ExpensesWorkspace
+              <Expenses
                 key={`${session.user.id}:${family.id}`}
                 family={family}
-                actorId={session.user.id}
                 requestedExpense={expenseTarget}
-                requestedSubscription={subscriptionTarget}
                 onExpenseOpened={() => setExpenseTarget(null)}
+                onExpired={() => void refresh()}
+              />
+            ) : page === "subscriptions" ? (
+              <Subscriptions
+                key={`${session.user.id}:${family.id}`}
+                family={family}
+                requestedSubscription={subscriptionTarget}
                 onSubscriptionOpened={() => setSubscriptionTarget(null)}
                 onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
@@ -789,16 +839,16 @@ export default function App() {
                 onChanged={() => setCalendarRevision((value) => value + 1)}
                 onVehicle={(target) => {
                   setVehicleTarget(target);
-                  setPage("vehicles");
+                  navigatePage("vehicles");
                 }}
                 onTask={(id) => {
                   setTaskTarget(id);
-                  setPage("tasks");
+                  navigatePage("tasks");
                 }}
                 onPet={(target) => {
                   setPetProfileTarget(null);
                   setPetTarget(target);
-                  setPage("pets");
+                  navigatePage("pets");
                 }}
                 onDocument={async (id, signal) => {
                   const document = await api<DocumentDetail>(
@@ -823,11 +873,11 @@ export default function App() {
                   setProfileTarget(null);
                   setDocumentTarget({ id: document.id, memberId, document });
                   setFamilySection(common ? "documents" : "members");
-                  setPage("family");
+                  navigatePage("family");
                 }}
                 onMemory={(id) => {
                   setMemoryTarget(id);
-                  setPage("memory");
+                  navigatePage("memory");
                 }}
                 onProfile={(memberId, entryId, kind) => {
                   const category =
@@ -837,7 +887,7 @@ export default function App() {
                   setDocumentTarget(null);
                   setProfileTarget({ memberId, entryId, category });
                   setFamilySection("members");
-                  setPage("family");
+                  navigatePage("family");
                 }}
                 onExpense={(id, date, visibility) => {
                   setSubscriptionTarget(null);
@@ -846,22 +896,22 @@ export default function App() {
                     date,
                     visibility: visibility === "private" ? "private" : "family",
                   });
-                  setPage("expenses");
+                  navigatePage("expenses");
                 }}
                 onSubscription={(id) => {
                   setExpenseTarget(null);
                   setSubscriptionTarget(id);
-                  setPage("expenses");
+                  navigatePage("subscriptions");
                 }}
                 onMeal={(id, date) => {
                   setRecipeTarget(null);
                   setMealDateTarget({ id, date });
-                  setPage("kitchen");
+                  navigatePage("kitchen");
                 }}
                 onPetProfile={(id) => {
                   setPetTarget(null);
                   setPetProfileTarget(id);
-                  setPage("pets");
+                  navigatePage("pets");
                 }}
                 onExpired={() => void refresh()}
               />
@@ -898,7 +948,7 @@ export default function App() {
                 )}
                 onMemory={(id) => {
                   setMemoryTarget(id);
-                  setPage("memory");
+                  navigatePage("memory");
                 }}
               />
             )
@@ -922,7 +972,7 @@ export default function App() {
       </div>
       <MobileNavigation
         page={page}
-        onPage={setPage}
+        onPage={navigatePage}
         onAccount={openAccount}
         admin={session.user.is_admin}
         hasFamily={session.families.length > 0}
@@ -975,10 +1025,10 @@ export default function App() {
             setSearchOpen(false);
             if (result.type === "moment") {
               setMemoryTarget(result.id);
-              setPage("memory");
+              navigatePage("memory");
             } else if (result.type === "recipe") {
               setRecipeTarget(result.id);
-              setPage("kitchen");
+              navigatePage("kitchen");
             } else {
               const common =
                 familyDocumentCategories.includes(result.category) ||
@@ -988,7 +1038,7 @@ export default function App() {
                 memberId: common ? null : result.member_id,
               });
               setFamilySection(common ? "documents" : "members");
-              setPage("family");
+              navigatePage("family");
             }
           }}
         />

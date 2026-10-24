@@ -11,6 +11,7 @@ import {
   Users,
   UtensilsCrossed,
   Wallet,
+  Tv,
   PawPrint,
   Settings,
 } from "lucide-react";
@@ -21,6 +22,7 @@ type Page =
   | "family"
   | "kitchen"
   | "expenses"
+  | "subscriptions"
   | "memory"
   | "calendar"
   | "tasks"
@@ -101,6 +103,7 @@ export function MobileNavigation({
             page === "memory" ||
             page === "vehicles" ||
             page === "pets" ||
+            page === "subscriptions" ||
             page === "admin"
               ? "active"
               : ""
@@ -112,6 +115,7 @@ export function MobileNavigation({
             page === "memory" ||
             page === "vehicles" ||
             page === "pets" ||
+            page === "subscriptions" ||
             page === "admin"
               ? "page"
               : undefined
@@ -127,6 +131,17 @@ export function MobileNavigation({
       {more && (
         <Modal title="Mai multe" onClose={() => setMore(false)}>
           <nav className="more-menu" aria-label="Mai multe secțiuni">
+            <button
+              aria-current={page === "subscriptions" ? "page" : undefined}
+              onClick={() => {
+                setMore(false);
+                onPage("subscriptions");
+              }}
+            >
+              <Tv size={22} />
+              <span>Abonamente</span>
+              <ChevronRight size={18} />
+            </button>
             <button
               aria-current={page === "calendar" ? "page" : undefined}
               onClick={() => {

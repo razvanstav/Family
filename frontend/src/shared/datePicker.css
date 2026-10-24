@@ -3,19 +3,15 @@
   gap: 6px;
   min-width: 0;
 }
-.month-selects select {
+.month-selects > .select-menu {
   width: 132px;
   min-width: 0;
-  min-height: 44px;
-  padding: 8px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  color: var(--ink);
-  font-weight: 700;
 }
-.month-selects select:last-child {
+.month-selects > .select-menu:last-child {
   width: 82px;
+}
+.month-selects > .select-menu:last-child .select-menu-trigger {
+  gap: 4px;
 }
 .date-picker-trigger {
   display: flex;
@@ -75,13 +71,15 @@
 .date-picker-calendar-heading > .month-selects {
   flex: 1;
 }
-.date-picker-calendar-heading .month-selects select {
+.date-picker-calendar-heading .month-selects > .select-menu {
   flex: 1;
   width: 0;
+}
+.date-picker-calendar-heading .select-menu-trigger {
   padding-inline: 5px;
   font-size: 13px;
 }
-.date-picker-calendar-heading .month-selects select:last-child {
+.date-picker-calendar-heading .month-selects > .select-menu:last-child {
   flex: 0 0 76px;
   width: 76px;
 }
