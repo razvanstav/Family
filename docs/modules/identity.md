@@ -1,10 +1,19 @@
 # Autentificare
 
-Stare: **AR1 — creare cont directă implementată și verificată local**, la 23 octombrie 2026; acceptarea vizuală așteaptă feedback. A1 și A1b — Contul meu rămân implementate și verificate local. A2–A3 rămân planificate în M03, fără pornire automată; confirmarea emailului este exclusă explicit din fluxul AR1.
+Extensie AP1, 24 octombrie 2026: `/session` include `user.is_admin`, calculat din grantul explicit și lista de adrese permisă, separat de rolurile familiei. Loginul/reîncărcarea contului admin deschid Administrare; restul conturilor păstrează Acasă. `/account` nu poate modifica acest acces. Implementarea, instalarea și verificările sunt în [Administrare Amora](operations.md#ap1--administrare-amora-24-octombrie-2026). Brevo este furnizorul ales; recuperarea parolei și verificarea emailului rămân pași separați.
+
+Stare: **AL1 — landing Amora cu autentificare implicită implementat și verificat local**, la 24 octombrie 2026; acceptarea vizuală așteaptă feedback. AR1, A1 și A1b rămân implementate. A2–A3 rămân planificate în M03, fără pornire automată; confirmarea emailului este exclusă explicit din fluxul AR1.
+
+## AL1 — Landing Amora, 24 octombrie 2026
+
+- Cerere explicită: prezentare scurtă a aplicației, logo-ul Amora furnizat de utilizator și login primul. Înlocuiește prioritatea înscrierii din AR1; `App.tsx` inițializează modul `login`, iar titlul paginii publice folosește Amora. Brandingul paginilor autentificate rămâne în afara acestui pas.
+- `AuthEntry.tsx` afișează logo-ul original din `assets/brand/amora-logo.png`, cardul de autentificare și o prezentare a funcțiilor existente. Pe desktop, prezentarea și cardul sunt alăturate; pe mobil, logo → formular → prezentare. Acuarela existentă este decorativă. Stilurile sunt în `styles.css`, cu regulile landingului separate de invitații.
+- „Creează cont” schimbă formularul din același card; Familia nouă / Am un cod, câmpurile, validările, stările de trimitere și contractele API sunt păstrate. Invitațiile prin link au în continuare prioritate în App; logoutul și expirarea păstrează loginul. Nu s-au modificat backendul sau datele.
+- **Verificat:** build TypeScript/Vite, Prettier, cele 7 teste existente de sesiune și `git diff --check`. Browser 1280×900, 390×844 și 320×800: login implicit după reload, trecere spre înscriere/cod și revenire, imagini încărcate, fără overflow orizontal și controale de minimum 44 px. Fără erori/warninguri în consola observată. Capturi ignorate: `.runtime/al1-auth-desktop.png`, `al1-auth-mobile.png`, `al1-register-320.png`. Viewportul temporar resetat la încheiere; pagina lăsată pe login. Fără creare de cont, probă de autentificare, suite backend sau deploy; baza macOS este nouă și fără conturi.
 
 ## AR1 — Creare cont, 23 octombrie 2026
 
-**Implementat la cererea explicită a utilizatorului:** intrare publică scurtă, direct în formular, fără confirmare de email. `AuthEntry.tsx` înlocuiește formularul login din App și păstrează autentificarea pentru conturile existente. Intrarea guest implicită este „Creează cont”; logoutul și expirarea unei sesiuni cunoscute deschid „Autentificare”.
+**Implementat la cererea explicită a utilizatorului:** intrare publică scurtă, direct în formular, fără confirmare de email. `AuthEntry.tsx` înlocuiește formularul login din App și păstrează autentificarea pentru conturile existente. AR1 deschidea „Creează cont” implicit; AL1 de mai sus îl înlocuiește cu landingul și autentificarea. Logoutul și expirarea unei sesiuni cunoscute deschid în continuare „Autentificare”.
 
 - Formularul cere nume, adresă de email, parolă de minimum 12 caractere și numele familiei. „Familie nouă” creează familia; „Am un cod” cere suplimentar codul administratorului. Nu cere confirmarea parolei, nu trimite email și nu prezintă o etapă de verificare a adresei. Stările includ salvare, eroare de validare și trecere la autentificare; comenzile sunt blocate cât cererea este în curs. Butoanele demo rămân numai în autentificarea locală.
 - `POST /api/v1/register`, guest, CSRF web, răspuns privat/no-store și limită 6/min: `name` și `family_name` maximum 100 caractere, `email` maximum 254, `password` 12–200. Fără `invitation_code` creează o familie nouă și apartenență `owner`; cu cod valid creează apartenență `adult` în familia indicată. Câmpul cod este omis numai în modul familie nouă; un cod gol/null prezent este respins, fără creare accidentală a unei familii. Contractul codului este în [F3b](families.md#f3b--coduri-de-invitație-23-octombrie-2026).
@@ -61,6 +70,6 @@ Stare: **AR1 — creare cont directă implementată și verificată local**, la 
 
 ## Dependențe și următorul pas
 
-A1/A1b sunt verificate local. AR1 și F3b au prioritate explicită și sunt implementate; urmează completarea probelor în browser și feedbackul asupra formularului scurt. A2–A3 au nevoie de decizia privind emailul, expeditorul și adresa publică înaintea livrării reale și nu încep automat după AR1. Nu se aleg servicii plătite sau conturi în această etapă.
+A1/A1b, AR1 și F3b sunt implementate și verificate local. AL1 are acum prioritate explicită; urmează feedbackul asupra landingului Amora cu login implicit. A2–A3 au nevoie de decizia privind emailul, expeditorul și adresa publică înaintea livrării reale și nu încep automat după AL1. Nu se aleg servicii plătite sau conturi în această etapă.
 
 Crearea familiei din F4 este acoperită numai la înscriere prin AR1; restul administrării F4 din [Familie](families.md) rămâne separat. Autentificarea nativă și stocarea tokenurilor pe dispozitive rămân în [Mobil](mobile.md).

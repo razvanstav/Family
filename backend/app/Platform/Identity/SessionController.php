@@ -2,6 +2,7 @@
 
 namespace App\Platform\Identity;
 
+use App\Platform\Administration\AdministratorAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ final class SessionController
             ->get(['families.id', 'families.name', 'm.role', 'm.id as membership_id']) : [];
 
         return response()->json([
-            'user' => $user ? ['id' => $user->id, 'name' => $user->name, 'email' => $user->email] : null,
+            'user' => $user ? ['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'is_admin' => AdministratorAccess::allows($user)] : null,
             'families' => $families, 'csrf_token' => csrf_token(),
             'demo' => app()->environment('local') && config('memoria.demo_enabled'),
         ])->header('Cache-Control', 'no-store');

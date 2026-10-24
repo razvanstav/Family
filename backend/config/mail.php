@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    'default' => 'amora',
 
     /*
     |--------------------------------------------------------------------------
@@ -36,6 +36,8 @@ return [
     */
 
     'mailers' => [
+
+        'amora' => ['transport' => 'amora'],
 
         'smtp' => [
             'transport' => 'smtp',

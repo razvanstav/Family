@@ -30,6 +30,7 @@ use App\Modules\Memory\Application\TimelineProjection;
 use App\Modules\Memory\Contracts\MomentSummaries;
 use App\Modules\Tasks\Application\TaskDeadlineSource;
 use App\Modules\Vehicles\Application\VehicleDeadlineSource;
+use App\Platform\Administration\BrevoTransport;
 use App\Platform\Contracts\Outbox;
 use App\Platform\Contracts\PrivateMedia;
 use App\Platform\Events\DatabaseOutbox;
@@ -39,7 +40,11 @@ use App\Platform\Media\ClamAvScanner;
 use App\Platform\Media\LocalPrivateMedia;
 use App\Platform\Media\Scanner;
 use App\Platform\Search\FamilySearch;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -72,6 +77,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Mail::extend('amora', fn (): BrevoTransport => $this->app->make(BrevoTransport::class));
+        RateLimiter::for('admin-email-test', fn (Request $request): Limit => Limit::perMinute(3)->by((string) $request->user()->id));
         Event::listen(MembershipRevoked::class, function (MembershipRevoked $event): void {
             $this->app->make(DocumentAccess::class)->revokeMembership($event->familyId, $event->membershipId);
             $this->app->make(CalendarReminders::class)->cancelMembership($event->familyId, $event->membershipId);

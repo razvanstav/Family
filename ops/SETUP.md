@@ -190,6 +190,22 @@ psql -h 127.0.0.1 -p 5432 -U memoria_admin -d memoria -f ops/grant-runtime.sql
 psql -h 127.0.0.1 -p 5432 -U memoria_admin -d memoria_test -f ops/grant-runtime.sql
 ```
 
+## Administrare Amora AP1
+
+La actualizarea din 24 octombrie, aplică toate cele trei migrații noi (`application_email_settings`, `is_platform_admin`, `email_deliveries`) cu rolul administrativ, apoi `ops/grant-runtime.sql`. Acesta refuză rolului runtime modificarea indicatorului de administrator; permisiunile pe coloanele obișnuite ale utilizatorilor se păstrează.
+
+Completează `APP_ADMIN_EMAILS` în `backend/.env` cu adresa contului autorizat (mai multe adrese se separă prin virgulă). Este o restricție suplimentară: simpla înscriere cu acea adresă nu acordă administrarea. Creează contul în mediul vizat prin fluxul de înscriere sau prin provisionare privată, apoi, în contextul DB administrativ folosit pentru migrații și înainte de cacheul final al configurației, rulează:
+
+```sh
+php backend/artisan app:grant-admin administrator@example.test --no-interaction
+```
+
+Înlocuiește numai adresa exemplu. Comanda operează exclusiv pe un cont existent și nu creează ori resetează parole. Revino la configurația DB runtime înainte de `config:cache` și repornește procesele de lungă durată la instalarea codului. Ulterior, setările SMTP sunt recitite la fiecare trimitere, fără restart pentru fiecare editare.
+
+Conturile, parolele, cheile și setările locale nu se transferă prin Git. Nu pune credențiale în migrații, seedere, argumente de comandă sau documentație. Contul creat local pentru această implementare trebuie provisionat și autorizat separat pe server.
+
+După login, administratorul intră în **Administrare → Email**: copiază Login și SMTP key din Brevo, completează expeditorul validat și opțional adresa de răspuns, activează trimiterea și salvează. Serverul/portul/TLS sunt fixe pentru Brevo. Cheia goală păstrează cheia existentă, fără să o afișeze. „Trimite email de test” folosește setările salvate și destinatarul introdus. Statisticile înregistrează rezultatul acceptării SMTP, fără corpul emailului și fără confirmarea livrării în inbox. SMTP pornește dezactivat; niciun email real nu a fost trimis în verificările AP1.
+
 ## 4. ClamAV și pornire
 
 Actualizează semnăturile cu `freshclam`, apoi pornește serviciul `clamd` al instalării tale. În configurația lui, păstrează directorul de semnături corect pentru sistem și setează:

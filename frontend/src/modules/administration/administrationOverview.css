@@ -1,0 +1,135 @@
+.admin-overview {
+  display: grid;
+  gap: 24px;
+}
+.admin-overview-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+.admin-overview-stat {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  overflow-wrap: anywhere;
+}
+.admin-overview-stat dt {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+.admin-overview-stat dd {
+  margin: 8px 0 0;
+  font-size: 30px;
+  font-weight: 750;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.admin-overview-stat .admin-overview-stat-detail {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+.admin-overview-emails {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.admin-overview-email-count,
+.admin-overview-email-help {
+  color: var(--muted);
+  font-size: 13px;
+}
+.admin-overview-email-help {
+  margin-top: 6px;
+}
+.admin-overview-empty {
+  margin-top: 24px;
+  color: var(--muted);
+}
+.admin-overview-email-list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
+.admin-overview-email-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 15px 0;
+  border-top: 1px solid var(--line);
+}
+.admin-overview-email-content {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.admin-overview-email-content strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+.admin-overview-email-content span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.admin-overview-email-meta {
+  display: grid;
+  flex-shrink: 0;
+  justify-items: end;
+  gap: 7px;
+}
+.admin-overview-email-meta time {
+  color: var(--muted);
+  font-size: 12px;
+}
+.admin-overview-email-status {
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.admin-overview-email-status.sent {
+  color: #35634d;
+}
+.admin-overview-email-status.failed {
+  color: #993d36;
+}
+@media (max-width: 1100px) {
+  .admin-overview-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .admin-overview-stats {
+    gap: 10px;
+  }
+  .admin-overview-stat {
+    padding: 16px;
+  }
+  .admin-overview-emails {
+    padding: 20px;
+  }
+  .admin-overview-email-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .admin-overview-email-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+  }
+}

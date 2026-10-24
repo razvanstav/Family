@@ -11,6 +11,7 @@ import {
   Users,
   UtensilsCrossed,
   Wallet,
+  Settings,
 } from "lucide-react";
 import { Modal } from "../shared/Modal";
 
@@ -22,16 +23,21 @@ type Page =
   | "memory"
   | "calendar"
   | "tasks"
-  | "vehicles";
+  | "vehicles"
+  | "admin";
 
 export function MobileNavigation({
   page,
   onPage,
   onAccount,
+  admin,
+  hasFamily,
 }: {
   page: Page;
   onPage: (page: Page) => void;
   onAccount: () => void;
+  admin: boolean;
+  hasFamily: boolean;
 }) {
   const [more, setMore] = useState(false);
   useEffect(() => {
@@ -42,6 +48,25 @@ export function MobileNavigation({
     desktop.addEventListener("change", close);
     return () => desktop.removeEventListener("change", close);
   }, []);
+  if (!hasFamily)
+    return (
+      <nav className="mobile-nav mobile-admin-nav" aria-label="Navigație mobil">
+        {admin && (
+          <button
+            aria-current={page === "admin" ? "page" : undefined}
+            className={page === "admin" ? "active" : ""}
+            onClick={() => onPage("admin")}
+          >
+            <Settings size={21} aria-hidden="true" />
+            <span>Administrare</span>
+          </button>
+        )}
+        <button onClick={onAccount}>
+          <UserRound size={21} aria-hidden="true" />
+          <span>Contul meu</span>
+        </button>
+      </nav>
+    );
   return (
     <>
       <nav className="mobile-nav" aria-label="Navigație mobil">
@@ -70,7 +95,8 @@ export function MobileNavigation({
             page === "calendar" ||
             page === "tasks" ||
             page === "memory" ||
-            page === "vehicles"
+            page === "vehicles" ||
+            page === "admin"
               ? "active"
               : ""
           }
@@ -79,7 +105,8 @@ export function MobileNavigation({
             page === "calendar" ||
             page === "tasks" ||
             page === "memory" ||
-            page === "vehicles"
+            page === "vehicles" ||
+            page === "admin"
               ? "page"
               : undefined
           }
@@ -138,6 +165,19 @@ export function MobileNavigation({
               <span>Auto</span>
               <ChevronRight size={18} />
             </button>
+            {admin && (
+              <button
+                aria-current={page === "admin" ? "page" : undefined}
+                onClick={() => {
+                  setMore(false);
+                  onPage("admin");
+                }}
+              >
+                <Settings size={22} />
+                <span>Administrare</span>
+                <ChevronRight size={18} />
+              </button>
+            )}
             <button
               onClick={() => {
                 setMore(false);

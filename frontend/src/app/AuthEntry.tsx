@@ -1,18 +1,23 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent } from "react";
+import { CalendarDays, FolderHeart, Wallet } from "lucide-react";
 import { api, errorMessage, type Session } from "../shared/api";
 import { SectionTabs } from "../shared/SectionTabs";
+import { Brand } from "../shared/Brand";
+
+const countryside = new URL(
+  "../assets/home/warm-countryside.png",
+  import.meta.url,
+).href;
 
 export type AuthMode = "register" | "login";
 
 export function AuthEntry({
-  brand,
   mode,
   demo,
   expired,
   onMode,
   onAuthenticated,
 }: {
-  brand: ReactNode;
   mode: AuthMode;
   demo: boolean;
   expired: boolean;
@@ -61,161 +66,191 @@ export function AuthEntry({
   }
 
   return (
-    <div className="login-page">
-      <div className="login-brand">{brand}</div>
-      <div className="login-form-wrap">
-        <div className="login-form">
-          <h1>{registering ? "Creează cont" : "Autentificare"}</h1>
-          {expired && (
-            <p className="notice" role="status">
-              Sesiunea nu mai este activă. Intră din nou în cont.
-            </p>
-          )}
-          <form onSubmit={submit}>
-            {registering && (
-              <label className="field">
-                Nume
-                <input
-                  required
-                  maxLength={100}
-                  autoComplete="name"
-                  disabled={busy}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </label>
+    <main className="login-page login-landing">
+      <div className="login-layout">
+        <div className="login-brand">
+          <Brand />
+        </div>
+        <section className="login-form-wrap" aria-labelledby="auth-title">
+          <div className="login-form">
+            <h1 id="auth-title">
+              {registering ? "Creează cont" : "Autentificare"}
+            </h1>
+            {expired && (
+              <p className="notice" role="status">
+                Sesiunea nu mai este activă. Intră din nou în cont.
+              </p>
             )}
-            <label className="field">
-              Adresa de email
-              <input
-                type="email"
-                required
-                maxLength={254}
-                autoComplete="username"
-                autoCapitalize="none"
-                spellCheck={false}
-                disabled={busy}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </label>
-            <label className="field">
-              Parola
-              <input
-                type="password"
-                required
-                minLength={registering ? 12 : undefined}
-                maxLength={200}
-                autoComplete={registering ? "new-password" : "current-password"}
-                disabled={busy}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                aria-describedby={
-                  registering ? "registration-password-hint" : undefined
-                }
-              />
+            <form onSubmit={submit}>
               {registering && (
-                <small id="registration-password-hint">
-                  Minimum 12 caractere.
-                </small>
-              )}
-            </label>
-            {registering && (
-              <>
-                <SectionTabs
-                  label="Familie"
-                  value={familyMode}
-                  options={[
-                    { value: "create", label: "Familie nouă" },
-                    { value: "join", label: "Am un cod" },
-                  ]}
-                  onChange={(value) => {
-                    if (!busy) {
-                      setFamilyMode(value);
-                      setError("");
-                    }
-                  }}
-                />
                 <label className="field">
-                  Numele familiei
+                  Nume
                   <input
                     required
                     maxLength={100}
-                    autoComplete="off"
+                    autoComplete="name"
                     disabled={busy}
-                    value={familyName}
-                    onChange={(e) => setFamilyName(e.target.value)}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                   />
                 </label>
-                {familyMode === "join" && (
+              )}
+              <label className="field">
+                Adresa de email
+                <input
+                  type="email"
+                  required
+                  maxLength={254}
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  disabled={busy}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </label>
+              <label className="field">
+                Parola
+                <input
+                  type="password"
+                  required
+                  minLength={registering ? 12 : undefined}
+                  maxLength={200}
+                  autoComplete={
+                    registering ? "new-password" : "current-password"
+                  }
+                  disabled={busy}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  aria-describedby={
+                    registering ? "registration-password-hint" : undefined
+                  }
+                />
+                {registering && (
+                  <small id="registration-password-hint">
+                    Minimum 12 caractere.
+                  </small>
+                )}
+              </label>
+              {registering && (
+                <>
+                  <SectionTabs
+                    label="Familie"
+                    value={familyMode}
+                    options={[
+                      { value: "create", label: "Familie nouă" },
+                      { value: "join", label: "Am un cod" },
+                    ]}
+                    onChange={(value) => {
+                      if (!busy) {
+                        setFamilyMode(value);
+                        setError("");
+                      }
+                    }}
+                  />
                   <label className="field">
-                    Cod de invitație
+                    Numele familiei
                     <input
                       required
-                      maxLength={200}
+                      maxLength={100}
                       autoComplete="off"
-                      autoCapitalize="none"
-                      spellCheck={false}
                       disabled={busy}
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
+                      value={familyName}
+                      onChange={(e) => setFamilyName(e.target.value)}
                     />
                   </label>
-                )}
-              </>
-            )}
-            {error && (
-              <p className="error" role="alert">
-                {error}
-              </p>
-            )}
-            <button className="button primary full" disabled={busy}>
-              {busy
-                ? registering
-                  ? "Se creează contul…"
-                  : "Se conectează…"
-                : registering
-                  ? "Creează cont"
-                  : "Intră în cont"}
+                  {familyMode === "join" && (
+                    <label className="field">
+                      Cod de invitație
+                      <input
+                        required
+                        maxLength={200}
+                        autoComplete="off"
+                        autoCapitalize="none"
+                        spellCheck={false}
+                        disabled={busy}
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                      />
+                    </label>
+                  )}
+                </>
+              )}
+              {error && (
+                <p className="error" role="alert">
+                  {error}
+                </p>
+              )}
+              <button className="button primary full" disabled={busy}>
+                {busy
+                  ? registering
+                    ? "Se creează contul…"
+                    : "Se conectează…"
+                  : registering
+                    ? "Creează cont"
+                    : "Intră în cont"}
+              </button>
+            </form>
+            <button
+              className="text-button auth-switch"
+              disabled={busy}
+              onClick={() => {
+                setError("");
+                onMode(registering ? "login" : "register");
+              }}
+            >
+              {registering ? "Ai deja cont? Intră în cont" : "Creează cont"}
             </button>
-          </form>
-          <button
-            className="text-button auth-switch"
-            disabled={busy}
-            onClick={() => {
-              setError("");
-              onMode(registering ? "login" : "register");
-            }}
-          >
-            {registering ? "Ai deja cont? Intră în cont" : "Creează cont"}
-          </button>
-          {demo && !registering && (
-            <div className="demo-accounts">
-              <p>Conturi demo</p>
-              <div>
-                {["ana", "mihai", "elena"].map((account) => (
-                  <button
-                    key={account}
-                    disabled={busy}
-                    onClick={() => {
-                      setEmail(`${account}@example.test`);
-                      setPassword("Familie-Demo-2026!");
-                      setError("");
-                    }}
-                  >
-                    {account === "ana"
-                      ? "Ana"
-                      : account === "mihai"
-                        ? "Mihai"
-                        : "Elena"}
-                  </button>
-                ))}
+            {demo && !registering && (
+              <div className="demo-accounts">
+                <p>Conturi demo</p>
+                <div>
+                  {["ana", "mihai", "elena"].map((account) => (
+                    <button
+                      key={account}
+                      disabled={busy}
+                      onClick={() => {
+                        setEmail(`${account}@example.test`);
+                        setPassword("Familie-Demo-2026!");
+                        setError("");
+                      }}
+                    >
+                      {account === "ana"
+                        ? "Ana"
+                        : account === "mihai"
+                          ? "Mihai"
+                          : "Elena"}
+                    </button>
+                  ))}
+                </div>
+                <small>Date fictive.</small>
               </div>
-              <small>Date fictive.</small>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </section>
+        <section className="login-intro" aria-labelledby="login-intro-title">
+          <h2 id="login-intro-title">Organizează viața de familie.</h2>
+          <p>
+            Amora aduce la un loc lucrurile de care aveți nevoie zi de zi și
+            amintirile pe care vreți să le păstrați.
+          </p>
+          <ul className="login-features">
+            <li>
+              <FolderHeart size={22} strokeWidth={1.65} aria-hidden="true" />
+              <span>Documente și amintiri, cu acces pentru cei apropiați.</span>
+            </li>
+            <li>
+              <CalendarDays size={22} strokeWidth={1.65} aria-hidden="true" />
+              <span>Calendar, sarcini și mese, organizate împreună.</span>
+            </li>
+            <li>
+              <Wallet size={22} strokeWidth={1.65} aria-hidden="true" />
+              <span>Cheltuielile familiei, ușor de urmărit.</span>
+            </li>
+          </ul>
+          <img className="login-landscape" src={countryside} alt="" />
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
