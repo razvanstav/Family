@@ -4,6 +4,10 @@
 
 **NS1, 24 octombrie 2026:** workerul existent `calendar:deliver-reminders` livrează și emailuri pentru canalele activate personal în Contul meu → Setări. Migrațiile aditive `2026_10_24_141611`, `141721`, `170100`, granturile runtime și repornirea proceselor `--watch` sunt necesare la instalare; nu se adaugă cron/worker separat. Brevo trebuie configurat și activat în Administrare, iar emailul este implicit debifat. SMTP indisponibil produce amânare înaintea trimiterii; răspunsul incert nu este retrimis automat. Stările și verificările cu transport fals sunt în [NS1](calendar.md#ns1--setări-personale-și-emailuri-automate-24-octombrie-2026). Acceptarea SMTP nu confirmă inboxul.
 
+## Publicare H5/NR1/DC1/NS1/MP1, 24 octombrie 2026
+
+Push confirmat în repositoryul public razvanstav/Family, după aprobarea explicită a utilizatorului: commit **4c40a50**, ramura codex/documente-design. [Deployul 40110325769](https://github.com/razvanstav/Family/actions/runs/40110325769) a reușit: cele șase migrații 132325/141611/141721/144808/153519/170100 aplicate, GRANT executat, containerele aplicației/web/ClamAV recreate și pornite, verificările HTTP și HTTPS origin trecute. Verificare suplimentară HTTPS public: /up și /app/ HTTP 200, bundle index-BswbLztS.js identic cu buildul verificat local. Datele locale și credențialele nu sunt publicate. Configurația efectivă a workerilor din Dockerul extern se verifică separat, fără execuția livrării drept probă.
+
 ## Lucru pe mai multe calculatoare
 
 Codul este comun prin Git; bazele locale, media și fișierele de mediu rămân separate pe fiecare calculator. Înainte de o sesiune, verifică starea locală și preia ramura remote. Pentru lucru simultan, folosește ramuri distincte cu prefixul codex/ și integrează schimbările după verificare. Un push refuzat cere fetch și compararea istoriilor; nu se rezolvă prin force push. Migrațiile aditive și granturile se aplică separat fiecărui mediu, fără copierea sau resetarea bazei altui PC.

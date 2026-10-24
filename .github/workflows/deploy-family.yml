@@ -181,6 +181,97 @@ jobs:
 
           echo "HTTPS origin verification successful"
 
+      - name: Verify runtime grants and worker configuration
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          set -euo pipefail
+
+          ssh -F ~/.ssh/family.conf "$SERVER_USER@$SERVER_HOST" 'bash -s' <<'REMOTE_DIAGNOSTIC'
+          set -u
+          docker_command=(docker)
+          if ! docker info >/dev/null 2>&1; then
+            if sudo -n docker info >/dev/null 2>&1; then
+              docker_command=(sudo -n docker)
+            else
+              echo "Runtime diagnostics unavailable: Docker access denied"
+              exit 0
+            fi
+          fi
+          if ! "${docker_command[@]}" inspect family-app-1 >/dev/null 2>&1; then
+            echo "Runtime diagnostics unavailable: family-app-1 absent"
+            exit 0
+          fi
+          working_directory=$("${docker_command[@]}" inspect --format '{{.Config.WorkingDir}}' family-app-1 2>/dev/null)
+          if [[ "$working_directory" =~ ^/[a-zA-Z0-9_./-]+$ ]]; then
+            printf 'App working directory: %s\n' "$working_directory"
+          else
+            echo "App working directory unavailable"
+          fi
+          compose_paths=$("${docker_command[@]}" inspect --format '{{ index .Config.Labels "com.docker.compose.project.config_files" }}' family-app-1 2>/dev/null)
+          if command -v python3 >/dev/null 2>&1; then
+            python3 - "$compose_paths" <<'PY_CONFIG'
+          import pathlib, re, sys
+          root = pathlib.Path('/srv/family').resolve()
+          paths = [root / 'deploy/deploy.sh']
+          paths += [pathlib.Path(p) for p in sys.argv[1].split(',') if p.startswith('/')]
+          for index, path in enumerate(paths[:5]):
+              label = 'Deploy script' if index == 0 else 'Compose configuration'
+              try:
+                  resolved = path.resolve()
+                  if root not in resolved.parents or resolved.stat().st_size > 262144:
+                      raise ValueError()
+                  source = resolved.read_text()
+              except Exception:
+                  print(f'{label} readable: false')
+                  continue
+              print(f'{label} readable: true')
+              for command in ('calendar:deliver-reminders', 'outbox:deliver', 'supervisord', 'cron'):
+                  print(f'{label} references {command}: {str(command in source).lower()}')
+              minute_interval = bool(re.search(r'(?:sleep\s+60\b|OnUnitInactiveSec=60s|\*/1\s+\*)', source))
+              print(f'{label} references 60-second interval: {str(minute_interval).lower()}')
+          PY_CONFIG
+          else
+            echo "Deployment configuration diagnostics unavailable: python3 absent"
+          fi
+          "${docker_command[@]}" exec -i family-app-1 php <<'PHP_DIAGNOSTIC' || echo "Container PHP diagnostics unavailable"
+          <?php
+          function result(string $label, bool $value): void { echo $label.': '.($value ? 'true' : 'false').PHP_EOL; }
+          $processes = ['calendar:deliver-reminders' => false, 'outbox:deliver' => false, 'supervisord' => false, 'cron' => false];
+          foreach (glob('/proc/[0-9]*/cmdline') ?: [] as $path) {
+              $arguments = explode("\0", @file_get_contents($path) ?: '');
+              foreach (array_keys($processes) as $name) {
+                  if (in_array($name, $arguments, true) || basename($arguments[0]) === $name) { $processes[$name] = true; }
+              }
+          }
+          foreach ($processes as $name => $active) { result('Running '.$name, $active); }
+          $base = null;
+          foreach ([getcwd(), getcwd().'/backend', '/var/www/html', '/var/www/html/backend', '/app', '/app/backend'] as $candidate) {
+              if (is_file($candidate.'/bootstrap/app.php') && is_file($candidate.'/vendor/autoload.php')) { $base = $candidate; break; }
+          }
+          if ($base === null) { echo "Application diagnostics unavailable: bootstrap path absent\n"; exit; }
+          foreach (['DeliverCalendarReminders', 'DeliverOutbox'] as $command) {
+              $source = @file_get_contents($base.'/app/Console/Commands/'.$command.'.php') ?: '';
+              result($command.' loaded source uses 60-second wait', (bool) preg_match('/sleep\(60\)/', $source));
+          }
+          try {
+              require $base.'/vendor/autoload.php';
+              $app = require $base.'/bootstrap/app.php';
+              $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+              $connection = $app->make('db')->connection();
+              $connection->beginTransaction();
+              try {
+                  $connection->statement('SET TRANSACTION READ ONLY');
+                  foreach (['memory_moment_photos', 'user_notification_preferences', 'calendar_reminder_syncs'] as $table) {
+                      $row = $connection->selectOne("SELECT bool_and(has_table_privilege(current_user, ?, p)) AS allowed FROM (VALUES ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE')) AS privileges(p)", ['public.'.$table]);
+                      result('Runtime CRUD '.$table, in_array($row->allowed, [true, 1, '1', 't'], true));
+                  }
+              } finally { $connection->rollBack(); }
+          } catch (Throwable $error) { echo "Database diagnostics unavailable; exception details withheld\n"; }
+          PHP_DIAGNOSTIC
+          REMOTE_DIAGNOSTIC
+
       # 8. Deployment completed
       - name: Deployment completed
         run: |
