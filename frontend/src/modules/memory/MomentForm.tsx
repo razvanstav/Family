@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, ApiError, shareableMembers, type Member } from "../../shared/api";
 import { bucharestToday } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
+import { DatePicker } from "../../shared/DatePicker";
 import { momentKinds, type Moment } from "./memoryTypes";
 import { MomentPhotoEditor } from "./MomentPhotoEditor";
 
@@ -23,6 +24,9 @@ export function MomentForm({
   onUnavailable: () => void;
 }) {
   const [moment, setMoment] = useState(initialMoment);
+  const [date, setDate] = useState(
+    initialMoment?.occurred_on ?? bucharestToday(),
+  );
   const [kind, setKind] = useState<Moment["kind"]>(
     initialMoment?.kind ?? "moment",
   );
@@ -89,6 +93,7 @@ export function MomentForm({
         return;
       }
       setMoment(current);
+      setDate(current.occurred_on);
       setKind(current.kind);
       setPeople(current.people.map((person) => person.id));
       setVisibility(current.visibility);
@@ -213,17 +218,15 @@ export function MomentForm({
                 ))}
               </select>
             </label>
-            <label className="field">
-              Data
-              <input
-                type="date"
-                name="occurred_on"
-                required
-                min="1900-01-01"
-                max="2100-12-31"
-                defaultValue={moment?.occurred_on ?? bucharestToday()}
-              />
-            </label>
+            <DatePicker
+              label="Data"
+              name="occurred_on"
+              required
+              min="1900-01-01"
+              max="2100-12-31"
+              value={date}
+              onChange={setDate}
+            />
           </div>
           <label className="field">
             Titlu

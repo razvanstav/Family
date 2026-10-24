@@ -117,10 +117,6 @@
   margin: 0;
   font-size: 14px;
 }
-.document-clear-expiration {
-  align-self: flex-start;
-  min-height: 44px;
-}
 @media (max-width: 700px) {
   .library-tools {
     gap: 8px;

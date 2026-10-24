@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { UserRoundPlus } from "lucide-react";
 import { api, ApiError, type Member } from "../../shared/api";
 import { bucharestToday } from "../../shared/calendarDates";
+import { DatePicker } from "../../shared/DatePicker";
 import { ParentPicker, eligibleParents } from "./ParentPicker";
 
 export function ChildForm({
@@ -73,17 +74,16 @@ export function ChildForm({
             onChange={(event) => setName(event.target.value)}
           />
         </label>
-        <label className="field">
-          Data nașterii
-          <input
-            type="date"
-            required
-            min="1900-01-01"
-            max={bucharestToday()}
-            value={birth}
-            onChange={(event) => setBirth(event.target.value)}
-          />
-        </label>
+        <DatePicker
+          label="Data nașterii"
+          dialogLabel="Alege data nașterii"
+          emptyLabel="Alege data"
+          required
+          min="1900-01-01"
+          max={bucharestToday()}
+          value={birth}
+          onChange={setBirth}
+        />
         <ParentPicker
           members={members}
           selected={parents}

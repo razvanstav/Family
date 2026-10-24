@@ -49,6 +49,7 @@ import {
 } from "../modules/families/profileData";
 import { SectionTabs } from "../shared/SectionTabs";
 import { observeSessionLifecycle } from "./sessionLifecycle";
+import { observeVisualViewport } from "../shared/visualViewport";
 import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
 import { Home } from "../modules/home/Home";
@@ -58,7 +59,8 @@ import { mealTypes, type MealRequest } from "../modules/kitchen/mealTypes";
 import { Memories } from "../modules/memory/Memories";
 import { Vehicles } from "../modules/vehicles/Vehicles";
 import { Expenses } from "../modules/expenses/Expenses";
-import type { ExpenseRequest } from "../modules/expenses/expenseData";
+import { UpcomingPaymentsCard } from "../modules/expenses/UpcomingPaymentsCard";
+import type { Expense, ExpenseRequest } from "../modules/expenses/expenseData";
 import { Tasks } from "../modules/tasks/Tasks";
 import { TaskHomeCard } from "../modules/tasks/TaskHomeCard";
 import type { Task } from "../modules/tasks/taskData";
@@ -82,6 +84,7 @@ const pageLabels = {
 };
 
 export default function App() {
+  useEffect(() => observeVisualViewport(window, document.documentElement), []);
   const [session, setSession] = useState<Session | null>(null);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [familyId, setFamilyId] = useState("");
@@ -640,7 +643,7 @@ export default function App() {
             />
           ) : family ? (
             page === "home" ? (
-              <Home<Task>
+              <Home<Task, Expense>
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 onExpired={() => void refresh()}
@@ -666,6 +669,28 @@ export default function App() {
                     onAll={() => {
                       setTaskTarget(null);
                       setPage("tasks");
+                    }}
+                    onExpired={() => void refresh()}
+                  />
+                )}
+                renderUpcomingPayments={({ payments, loading, onChanged }) => (
+                  <UpcomingPaymentsCard
+                    family={family}
+                    payments={payments}
+                    loading={loading}
+                    onChanged={() => {
+                      onChanged();
+                      setCalendarRevision((value) => value + 1);
+                    }}
+                    onOpen={(expense) => {
+                      setExpenseTarget({
+                        id: expense.id,
+                        date: expense.spent_on,
+                        visibility: expense.visibility,
+                        payment_status: "planned",
+                        expense,
+                      });
+                      setPage("expenses");
                     }}
                     onExpired={() => void refresh()}
                   />

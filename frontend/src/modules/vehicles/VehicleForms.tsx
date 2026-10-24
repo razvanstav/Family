@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError, type Document } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
+import { DatePicker } from "../../shared/DatePicker";
 import { bucharestToday } from "../../shared/calendarDates";
 import { ReminderFields } from "../../shared/ReminderFields";
 import {
@@ -432,17 +433,14 @@ export function VehicleEntryForm({
                 <option value="completed">Efectuat</option>
               </select>
             </label>
-            <label className="field">
-              {state === "planned" ? "Scadență" : "Data efectuării"}
-              <input
-                type="date"
-                required
-                min="1900-01-01"
-                max={state === "completed" ? bucharestToday() : "2100-12-31"}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
+            <DatePicker
+              label={state === "planned" ? "Scadență" : "Data efectuării"}
+              required
+              min="1900-01-01"
+              max={state === "completed" ? bucharestToday() : "2100-12-31"}
+              value={date}
+              onChange={setDate}
+            />
           </div>
           {state === "completed" && (
             <div className="vehicle-field-pair">

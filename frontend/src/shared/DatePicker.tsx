@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   bucharestToday,
+  clampCalendarValue,
   dateLabel,
   monthDays,
   moveMonth,
@@ -9,8 +10,6 @@ import {
 import { MonthSelect } from "./MonthSelect";
 import "./datePicker.css";
 
-const minimum = "1900-01-01";
-const maximum = "2099-12-31";
 function shiftedDay(date: string, days: number) {
   const shifted = new Date(`${date}T12:00:00Z`);
   shifted.setUTCDate(shifted.getUTCDate() + days);
@@ -25,6 +24,12 @@ export function DatePicker({
   dialogLabel = "Alege data",
   optional = false,
   emptyLabel = "Fără termen",
+  min = "1900-01-01",
+  max = "2099-12-31",
+  disabled = false,
+  autoFocus = false,
+  required = !optional,
+  hideLabel = false,
 }: {
   value: string;
   label?: string;
@@ -32,52 +37,102 @@ export function DatePicker({
   dialogLabel?: string;
   optional?: boolean;
   emptyLabel?: string;
+  min?: string;
+  max?: string;
+  disabled?: boolean;
+  autoFocus?: boolean;
+  required?: boolean;
+  hideLabel?: boolean;
   onChange: (date: string) => void;
 }) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const popup = useRef<HTMLDivElement>(null);
+  const validationInput = useRef<HTMLInputElement>(null);
+  const [invalid, setInvalid] = useState(false);
   const [open, setOpen] = useState(false);
   const [month, setMonth] = useState((value || bucharestToday()).slice(0, 7));
   const [focused, setFocused] = useState(value || bucharestToday());
   const [position, setPosition] = useState({ left: 0, top: 0, width: 0 });
   const today = bucharestToday();
+  const boundsError =
+    value && (value < min || value > max)
+      ? `Alege o dată între ${dateLabel(min)} și ${dateLabel(max)}.`
+      : "";
+  const validationMessage =
+    boundsError || (required && !value ? "Alege data." : "");
+  useEffect(() => {
+    validationInput.current?.setCustomValidity(boundsError);
+    if (!validationMessage) setInvalid(false);
+  }, [boundsError, validationMessage]);
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
   function close(restoreFocus = true) {
     setOpen(false);
     if (restoreFocus) trigger.current?.focus();
   }
   function choose(date: string) {
+    if (disabled || (date ? date < min || date > max : !optional)) return;
     onChange(date);
+    setInvalid(false);
     close();
   }
   function changeMonth(next: string) {
+    next = clampCalendarValue(next, min.slice(0, 7), max.slice(0, 7));
     const days = monthDays(next).filter(
       (date): date is string => date !== null,
     );
     setMonth(next);
-    setFocused(days[Math.min(Number(focused.slice(-2)), days.length) - 1]);
+    setFocused(
+      clampCalendarValue(
+        days[Math.min(Number(focused.slice(-2)), days.length) - 1],
+        min,
+        max,
+      ),
+    );
   }
   function placeCalendar() {
     const bounds = trigger.current!.getBoundingClientRect();
+    const viewport = window.visualViewport;
+    const offsetLeft = viewport?.offsetLeft ?? 0;
+    const height = viewport
+      ? Math.min(window.innerHeight, Math.max(0, viewport.height))
+      : window.innerHeight;
+    const offsetTop = viewport
+      ? Math.abs(viewport.scale - 1) > 0.01
+        ? viewport.offsetTop
+        : Math.min(
+            Math.max(0, viewport.offsetTop),
+            Math.max(0, window.innerHeight - height),
+          )
+      : 0;
     const availableWidth = Math.min(
+      viewport?.width ?? window.innerWidth,
       document.documentElement.clientWidth,
       document.documentElement.getBoundingClientRect().width,
     );
     const width = Math.min(availableWidth, 380);
     setPosition({
-      left: Math.max(0, Math.min(bounds.left, availableWidth - width)),
-      top: Math.max(8, Math.min(bounds.bottom + 8, window.innerHeight - 440)),
+      left:
+        offsetLeft +
+        Math.max(0, Math.min(bounds.left - offsetLeft, availableWidth - width)),
+      top:
+        offsetTop +
+        Math.max(8, Math.min(bounds.bottom - offsetTop + 8, height - 440)),
       width,
     });
   }
   function toggle() {
+    if (disabled) return;
     if (open) {
       close();
       return;
     }
     placeCalendar();
-    setMonth((value || bucharestToday()).slice(0, 7));
-    setFocused(value || bucharestToday());
+    const initialDate = clampCalendarValue(value || bucharestToday(), min, max);
+    setMonth(initialDate.slice(0, 7));
+    setFocused(initialDate);
     setOpen(true);
   }
   useEffect(() => {
@@ -93,9 +148,13 @@ export function DatePicker({
     };
     document.addEventListener("pointerdown", outside, true);
     window.addEventListener("resize", placeCalendar);
+    window.visualViewport?.addEventListener("resize", placeCalendar);
+    window.visualViewport?.addEventListener("scroll", placeCalendar);
     return () => {
       document.removeEventListener("pointerdown", outside, true);
       window.removeEventListener("resize", placeCalendar);
+      window.visualViewport?.removeEventListener("resize", placeCalendar);
+      window.visualViewport?.removeEventListener("scroll", placeCalendar);
       if (panel.matches(":popover-open")) panel.hidePopover();
     };
   }, [open]);
@@ -115,13 +174,13 @@ export function DatePicker({
     if (delta === undefined) return;
     event.preventDefault();
     const next = shiftedDay(date, delta);
-    if (next < minimum || next > maximum) return;
+    if (next < min || next > max) return;
     setMonth(next.slice(0, 7));
     setFocused(next);
   }
   return (
     <div className="field date-picker-field">
-      <label id={`${id}-label`} htmlFor={`${id}-trigger`}>
+      <label id={`${id}-label`} htmlFor={`${id}-trigger`} hidden={hideLabel}>
         {label}
       </label>
       <button
@@ -133,6 +192,10 @@ export function DatePicker({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
+        aria-describedby={invalid ? `${id}-error` : undefined}
+        aria-invalid={invalid || undefined}
+        disabled={disabled}
+        autoFocus={autoFocus}
         onClick={toggle}
       >
         <span id={`${id}-value`}>
@@ -146,7 +209,28 @@ export function DatePicker({
         </span>
         <CalendarDays size={18} aria-hidden="true" />
       </button>
-      <input type="hidden" name={name} value={value} />
+      <input
+        ref={validationInput}
+        type="text"
+        className="date-picker-validation"
+        name={name}
+        value={value}
+        onChange={() => {}}
+        required={required}
+        disabled={disabled}
+        tabIndex={-1}
+        aria-hidden="true"
+        onInvalid={(event) => {
+          event.preventDefault();
+          setInvalid(true);
+          trigger.current?.focus();
+        }}
+      />
+      {invalid && (
+        <small id={`${id}-error`} className="error" role="alert">
+          {validationMessage}
+        </small>
+      )}
       {open && (
         <div
           ref={popup}
@@ -185,17 +269,22 @@ export function DatePicker({
               className="icon-button"
               type="button"
               aria-label="Luna precedentă"
-              disabled={month === "1900-01"}
+              disabled={month <= min.slice(0, 7)}
               onClick={() => changeMonth(moveMonth(month, -1))}
             >
               <ChevronLeft size={19} />
             </button>
-            <MonthSelect month={month} onChange={changeMonth} />
+            <MonthSelect
+              month={month}
+              onChange={changeMonth}
+              min={min.slice(0, 7)}
+              max={max.slice(0, 7)}
+            />
             <button
               className="icon-button"
               type="button"
               aria-label="Luna următoare"
-              disabled={month === "2099-12"}
+              disabled={month >= max.slice(0, 7)}
               onClick={() => changeMonth(moveMonth(month, 1))}
             >
               <ChevronRight size={19} />
@@ -217,6 +306,7 @@ export function DatePicker({
                   aria-pressed={date === value}
                   aria-current={date === today ? "date" : undefined}
                   tabIndex={date === focused ? 0 : -1}
+                  disabled={date < min || date > max}
                   onFocus={() => setFocused(date)}
                   onKeyDown={(event) => onDayKey(event, date)}
                   onClick={() => choose(date)}
@@ -241,6 +331,7 @@ export function DatePicker({
             <button
               className="text-button"
               type="button"
+              disabled={today < min || today > max}
               onClick={() => choose(today)}
             >
               Astăzi

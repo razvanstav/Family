@@ -22,6 +22,7 @@ import {
   visibilityLabel,
 } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
+import { DatePicker } from "../../shared/DatePicker";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
@@ -808,17 +809,14 @@ function EventEditor({
                     maxLength={160}
                   />
                 </label>
-                <label className="field">
-                  Data
-                  <input
-                    type="date"
-                    value={date}
-                    min="1900-01-01"
-                    max="2100-12-31"
-                    onChange={(e) => setDate(e.target.value)}
-                    required
-                  />
-                </label>
+                <DatePicker
+                  label="Data"
+                  value={date}
+                  min="1900-01-01"
+                  max="2100-12-31"
+                  onChange={setDate}
+                  required
+                />
                 <label className="calendar-check">
                   <input
                     type="checkbox"

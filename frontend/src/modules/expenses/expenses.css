@@ -178,6 +178,11 @@
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
+.expense-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
 .expense-breakdown {
   padding: 20px;
 }
@@ -331,9 +336,10 @@
   .expense-row-amount {
     grid-column: 2;
   }
-  .expense-day li > .icon-button {
+  .expense-row-actions {
     grid-column: 3;
     grid-row: 1 / 3;
+    flex-direction: column;
   }
   .expense-breakdown {
     padding: 16px;

@@ -3,6 +3,7 @@ import { LockKeyhole, Users, Pencil } from "lucide-react";
 import { api, ApiError, visibilityLabel, type Member } from "../../shared/api";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
+import { DatePicker } from "../../shared/DatePicker";
 import { ParentPicker } from "./ParentPicker";
 import {
   kinds,
@@ -74,17 +75,19 @@ export function ProfileSettings({
     >
       <form onSubmit={save}>
         <fieldset className="profile-form-fields" disabled={busy || stale}>
-          <label className="field">
-            Data nașterii
-            <input
-              type="date"
-              required={profile.user_id === null}
-              min="1900-01-01"
-              max={today}
-              value={birth}
-              onChange={(e) => setBirth(e.target.value)}
-            />
-          </label>
+          <DatePicker
+            label="Data nașterii"
+            dialogLabel="Alege data nașterii"
+            emptyLabel={
+              profile.user_id === null ? "Alege data" : "Fără dată de naștere"
+            }
+            optional={profile.user_id !== null}
+            required={profile.user_id === null}
+            min="1900-01-01"
+            max={today}
+            value={birth}
+            onChange={setBirth}
+          />
           <label className="profile-checkbox">
             <input
               type="checkbox"
@@ -251,17 +254,14 @@ export function ProfileEntryModal({
                 required
               />
             </label>
-            <label className="field">
-              Data
-              <input
-                type="date"
-                value={date}
-                min="1900-01-01"
-                max="2100-12-31"
-                onChange={(e) => setDate(e.target.value)}
-                required
-              />
-            </label>
+            <DatePicker
+              label="Data"
+              value={date}
+              min="1900-01-01"
+              max="2100-12-31"
+              onChange={setDate}
+              required
+            />
             <label className="field">
               Detalii
               <textarea

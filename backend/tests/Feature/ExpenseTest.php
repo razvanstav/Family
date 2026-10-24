@@ -4,9 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Database\Seeders\DemoSeeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -24,6 +22,10 @@ final class ExpenseTest extends TestCase
 
     private string $base;
 
+    private string $family;
+
+    private string $otherFamily;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -31,29 +33,47 @@ final class ExpenseTest extends TestCase
         $admin = config('database.connections.pgsql');
         $admin['username'] = 'memoria_admin';
         $admin['password'] = env('DB_ADMIN_PASSWORD');
-        config(['database.connections.admin' => $admin, 'memoria.demo_enabled' => true]);
-        DB::connection('admin')->statement('TRUNCATE families, users RESTART IDENTITY CASCADE');
-        DB::setDefaultConnection('admin');
-        Storage::fake('local');
-        (new DemoSeeder)->run();
-        DB::setDefaultConnection('pgsql');
-        $this->ana = User::where('email', 'ana@example.test')->firstOrFail();
-        $this->mihai = User::where('email', 'mihai@example.test')->firstOrFail();
-        $this->anaMember = DB::table('family_memberships')->where('family_id', DemoSeeder::POPESCU)->where('user_id', $this->ana->id)->value('id');
-        $this->mihaiMember = DB::table('family_memberships')->where('family_id', DemoSeeder::POPESCU)->where('user_id', $this->mihai->id)->value('id');
-        $this->otherMember = DB::table('family_memberships')->where('family_id', DemoSeeder::IONESCU)->value('id');
-        $this->base = '/api/v1/families/'.DemoSeeder::POPESCU.'/expenses';
+        config(['database.connections.admin' => $admin]);
+        $this->family = (string) Str::uuid();
+        $this->otherFamily = (string) Str::uuid();
+        foreach ([$this->family, $this->otherFamily] as $family) {
+            DB::connection('admin')->table('families')->insert(['id' => $family, 'name' => 'Expense fixture']);
+        }
+        foreach (['ana' => 'Ana Popescu', 'mihai' => 'Mihai Popescu'] as $key => $name) {
+            $user = User::factory()->make(['name' => $name, 'email' => 'expense-'.$this->family.'-'.$key.'@example.test']);
+            $user->setConnection('admin')->save();
+            $this->{$key} = $user;
+        }
+        $this->anaMember = (string) Str::uuid();
+        $this->mihaiMember = (string) Str::uuid();
+        $this->otherMember = (string) Str::uuid();
+        DB::connection('admin')->table('family_memberships')->insert([
+            ['id' => $this->anaMember, 'family_id' => $this->family, 'user_id' => $this->ana->id, 'role' => 'owner'],
+            ['id' => $this->mihaiMember, 'family_id' => $this->family, 'user_id' => $this->mihai->id, 'role' => 'adult'],
+            ['id' => $this->otherMember, 'family_id' => $this->otherFamily, 'user_id' => $this->ana->id, 'role' => 'owner'],
+        ]);
+        $this->base = '/api/v1/families/'.$this->family.'/expenses';
         $this->actingAs($this->ana);
         $this->travelTo(CarbonImmutable::parse('2026-10-23T22:30:00Z'));
     }
 
     protected function tearDown(): void
     {
-        $this->travelBack();
-        DB::disableQueryLog();
-        DB::disconnect('pgsql');
-        DB::disconnect('admin');
-        parent::tearDown();
+        try {
+            DB::disableQueryLog();
+            foreach ([$this->family, $this->otherFamily] as $family) {
+                foreach (['expenses', 'audit_events', 'member_profiles', 'family_memberships'] as $table) {
+                    DB::connection('admin')->table($table)->where('family_id', $family)->delete();
+                }
+                DB::connection('admin')->table('families')->where('id', $family)->delete();
+            }
+            DB::connection('admin')->table('users')->whereIn('id', [$this->ana->id, $this->mihai->id])->delete();
+        } finally {
+            $this->travelBack();
+            DB::disconnect('pgsql');
+            DB::disconnect('admin');
+            parent::tearDown();
+        }
     }
 
     private function content(array $changes = []): array
@@ -138,7 +158,7 @@ final class ExpenseTest extends TestCase
     public function test_revoked_sessions_other_families_and_database_rls_are_blocked(): void
     {
         $row = $this->create();
-        $other = '/api/v1/families/'.DemoSeeder::IONESCU.'/expenses';
+        $other = '/api/v1/families/'.$this->otherFamily.'/expenses';
         $this->getJson($other.'/'.$row['id'])->assertNotFound();
         $this->withHeader('If-Match', '"1"')->patchJson($other.'/'.$row['id'], $this->content(['visibility' => 'family']))->assertNotFound();
         $this->getJson($other)->assertOk()->assertJsonPath('total_bani', 0);
@@ -150,7 +170,7 @@ final class ExpenseTest extends TestCase
         DB::connection('admin')->table('family_memberships')->where('id', $this->mihaiMember)->update(['revoked_at' => null]);
         $this->getJson($this->base)->assertOk()->assertJsonPath('count', 1);
         DB::transaction(function () {
-            DB::select("SELECT set_config('app.family_id', ?, true)", [DemoSeeder::IONESCU]);
+            DB::select("SELECT set_config('app.family_id', ?, true)", [$this->otherFamily]);
             $this->assertSame(0, DB::table('expenses')->count());
         });
         $this->assertSame(0, DB::table('expenses')->count());
@@ -163,7 +183,7 @@ final class ExpenseTest extends TestCase
         }
         foreach ([['category' => 'invalid'], ['visibility' => 'selected'], ['spent_on' => '2026-02-30'],
             ['payer_membership_id' => $this->otherMember], ['payer_membership_id' => (string) Str::uuid()], ['owner_id' => $this->mihai->id],
-            ['family_id' => DemoSeeder::IONESCU], ['amount_bani' => 1], ['version' => 20], ['note' => str_repeat('a', 241)]] as $change) {
+            ['family_id' => $this->otherFamily], ['amount_bani' => 1], ['version' => 20], ['note' => str_repeat('a', 241)]] as $change) {
             $this->postJson($this->base, $this->content($change))->assertUnprocessable();
         }
         foreach (['2026-13', '26-10', '2026-00', '2100-01'] as $month) {
@@ -171,7 +191,7 @@ final class ExpenseTest extends TestCase
         }
         $this->getJson($this->base.'?visibility=all')->assertUnprocessable();
         $this->getJson($this->base.'?page=0')->assertUnprocessable();
-        $this->assertSame(0, DB::connection('admin')->table('expenses')->count());
+        $this->assertSame(0, DB::connection('admin')->table('expenses')->where('family_id', $this->family)->count());
     }
 
     public function test_revoked_payer_can_remain_in_existing_history_but_cannot_be_newly_selected(): void
@@ -192,7 +212,7 @@ final class ExpenseTest extends TestCase
         $small = count(DB::getQueryLog());
         $rows = [];
         for ($index = 0; $index < 52; $index++) {
-            $rows[] = ['id' => (string) Str::uuid(), 'family_id' => DemoSeeder::POPESCU, 'owner_id' => $this->ana->id,
+            $rows[] = ['id' => (string) Str::uuid(), 'family_id' => $this->family, 'owner_id' => $this->ana->id,
                 'payer_membership_id' => $this->anaMember, 'amount_bani' => 1, 'category' => 'food', 'spent_on' => '2026-10-24', 'created_at' => now(), 'updated_at' => now()];
         }
         DB::connection('admin')->table('expenses')->insert($rows);

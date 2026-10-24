@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
   RefreshCw,
@@ -17,6 +16,7 @@ import {
 } from "../../shared/api";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
+import { DatePicker } from "../../shared/DatePicker";
 import { observePageResume } from "../../shared/pageResume";
 import { KitchenPhoto } from "./KitchenPhoto";
 import { KitchenCard } from "./KitchenCard";
@@ -232,17 +232,16 @@ export function Meals({
         >
           <ChevronLeft size={20} />
         </button>
-        <label className="meal-day-picker">
-          <CalendarDays size={17} aria-hidden="true" />
-          <input
-            type="date"
-            aria-label="Ziua meselor"
+        <div className="meal-day-picker">
+          <DatePicker
+            label="Ziua meselor"
+            hideLabel
             value={date}
             min="1900-01-01"
             max="2100-12-31"
-            onChange={(e) => chooseDate(e.target.value)}
+            onChange={chooseDate}
           />
-        </label>
+        </div>
         <button
           className="icon-button"
           aria-label="Ziua următoare"
@@ -403,10 +402,9 @@ function MealForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [visibility, setVisibility] = useState("family");
-  const dateInput = useRef<HTMLInputElement>(null);
+  const [date, setDate] = useState(bucharestToday);
   const request = useRef<AbortController | null>(null);
   useEffect(() => {
-    dateInput.current?.focus();
     return () => request.current?.abort();
   }, []);
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -449,18 +447,16 @@ function MealForm({
     <Modal title="Adaugă masă" onClose={onClose}>
       <p className="meal-recipe-name">{recipe.title}</p>
       <form onSubmit={(e) => void save(e)}>
-        <label className="field">
-          Data
-          <input
-            name="meal_date"
-            ref={dateInput}
-            type="date"
-            required
-            min="1900-01-01"
-            max="2100-12-31"
-            defaultValue={bucharestToday()}
-          />
-        </label>
+        <DatePicker
+          label="Data"
+          name="meal_date"
+          autoFocus
+          required
+          min="1900-01-01"
+          max="2100-12-31"
+          value={date}
+          onChange={setDate}
+        />
         <label className="field">
           Masă
           <select name="meal_type" defaultValue="lunch">

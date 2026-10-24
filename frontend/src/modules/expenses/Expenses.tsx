@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Bike,
   Check,
+  CircleCheck,
   ChevronLeft,
   ChevronRight,
   Ellipsis,
@@ -24,16 +25,22 @@ import {
   moveMonth,
 } from "../../shared/calendarDates";
 import { PageBackdrop } from "../../shared/PageBackdrop";
+import { SectionTabs } from "../../shared/SectionTabs";
+import { observePageResume } from "../../shared/pageResume";
 import { ExpenseForm } from "./ExpenseForm";
 import { MonthSelect } from "../../shared/MonthSelect";
 import {
   expenseCategoryLabel,
   expenseMoney,
+  expensePaymentMessage,
+  expenseRecurrenceLabel,
+  markExpensePaid,
   type Expense,
   type ExpenseCategory,
   type ExpenseMonth,
   type ExpenseVisibility,
   type ExpenseRequest,
+  type ExpensePaymentStatus,
 } from "./expenseData";
 import "./expenses.css";
 
@@ -46,6 +53,10 @@ const categoryIcons = {
   leisure: Ticket,
   other: Receipt,
 };
+const paymentStatuses = [
+  { value: "paid", label: "Plătite" },
+  { value: "planned", label: "De plătit" },
+] as const;
 function CategoryIcon({ category }: { category: ExpenseCategory }) {
   const Icon = categoryIcons[category];
   return (
@@ -75,9 +86,16 @@ export function Expenses({
   const [visibility, setVisibility] = useState<ExpenseVisibility>(
     requestedExpense?.visibility ?? "family",
   );
+  const [paymentStatus, setPaymentStatus] = useState<ExpensePaymentStatus>(
+    requestedExpense?.expense?.payment_status ??
+      requestedExpense?.payment_status ??
+      "paid",
+  );
   const [data, setData] = useState<ExpenseMonth | null>(null);
   const [loading, setLoading] = useState(true);
   const [moreBusy, setMoreBusy] = useState(false);
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const paymentPending = useRef(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [revision, setRevision] = useState(0);
@@ -88,9 +106,13 @@ export function Expenses({
   const morePending = useRef(false);
   const addButton = useRef<HTMLButtonElement>(null);
   const focusAfterSave = useRef(false);
-  const endpoint = `/families/${family.id}/expenses?month=${month}&visibility=${visibility}`;
+  const endpoint = `/families/${family.id}/expenses?month=${month}&visibility=${visibility}&payment_status=${paymentStatus}`;
   const current =
-    data?.month === month && data.visibility === visibility ? data : null;
+    data?.month === month &&
+    data.visibility === visibility &&
+    data.payment_status === paymentStatus
+      ? data
+      : null;
   const canCreate = family.role !== "limited";
   useEffect(() => {
     if (focusAfterSave.current && !loading && current) {
@@ -98,6 +120,13 @@ export function Expenses({
       addButton.current?.focus();
     }
   }, [loading, current]);
+  useEffect(
+    () =>
+      observePageResume(document, window, () =>
+        setRevision((value) => value + 1),
+      ),
+    [],
+  );
   function unavailable(error: unknown) {
     if (
       error instanceof ApiError &&
@@ -137,20 +166,31 @@ export function Expenses({
   useEffect(() => {
     if (!requestedExpense) return;
     const targetMonth = requestedExpense.date.slice(0, 7);
-    if (month !== targetMonth || visibility !== requestedExpense.visibility) {
+    const targetStatus =
+      requestedExpense.expense?.payment_status ??
+      requestedExpense.payment_status;
+    if (
+      month !== targetMonth ||
+      visibility !== requestedExpense.visibility ||
+      (targetStatus && paymentStatus !== targetStatus)
+    ) {
       setMonth(targetMonth);
       setVisibility(requestedExpense.visibility);
+      if (targetStatus) setPaymentStatus(targetStatus);
       return;
     }
     if (loading || !current) return;
     const controller = new AbortController();
     function open(expense: Expense) {
+      setMonth(expense.spent_on.slice(0, 7));
+      setVisibility(expense.visibility);
+      setPaymentStatus(expense.payment_status);
       setEditor({ expense });
       onExpenseOpened();
     }
-    const existing = current.items.find(
-      (expense) => expense.id === requestedExpense.id,
-    );
+    const existing =
+      current.items.find((expense) => expense.id === requestedExpense.id) ??
+      requestedExpense.expense;
     if (existing) open(existing);
     else
       api<Expense>(`/families/${family.id}/expenses/${requestedExpense.id}`, {
@@ -166,7 +206,33 @@ export function Expenses({
           unavailable(cause);
         });
     return () => controller.abort();
-  }, [requestedExpense, month, visibility, loading, current, family.id]);
+  }, [
+    requestedExpense,
+    month,
+    visibility,
+    paymentStatus,
+    loading,
+    current,
+    family.id,
+  ]);
+  async function pay(expense: Expense) {
+    if (paymentPending.current || expense.payment_status !== "planned") return;
+    paymentPending.current = true;
+    setPayingId(expense.id);
+    setError("");
+    try {
+      const result = await markExpensePaid(family.id, expense);
+      setMessage(expensePaymentMessage(result));
+      focusAfterSave.current = true;
+      setRevision((value) => value + 1);
+    } catch (cause) {
+      setError(errorMessage(cause));
+      unavailable(cause);
+    } finally {
+      paymentPending.current = false;
+      setPayingId(null);
+    }
+  }
   async function loadMore() {
     if (!current?.next_page || loading || morePending.current) return;
     const request = sequence.current;
@@ -227,6 +293,12 @@ export function Expenses({
           )}
         </section>
       </PageBackdrop>
+      <SectionTabs
+        label="Starea cheltuielilor"
+        value={paymentStatus}
+        options={paymentStatuses}
+        onChange={setPaymentStatus}
+      />
       <section className="expenses-toolbar" aria-label="Filtre cheltuieli">
         <div className="expense-month-picker">
           <button
@@ -314,7 +386,11 @@ export function Expenses({
               </span>
               <div>
                 <h2 id="expense-total-label">
-                  {visibility === "family" ? "Total familie" : "Total personal"}
+                  {paymentStatus === "planned"
+                    ? "Total de plătit"
+                    : visibility === "family"
+                      ? "Total familie"
+                      : "Total personal"}
                 </h2>
                 <strong>{expenseMoney(current.total_bani)}</strong>
               </div>
@@ -356,6 +432,12 @@ export function Expenses({
                                 <>{expenseCategoryLabel(item.category)} · </>
                               )}
                               {item.payer_name}
+                              {item.recurrence && (
+                                <>
+                                  {" "}
+                                  · {expenseRecurrenceLabel(item.recurrence)}
+                                </>
+                              )}
                               {item.payer_name !== item.owner_name && (
                                 <> · Adăugat de {item.owner_name}</>
                               )}
@@ -365,14 +447,34 @@ export function Expenses({
                             {expenseMoney(item.amount_bani)}
                           </strong>
                           {item.can_edit && (
-                            <button
-                              className="icon-button"
-                              disabled={loading || moreBusy}
-                              aria-label={`Editează ${item.note || expenseCategoryLabel(item.category)}, ${expenseMoney(item.amount_bani)}`}
-                              onClick={() => setEditor({ expense: item })}
-                            >
-                              <Ellipsis size={20} />
-                            </button>
+                            <div className="expense-row-actions">
+                              {item.payment_status === "planned" && (
+                                <button
+                                  className="icon-button"
+                                  disabled={
+                                    loading || moreBusy || payingId !== null
+                                  }
+                                  aria-label={`Marchează plătită: ${item.note || expenseCategoryLabel(item.category)}, ${expenseMoney(item.amount_bani)}`}
+                                  onClick={() => void pay(item)}
+                                >
+                                  {payingId === item.id ? (
+                                    <RefreshCw size={20} className="spin" />
+                                  ) : (
+                                    <CircleCheck size={20} />
+                                  )}
+                                </button>
+                              )}
+                              <button
+                                className="icon-button"
+                                disabled={
+                                  loading || moreBusy || payingId !== null
+                                }
+                                aria-label={`Editează ${item.note || expenseCategoryLabel(item.category)}, ${expenseMoney(item.amount_bani)}`}
+                                onClick={() => setEditor({ expense: item })}
+                              >
+                                <Ellipsis size={20} />
+                              </button>
+                            </div>
                           )}
                         </li>
                       ))}
@@ -383,9 +485,11 @@ export function Expenses({
                 <div className="expense-empty">
                   <Receipt size={32} aria-hidden="true" />
                   <p>
-                    {visibility === "family"
-                      ? "Nicio cheltuială a familiei în această lună."
-                      : "Nicio cheltuială personală în această lună."}
+                    {paymentStatus === "planned"
+                      ? "Nicio plată de făcut în această lună."
+                      : visibility === "family"
+                        ? "Nicio cheltuială a familiei în această lună."
+                        : "Nicio cheltuială personală în această lună."}
                   </p>
                   {canCreate && (
                     <button
@@ -431,14 +535,22 @@ export function Expenses({
         <ExpenseForm
           family={family}
           expense={editor.expense}
+          initialPaymentStatus={paymentStatus}
           payers={current.payers}
           onClose={() => setEditor(null)}
           onSaved={(result) => {
             setEditor(null);
-            setMessage(result ? "Cheltuială salvată." : "Cheltuială ștearsă.");
+            setMessage(
+              result?.recurrence_notice || result?.next_due_on
+                ? expensePaymentMessage(result)
+                : result
+                  ? "Cheltuială salvată."
+                  : "Cheltuială ștearsă.",
+            );
             if (result) {
               setMonth(result.spent_on.slice(0, 7));
               setVisibility(result.visibility);
+              setPaymentStatus(result.payment_status);
             }
             setRevision((value) => value + 1);
             focusAfterSave.current = true;

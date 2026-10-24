@@ -6,25 +6,11 @@
 }
 .meal-day-picker {
   display: flex;
-  align-items: center;
-  gap: 8px;
   min-width: 0;
-  padding: 0 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 13px;
 }
-.meal-day-picker > svg {
-  color: #a66d13;
-  flex-shrink: 0;
-}
-.meal-day-picker input {
-  background: transparent;
-  color: var(--ink);
-  border: 0;
-  min-width: 0;
-  min-height: 44px;
-  max-width: 100%;
+.meal-day-picker > .date-picker-field {
+  width: 100%;
+  margin: 0;
 }
 .meal-vote-counts {
   display: flex;
@@ -167,15 +153,7 @@
     gap: 4px;
   }
   .meal-day-picker {
-    padding-inline: 7px;
     flex: 1;
-  }
-  .meal-day-picker input {
-    width: 100%;
-    font-size: 14px;
-  }
-  .meal-day-picker > svg {
-    display: none;
   }
   .meal-day-controls > .button {
     padding-inline: 12px;

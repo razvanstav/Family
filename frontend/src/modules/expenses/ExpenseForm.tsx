@@ -8,9 +8,12 @@ import {
   expenseAmountInput,
   expenseCategories,
   expenseMoney,
+  expenseRecurrences,
   type Expense,
   type ExpenseCategory,
   type ExpenseVisibility,
+  type ExpensePaymentStatus,
+  type ExpenseRecurrence,
   type Payer,
 } from "./expenseData";
 
@@ -18,6 +21,7 @@ export function ExpenseForm({
   family,
   expense,
   payers,
+  initialPaymentStatus = "paid",
   onClose,
   onSaved,
   onUnavailable,
@@ -25,6 +29,7 @@ export function ExpenseForm({
   family: Family;
   expense: Expense | null;
   payers: Payer[];
+  initialPaymentStatus?: ExpensePaymentStatus;
   onClose: () => void;
   onSaved: (result: Expense | null) => void;
   onUnavailable: () => void;
@@ -37,6 +42,12 @@ export function ExpenseForm({
     expense?.category ?? "food",
   );
   const [date, setDate] = useState(expense?.spent_on ?? bucharestToday());
+  const [paymentStatus, setPaymentStatus] = useState<ExpensePaymentStatus>(
+    expense?.payment_status ?? initialPaymentStatus,
+  );
+  const [recurrence, setRecurrence] = useState<ExpenseRecurrence>(
+    expense?.recurrence ?? null,
+  );
   const [payer, setPayer] = useState(
     expense?.payer_membership_id ?? family.membership_id,
   );
@@ -54,6 +65,7 @@ export function ExpenseForm({
   const [stale, setStale] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const base = `/families/${family.id}/expenses`;
+  const readOnly = source !== null && !source.can_edit;
   const payerOptions =
     source && !payers.some((member) => member.id === source.payer_membership_id)
       ? [
@@ -91,6 +103,8 @@ export function ExpenseForm({
                 payer_membership_id: payer,
                 note: note.trim() || null,
                 visibility,
+                payment_status: paymentStatus,
+                recurrence,
               }),
         },
       );
@@ -117,6 +131,8 @@ export function ExpenseForm({
       setAmount(expenseAmountInput(fresh.amount_bani));
       setCategory(fresh.category);
       setDate(fresh.spent_on);
+      setPaymentStatus(fresh.payment_status);
+      setRecurrence(fresh.recurrence);
       setPayer(fresh.payer_membership_id);
       setNote(fresh.note ?? "");
       setVisibility(fresh.visibility);
@@ -135,7 +151,9 @@ export function ExpenseForm({
         deleting
           ? "Șterge cheltuiala"
           : source
-            ? "Editează cheltuiala"
+            ? readOnly
+              ? "Cheltuială"
+              : "Editează cheltuiala"
             : "Adaugă cheltuială"
       }
       onClose={() => {
@@ -172,7 +190,10 @@ export function ExpenseForm({
             void submit();
           }}
         >
-          <fieldset className="expense-fields" disabled={busy || stale}>
+          <fieldset
+            className="expense-fields"
+            disabled={busy || stale || readOnly}
+          >
             <div className="expense-form-pair">
               <label className="field">
                 Sumă (lei)
@@ -207,14 +228,67 @@ export function ExpenseForm({
               </label>
             </div>
             <div className="expense-form-pair">
+              <label className="field">
+                Stare
+                <select
+                  name="payment_status"
+                  value={paymentStatus}
+                  disabled={source !== null}
+                  onChange={(event) =>
+                    setPaymentStatus(event.target.value as ExpensePaymentStatus)
+                  }
+                >
+                  <option value="paid">Plătită</option>
+                  <option value="planned">De plătit</option>
+                </select>
+              </label>
+              <label className="field">
+                Repetare
+                <select
+                  name="recurrence"
+                  value={recurrence ?? ""}
+                  disabled={Boolean(source?.has_next_payment)}
+                  aria-describedby={
+                    source?.has_next_payment || recurrence
+                      ? "expense-recurrence-hint"
+                      : undefined
+                  }
+                  onChange={(event) =>
+                    setRecurrence(
+                      (event.target.value || null) as ExpenseRecurrence,
+                    )
+                  }
+                >
+                  <option value="">Fără repetare</option>
+                  {expenseRecurrences.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                {(source?.has_next_payment || recurrence) && (
+                  <small id="expense-recurrence-hint">
+                    {source?.has_next_payment
+                      ? "Modifică repetarea în următoarea plată."
+                      : paymentStatus === "planned"
+                        ? "Următoarea plată se creează când aceasta este plătită."
+                        : "Următoarea plată se creează la salvare."}
+                  </small>
+                )}
+              </label>
+            </div>
+            <div className="expense-form-pair">
               <DatePicker
                 value={date}
                 onChange={setDate}
+                label={paymentStatus === "planned" ? "Termen" : "Data"}
                 name="spent_on"
                 dialogLabel="Alege data cheltuielii"
               />
               <label className="field">
-                Cine a plătit
+                {paymentStatus === "planned"
+                  ? "Cine plătește"
+                  : "Cine a plătit"}
                 <select
                   name="payer"
                   value={payer}
@@ -260,7 +334,7 @@ export function ExpenseForm({
             </label>
           </fieldset>
           <div className="expense-form-actions">
-            {source && (
+            {source && !readOnly && (
               <button
                 type="button"
                 className="icon-button"
@@ -277,11 +351,13 @@ export function ExpenseForm({
               disabled={busy}
               onClick={onClose}
             >
-              Anulează
+              {readOnly ? "Închide" : "Anulează"}
             </button>
-            <button className="button primary" disabled={busy || stale}>
-              {busy ? "Se salvează…" : "Salvează"}
-            </button>
+            {!readOnly && (
+              <button className="button primary" disabled={busy || stale}>
+                {busy ? "Se salvează…" : "Salvează"}
+              </button>
+            )}
           </div>
         </form>
       )}

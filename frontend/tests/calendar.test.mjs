@@ -12,9 +12,10 @@ const js = ts.transpileModule(source, {
     module: ts.ModuleKind.ES2022,
   },
 }).outputText;
-const { bucharestToday, monthDays, moveMonth, dateLabel } = await import(
-  `data:text/javascript;base64,${Buffer.from(js).toString("base64")}`
-);
+const { bucharestToday, monthDays, moveMonth, dateLabel, clampCalendarValue } =
+  await import(
+    `data:text/javascript;base64,${Buffer.from(js).toString("base64")}`
+  );
 test("C1: today is determined in Bucharest at UTC day boundaries", () => {
   assert.equal(bucharestToday(new Date("2026-10-20T22:30:00Z")), "2026-10-21");
   assert.equal(bucharestToday(new Date("2026-12-20T21:30:00Z")), "2026-12-20");
@@ -31,4 +32,23 @@ test("C1: month navigation crosses year boundaries without shifting a date-only 
   assert.equal(moveMonth("2026-01", -1), "2025-12");
   assert.match(dateLabel("2026-03-29"), /29/);
   assert.match(dateLabel("2026-10-25"), /25/);
+});
+
+test("DP1: selecting another year keeps a birth-date month inside its allowed range", () => {
+  assert.equal(clampCalendarValue("2026-12", "1900-01", "2026-10"), "2026-10");
+  assert.equal(clampCalendarValue("2025-12", "1900-01", "2026-10"), "2025-12");
+  assert.equal(clampCalendarValue("1899-12", "1900-01", "2100-12"), "1900-01");
+});
+
+test("DP1: a newly opened calendar focuses a selectable date at both range boundaries", () => {
+  assert.equal(
+    clampCalendarValue("2026-10-24", "2027-01-01", "2100-12-31"),
+    "2027-01-01",
+  );
+  assert.equal(
+    clampCalendarValue("2026-10-24", "1900-01-01", "2025-12-31"),
+    "2025-12-31",
+  );
+  assert.equal(monthDays("2100-02").filter(Boolean).length, 28);
+  assert.equal(moveMonth("2099-12", 1), "2100-01");
 });

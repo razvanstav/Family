@@ -59,6 +59,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::post('/expenses', [ExpenseController::class, 'store'])->middleware('throttle:60,1');
         Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])->whereUuid('expense');
         Route::patch('/expenses/{expense}', [ExpenseController::class, 'update'])->whereUuid('expense')->middleware('throttle:60,1');
+        Route::patch('/expenses/{expense}/payment', [ExpenseController::class, 'payment'])->whereUuid('expense')->middleware('throttle:60,1');
         Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])->whereUuid('expense')->middleware('throttle:60,1');
         Route::get('/invitation-codes', [InvitationCodeController::class, 'index']);
         Route::post('/invitation-codes', [InvitationCodeController::class, 'store'])->middleware('throttle:20,1');

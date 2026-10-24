@@ -45,13 +45,13 @@
 .home-shortcuts {
   grid-column: 1 / -1;
 }
-.home-tasks {
+.home-tasks,
+.home-payments {
   grid-column: 1 / -1;
   min-width: 0;
 }
 .home-memories {
   grid-column: 1;
-  grid-row: 4;
 }
 .home-section {
   min-width: 0;

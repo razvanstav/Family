@@ -38,13 +38,26 @@
   flex-shrink: 0;
   color: var(--muted);
 }
+.date-picker-field input.date-picker-validation {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  padding: 0;
+  border: 0;
+}
+.date-picker-field > label[hidden] {
+  display: none;
+}
 .date-picker-calendar {
   position: fixed;
   margin: 0;
   inset: auto;
   min-width: 0;
   max-width: none;
-  max-height: calc(100dvh - 16px);
+  max-height: calc(var(--visual-viewport-height, 100dvh) - 16px);
   overflow: auto;
   box-sizing: border-box;
   border: 1px solid var(--line);

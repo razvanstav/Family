@@ -43,7 +43,7 @@ type ReminderSummary = {
   event_date: string;
   due_at: string;
 };
-type Overview<Task> = {
+type Overview<Task, Payment> = {
   today: string;
   month: string;
   days: string[];
@@ -51,6 +51,7 @@ type Overview<Task> = {
   events: EventSummary[];
   reminders: ReminderSummary[];
   tasks: Task[];
+  upcoming_payments: Payment[];
 };
 
 type MemorySummary = {
@@ -63,13 +64,14 @@ type MemorySummary = {
   photo_status: PhotoStatus;
 };
 
-export function Home<Task>({
+export function Home<Task, Payment>({
   family,
   onExpired,
   onCalendar,
   onMemories,
   onKitchen,
   renderTasks,
+  renderUpcomingPayments,
 }: {
   family: Family;
   onExpired: () => void;
@@ -82,14 +84,21 @@ export function Home<Task>({
     loading: boolean;
     onChanged: () => void;
   }) => ReactNode;
+  renderUpcomingPayments: (props: {
+    payments: Payment[];
+    loading: boolean;
+    onChanged: () => void;
+  }) => ReactNode;
 }) {
   const [month, setMonth] = useState(bucharestToday().slice(0, 7));
-  const [data, setData] = useState<Overview<Task> | null>(null);
+  const [data, setData] = useState<Overview<Task, Payment> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
   const sequence = useRef(0);
   const pending = useRef(false);
+  const shortcuts = useRef<HTMLElement>(null);
+  const paymentChanged = useRef(false);
   const endpoint = `/families/${family.id}/home?month=${month}`;
   useEffect(() => {
     const request = ++sequence.current;
@@ -97,7 +106,7 @@ export function Home<Task>({
     pending.current = true;
     setLoading(true);
     setError("");
-    api<Overview<Task>>(endpoint, { signal: controller.signal })
+    api<Overview<Task, Payment>>(endpoint, { signal: controller.signal })
       .then((result) => {
         if (request === sequence.current) setData(result);
       })
@@ -129,6 +138,13 @@ export function Home<Task>({
       if (!pending.current) setRevision((value) => value + 1);
     });
   }, []);
+  useEffect(() => {
+    if (loading || !data || !paymentChanged.current) return;
+    paymentChanged.current = false;
+    if (data.upcoming_payments.length === 0) {
+      shortcuts.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    }
+  }, [data, loading]);
   const today = data?.today ?? bucharestToday();
   const featured =
     data?.memories.find((moment) => moment.photo_status === "ready") ??
@@ -323,7 +339,26 @@ export function Home<Task>({
             onChanged: () => setRevision((value) => value + 1),
           })}
         </section>
-        <nav className="home-shortcuts" aria-label="Acces rapid">
+        {!!data?.upcoming_payments.length && (
+          <section
+            className="home-section home-payments"
+            aria-label="Plăți următoare"
+          >
+            {renderUpcomingPayments({
+              payments: data.upcoming_payments,
+              loading,
+              onChanged: () => {
+                paymentChanged.current = true;
+                setRevision((value) => value + 1);
+              },
+            })}
+          </section>
+        )}
+        <nav
+          ref={shortcuts}
+          className="home-shortcuts"
+          aria-label="Acces rapid"
+        >
           <button onClick={() => onCalendar({ date: today, monthOnly: true })}>
             <span className="home-shortcut-icon home-icon--calendar">
               <CalendarDays size={22} aria-hidden="true" />

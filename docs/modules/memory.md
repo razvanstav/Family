@@ -55,7 +55,7 @@ Stare la 22 octombrie 2026: **AM1–AM3 implementate**, cu fluxurile principale 
 - Ordinea după dată, filtrele, arhivarea, detaliul complet, paginarea, cronologia și rutele private rămân existente. Refreshul de fundal păstrează cardurile; schimbarea filtrelor înlocuiește lista. Fără GET suplimentar la deschiderea unui moment din listă.
 - Modificări de cod limitate la `Memories.tsx` și `memory.css`. Stilurile comune page-heading/search/modal rămân în styles.css. TypeScript/Vite build, Prettier și `git diff --check` trecute. Fără teste noi sau suite automate.
 - Browser, previzualizare mobilă de 390 px: card foto pe lățime, notă compactă și controale fără overflow observat; căutarea „bunici” întoarce nota, iar închiderea readuce lista. Panoul de filtre expune accesul, actualizarea și arhiva. Cardul foto deschide detaliul complet. Cronologia afișează cele două amintiri și masa existente, grupate pe date. Pagina rămâne deschisă pe Momente și note, cu Toate selectat. Captură locală ignorată: `.runtime/mh1-memories-mobile.png`.
-- Nu s-au modificat date, permisiuni, rute sau backend. Nu s-au reluat scrierile/uploadul, conflictele, revocările ori dispozitivele fizice; limitele AM1–AM3 de mai jos rămân valabile. Refreshul periodic nu a fost verificat prin așteptare dedicată.
+- Nu s-au modificat date, permisiuni, rute sau backend. Nu s-au reluat scrierile/uploadul, conflictele, revocările ori dispozitivele fizice; limitele AM1–AM3 de mai jos rămân valabile. Refreshul periodic existent atunci nu a fost verificat prin așteptare dedicată; comportamentul actual fără polling este descris în AM3.
 
 ## Scop
 
@@ -93,7 +93,7 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 - Lista are 12 elemente/pagină, ordonate descrescător după dată și UUID. Căutarea se face în titlu și text; filtrele sunt tipul și accesul. Payloadul conține întregul element, autorul, persoanele active și `can_edit`, prin join/aggregate, fără query per card. Deschiderea detaliului și a editării reutilizează acest payload.
 - `POST /api/v1/families/{family}/moments` creează elementul; `GET` pe aceeași rută listează cu `q`, `kind`, `visibility` și `page`. `GET /moments/{moment}` returnează elementul și ETag. `PATCH /moments/{moment}` primește conținutul formularului și cere `If-Match: "<version>"`; fără token răspunde 428, cu versiune veche 412. Schimbarea conținutului, accesului, persoanelor și auditului este atomică, iar salvarea crește versiunea.
 - Formularul păstrează draftul la conflict și blochează salvarea până la reîncărcare explicită, care înlocuiește modificările nesalvate. Nu există retrimitere automată a mutațiilor. Cererile sunt anulate/ignorate la demontare; închiderea unui formular nu garantează anularea unui commit deja ajuns la server.
-- Lista și detaliul se actualizează manual ori la 60 s cât pagina este vizibilă. Editarea nu este suprascrisă de polling. Schimbarea familiei sau actorului remontează modulul. Erorile de acces închid conținutul și cer reverificarea sesiunii.
+- Lista și detaliul se actualizează la deschidere, revenire în aplicație, acțiuni și reîncărcare explicită, prin `observePageResume`, fără polling. Editarea păstrează draftul. Schimbarea familiei sau actorului remontează modulul. Erorile de acces închid conținutul și cer reverificarea sesiunii.
 - Meniul include Amintiri după Bucătărie și înainte de Calendar, pe desktop și mobil. Folosește Modal, API-ul și datele comune, Helvetica, suprafețe calde și etichete directe. Bara mobilă are șapte controale de minimum 44 px, cu derulare internă la lățimi insuficiente.
 
 ### Fișiere și instalare
@@ -137,6 +137,11 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 
 ## AM3 — cronologie
 
+### Scop verificat în cod, 24 octombrie 2026
+
+- Cronologia reunește amintirile/notele și mesele din Bucătărie într-o listă compactă pe zile, de la cele mai recente; fiecare card deschide sursa autorizată. Valoarea distinctă față de album este reunirea acestor două surse. Albumul oferă deja ordonare după dată, grupare pe ani, fotografii, căutare și „În ziua asta”; fără mese, conținutul celor două vizualizări se suprapune în mare parte.
+- Sursele implementate sunt numai `memory.moment` și `kitchen.meal`. Auditul nu a identificat controale fictive ori cod mort în acest flux și nu a schimbat denumirea, layoutul sau funcționalitatea. Verificarea a fost numai prin citirea UI, contractelor, proiecției și configurației livrate; fără teste noi, probe în browser sau modificări de date. Funcționarea procesului outbox de pe server nu a fost verificată în acest audit.
+
 ### Comportament și contract
 
 - În Amintiri, vizualizarea nouă „Cronologie” reunește momentele/notele și mesele, cu grupare după data lor calendaristică, filtre Toate/Amintiri/Mese și paginare. Prima vizualizare rămâne „Momente și note”; meniul aplicației și pagina implicită nu se schimbă. Nu sunt incluse carduri separate de rețete, chat sau date fictive de activitate.
@@ -147,7 +152,7 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 - `GET /api/v1/families/{family}/timeline?kind=all|memory|meals&limit=20&cursor=...` folosește `TenantContext` și răspuns privat fără cache. 1–50 carduri/pagină, maximum 200 de referințe scanate plus un rând pentru continuare. Rezumatul autorizat conține titlu, autor, acces, tip, dată, revizie, stare foto și, pentru amintiri, maximum 240 caractere din text. Detaliile complete se cer numai la deschiderea unei surse; nu există query per card.
 - Ordine: dată descrescătoare, tip crescător, UUID descrescător. Cursorul criptat/autentificat este legat de familie și filtru și indică ultima referință scanată. O pagină poate fi goală și avea continuare. Cardul cu dată canonică diferită de index este omis până la reconciliere, pentru a nu apărea într-o grupă greșită.
 - `memory:rebuild-timeline --family=<UUID>` reconstruiește atomic numai proiecția, inclusiv resursele anterioare instalării, prin sursele Memory și providerul Kitchen. Eșecul păstrează proiecția anterioară. `outbox:deliver --family=<UUID> --replay=memory.timeline.v1` reprocesează evenimentele păstrate, fără a crea surse sau evenimente istorice artificiale.
-- UI actualizează cronologia la 15 s cât pagina este vizibilă, cu păstrarea rândurilor/focusului la refresh în fundal. Detaliul amintirii refolosește `MomentDetail`/`MomentForm`; masa folosește componenta publică `Kitchen/MealViewer`, cu detaliul/votul/rețeta existentă și reautorizare la 60 s. Refreshul nu înlocuiește draftul votului. Listele inactive nu trimit cereri de polling paralele.
+- UI actualizează cronologia la deschidere, schimbarea filtrului/paginii, acțiuni, revenire în aplicație și reîncărcare explicită, fără polling. `Timeline`, `MomentDetail` și `MealViewer` folosesc `observePageResume`. Detaliul amintirii refolosește `MomentDetail`/`MomentForm`; masa este compusă de App prin `renderMeal`, cu detaliul/votul/rețeta existente. Refreshul nu înlocuiește draftul votului. Lista Momente și note este inactivă cât este deschisă Cronologia.
 
 ### Intrări și instalare
 
@@ -164,7 +169,7 @@ Albumele sofisticate, montajul video, embeddings și poveștile generate AI răm
 - Vizual: listă/grupe pe zile pe desktop și la 390 px, filtrele Toate/Mese și deschiderea mesei pe mobil, fără overflow orizontal observat. Controalele și derularea ferestrei mesei rămân utilizabile. Regulile mobile sunt după stilurile de bază, fără suprapuneri contradictorii. Capturi locale ignorate: `.runtime/am3-desktop.png`, `.runtime/am3-mobile.png`.
 - Build TypeScript/Vite, Prettier, Pint și lint PHP: reușite. S-au ajustat numai cele trei contoare de receipts din `KitchenOutboxTest` afectate de al doilea handler; nu sunt teste noi și nu s-au rulat suite automate, conform priorității salvate. Rezultatele istorice K4b nu reprezintă o regresie rerulată pentru AM3.
 - Rămân neexercitate în AM3 ștergerea fizică a sursei, eșecul forțat de handler/rebuild și rollbackul lui, concurența a doi workeri, schemă nouă, limitele de 200 de surse ascunse, volum mare și revocarea completă a apartenenței. Nu sunt declarate acceptate doar prin reutilizarea infrastructurii.
-- Apariția sau mutarea unei surse în cronologie este eventual consistentă (worker la 15 s plus polling UI). Politica se verifică live la fiecare citire; aplicația nu poate retrage copii salvate anterior. Publicarea/deploy-ul și acceptarea completă a MVP-ului rămân separate de această demonstrație locală.
+- Apariția sau mutarea unei surse în cronologie depinde de procesarea indexului prin outbox. Configurația systemd livrată pornește o trecere centrală la 60 de secunde după încheierea precedentei; modul local `outbox:deliver --watch` așteaptă 60 de secunde între treceri. Un refresh imediat după salvare poate preceda procesarea: lista poate rămâne veche ori poate omite temporar sursa cu dată schimbată, până la procesare și următoarea revenire/reîncărcare explicită. Nu există polling în browser. Vezi [configurația de operare](../../ops/SETUP.md); instalarea și funcționarea efectivă a procesului pe server rămân neverificate în auditul din 24 octombrie. Politica se verifică live la fiecare citire; aplicația nu poate retrage copii salvate anterior. Acceptarea completă a MVP-ului rămâne separată de demonstrația locală.
 
 ## Consum Acasă — H2, 22 octombrie 2026
 

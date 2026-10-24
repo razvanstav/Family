@@ -22,7 +22,9 @@ use App\Modules\Documents\Application\DocumentExpirySource;
 use App\Modules\Documents\Application\DocumentSearch;
 use App\Modules\Documents\Contracts\DocumentLinks;
 use App\Modules\Documents\Contracts\DocumentSummaries;
+use App\Modules\Expenses\Application\ExpenseAccess;
 use App\Modules\Expenses\Application\ExpenseDatedRecords;
+use App\Modules\Expenses\Contracts\UpcomingPayments;
 use App\Modules\Kitchen\Application\KitchenActivity;
 use App\Modules\Kitchen\Application\KitchenActivityReader;
 use App\Modules\Kitchen\Application\MealActivityReferences;
@@ -87,6 +89,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MomentSummaries::class, RecentMoments::class);
         $this->app->bind(Overview::class, CalendarOverview::class);
         $this->app->bind(TaskSummaries::class, TaskAccess::class);
+        $this->app->bind(UpcomingPayments::class, ExpenseAccess::class);
         $this->app->bind(SourceItems::class, SourceCalendarItems::class);
         $this->app->bind(Birthdays::class, BirthdayCalendar::class);
         $this->app->bind(BirthdaySource::class, FamilyBirthdaySource::class);

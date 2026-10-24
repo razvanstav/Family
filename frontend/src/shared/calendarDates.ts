@@ -26,6 +26,13 @@ export function moveMonth(month: string, delta: number): string {
     .toISOString()
     .slice(0, 7);
 }
+export function clampCalendarValue(
+  value: string,
+  minimum: string,
+  maximum: string,
+): string {
+  return value < minimum ? minimum : value > maximum ? maximum : value;
+}
 export function dateLabel(
   date: string,
   options: Intl.DateTimeFormatOptions = {
