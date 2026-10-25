@@ -22,6 +22,7 @@ import { SectionTabs } from "../../shared/SectionTabs";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { observePageResume } from "../../shared/pageResume";
 import type { MealRequest } from "./mealTypes";
+import { RestaurantArea } from "./RestaurantArea";
 
 export function Kitchen({
   family,
@@ -41,10 +42,17 @@ export function Kitchen({
   onMealOpened: () => void;
 }) {
   const base = `/families/${family.id}/recipes`;
-  const [section, setSection] = useState<"recipes" | "meals">(
+  const [section, setSection] = useState<"recipes" | "meals" | "restaurants">(
     requestedMeal || !requestedRecipe ? "meals" : "recipes",
   );
   const [mealTarget, setMealTarget] = useState<Recipe | null>(null);
+  const [newMeal, setNewMeal] = useState(false);
+  const [newVisit, setNewVisit] = useState(false);
+  const [diningMealTarget, setDiningMealTarget] = useState<MealRequest | null>(
+    null,
+  );
+  const [diningRevision, setDiningRevision] = useState(0);
+  const [mealRevision, setMealRevision] = useState(0);
   const [items, setItems] = useState<Recipe[]>([]);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState("");
@@ -160,18 +168,36 @@ export function Kitchen({
     <div className="kitchen-page">
       <PageBackdrop image="kitchen">
         <section className="page-heading">
-          <h1>Bucătărie</h1>
+          <h1>Mese</h1>
           <div className="page-heading-actions">
             <button
               className="icon-button"
-              aria-label="Caută rețete"
+              aria-label={
+                section === "restaurants"
+                  ? "Actualizează restaurantele"
+                  : section === "meals"
+                    ? "Actualizează mesele"
+                    : "Caută rețete"
+              }
               onClick={() => {
+                if (section === "restaurants") {
+                  setDiningRevision((value) => value + 1);
+                  return;
+                }
+                if (section === "meals") {
+                  setMealRevision((value) => value + 1);
+                  return;
+                }
                 setSection("recipes");
                 setBrowsing(true);
                 searchInput.current?.focus();
               }}
             >
-              <Search size={21} />
+              {section !== "recipes" ? (
+                <RefreshCw size={21} />
+              ) : (
+                <Search size={21} />
+              )}
             </button>
             {family.role !== "limited" && (
               <button
@@ -179,19 +205,23 @@ export function Kitchen({
                 aria-label={
                   section === "recipes"
                     ? "Adaugă rețetă"
-                    : "Alege rețetă pentru masă"
+                    : section === "restaurants"
+                      ? "Adaugă vizită"
+                      : "Adaugă masă"
                 }
                 onClick={() => {
                   if (section === "recipes") setAdding(true);
-                  else {
-                    setSection("recipes");
-                    setBrowsing(true);
-                  }
+                  else if (section === "restaurants") setNewVisit(true);
+                  else setNewMeal(true);
                 }}
               >
                 <Plus size={19} />
                 <span>
-                  {section === "recipes" ? "Adaugă rețetă" : "Alege rețetă"}
+                  {section === "recipes"
+                    ? "Adaugă rețetă"
+                    : section === "restaurants"
+                      ? "Adaugă vizită"
+                      : "Adaugă masă"}
                 </span>
               </button>
             )}
@@ -199,11 +229,12 @@ export function Kitchen({
         </section>
       </PageBackdrop>
       <SectionTabs
-        label="Secțiuni Bucătărie"
+        label="Secțiuni Mese"
         value={section}
         options={[
-          { value: "meals", label: "Mese" },
+          { value: "meals", label: "Jurnal" },
           { value: "recipes", label: "Rețete" },
+          { value: "restaurants", label: "Restaurante" },
         ]}
         onChange={setSection}
       />
@@ -433,10 +464,16 @@ export function Kitchen({
       <div hidden={section !== "meals"}>
         <Meals
           active={section === "meals"}
+          refreshToken={mealRevision}
           family={family}
           requestedRecipe={mealTarget}
-          requestedMeal={requestedMeal}
-          onMealOpened={onMealOpened}
+          requestedMeal={requestedMeal ?? diningMealTarget}
+          onMealOpened={() => {
+            setDiningMealTarget(null);
+            onMealOpened();
+          }}
+          requestedNewMeal={newMeal}
+          onNewMealOpened={() => setNewMeal(false)}
           onRecipeConsumed={() => setMealTarget(null)}
           onRecipe={setSelected}
           onChooseRecipe={() => {
@@ -446,6 +483,19 @@ export function Kitchen({
           onExpired={onExpired}
         />
       </div>
+      {section === "restaurants" && (
+        <RestaurantArea
+          family={family}
+          onExpired={onExpired}
+          requestedNewVisit={newVisit}
+          onNewVisitOpened={() => setNewVisit(false)}
+          refreshToken={diningRevision}
+          onOpenMeal={(id, date) => {
+            setDiningMealTarget({ id, date });
+            setSection("meals");
+          }}
+        />
+      )}
       {adding && (
         <RecipeForm
           base={base}

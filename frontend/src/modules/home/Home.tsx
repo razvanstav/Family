@@ -377,7 +377,7 @@ export function Home<Task, Payment>({
             <span className="home-shortcut-icon home-icon--kitchen">
               <UtensilsCrossed size={22} aria-hidden="true" />
             </span>
-            <span>Bucătărie</span>
+            <span>Mese</span>
             <ChevronRight size={17} aria-hidden="true" />
           </button>
           <button onClick={() => onMemories()}>

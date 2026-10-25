@@ -79,7 +79,7 @@ export function MobileNavigation({
           [
             ["home", "Acasă", "Acasă", House],
             ["family", "Familia mea", "Familie", Users],
-            ["kitchen", "Bucătărie", "Bucătărie", UtensilsCrossed],
+            ["kitchen", "Mese", "Mese", UtensilsCrossed],
             ["expenses", "Cheltuieli", "Cheltuieli", Wallet],
           ] as const
         ).map(([value, label, text, Icon]) => (

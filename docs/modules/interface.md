@@ -1,5 +1,11 @@
 # Interfață comună
 
+## ME1 — Mese, 25 octombrie 2026
+
+**Implementat, verificat local și acceptat vizual; deploy autorizat și în lucru.** Bucătărie se numește Mese pe desktop/mobil/Acasă și păstrează poziția în navigație. Un singur cadru cu Jurnal / Rețete / Restaurante, antetul/fotografia existente și acțiuni relevante în antet. Jurnal implicit, adăugare rapidă fără rețetă și istoric compact; Restaurante are vizite cu mai multe preparate și clasamente Preparate / Restaurante, Notele mele / Familie, medii și numere reale. Voturile binare și rețetele existente rămân disponibile, separat de notele1–10.
+
+Build `DmVIQ9H9/BVlgLeeS`, 72 teste frontend, 31 backend/543 aserțiuni, Prettier/Pint/diff/review trecute. Browser pe date fictive în memorie desktop1280/mobil360/320: salvări, evaluări/conflict/retragere, restaurante/topuri, familie, rol limited, erori/retry, rețete și date probate. Controale44px, fără overflow stabil, aceeași poziție a filelor240/217; resizeul intermediar al indicatorului este documentat în fișa modulului. Migrarea locală/test păstrează datele existente. Captura `.runtime/me1-restaurants-mobile.png` arată topul pastelor; fără iPhone fizic, salvări în baza aplicației sau deploy. [Contract, probe și limite ME1](kitchen.md#me1--mese-libere-restaurante-și-note-25-octombrie-2026).
+
 ## H7 — Adăugare din Acasă, 25 octombrie 2026
 
 **Publicare:** commit `345d55e`, [deploy40228864082](https://github.com/razvanstav/Family/actions/runs/40228864082) completed/success cu SHA exact `345d55e0423d3f3957556b3de764d92b8c8b284b` și toate etapele confirmate prin API Actions. HTTPS public `/up`, `/app/`, JS `cY83OUhs` și CSS `2ml7Txeu` răspund 200; JS/CSS sunt identice SHA-256 cu buildul local verificat. Meniul `home-add-menu` și toate cele șapte opțiuni sportive sunt prezente în bundle-ul public. Fără autentificare ori salvări de probă în producție; fără migrații noi sau modificări ale configurației/workerilor. Inspecția runtime independentă și iPhone fizic rămân neprobate.

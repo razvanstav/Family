@@ -6,6 +6,10 @@ import {
   ThumbsDown,
   ThumbsUp,
   UtensilsCrossed,
+  Search,
+  Star,
+  LockKeyhole,
+  Users,
 } from "lucide-react";
 import {
   api,
@@ -19,7 +23,6 @@ import { Modal } from "../../shared/Modal";
 import { DatePicker } from "../../shared/DatePicker";
 import { observePageResume } from "../../shared/pageResume";
 import { KitchenPhoto } from "./KitchenPhoto";
-import { KitchenCard } from "./KitchenCard";
 import {
   mealTypes,
   type Meal,
@@ -28,6 +31,9 @@ import {
   type MealDetailData,
 } from "./mealTypes";
 import type { Recipe } from "./recipeTypes";
+import { QuickMealForm } from "./QuickMealForm";
+import { MealRatingPanel } from "./MealRatingPanel";
+import { dishCategories, diningScore } from "./diningTypes";
 import "./meals.css";
 
 function VoteCounts({
@@ -38,7 +44,7 @@ function VoteCounts({
   compact?: boolean;
 }) {
   return (
-    <div
+    <span
       className={compact ? "recipe-meta meal-card-votes" : "meal-vote-counts"}
     >
       <span
@@ -59,7 +65,7 @@ function VoteCounts({
         {!compact && "Nu mi-a plăcut: "}
         {meal.disliked_count}
       </span>
-    </div>
+    </span>
   );
 }
 
@@ -79,6 +85,9 @@ export function Meals({
   onExpired,
   requestedMeal,
   onMealOpened,
+  requestedNewMeal,
+  onNewMealOpened,
+  refreshToken,
 }: {
   active: boolean;
   family: Family;
@@ -89,9 +98,18 @@ export function Meals({
   onExpired: () => void;
   requestedMeal: MealRequest | null;
   onMealOpened: () => void;
+  requestedNewMeal: boolean;
+  onNewMealOpened: () => void;
+  refreshToken: number;
 }) {
   const base = `/families/${family.id}/meals`;
   const [date, setDate] = useState(requestedMeal?.date ?? bucharestToday());
+  const [history, setHistory] = useState(!requestedMeal);
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [scope, setScope] = useState("family");
+  const [quickAdding, setQuickAdding] = useState(false);
   const [items, setItems] = useState<Meal[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -102,11 +120,28 @@ export function Meals({
   const [notice, setNotice] = useState("");
   const loadedPosition = useRef("");
   useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearch(query.trim());
+      setPage(1);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query]);
+  useEffect(() => {
+    if (!active || !requestedNewMeal) return;
+    if (family.role !== "limited") setQuickAdding(true);
+    onNewMealOpened();
+  }, [active, requestedNewMeal, family.role]);
+  useEffect(() => {
     if (!active) return;
     const controller = new AbortController();
     setLoading(true);
     setError("");
-    const position = `${base}?date=${date}&page=${page}`;
+    const params = new URLSearchParams({ page: String(page), scope });
+    if (history) params.set("history", "1");
+    else params.set("date", date);
+    if (search) params.set("q", search);
+    if (category) params.set("category", category);
+    const position = `${base}?${params}`;
     if (loadedPosition.current !== position) setItems([]);
     api<MealList>(position, {
       signal: controller.signal,
@@ -129,9 +164,29 @@ export function Meals({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [active, base, date, page, revision]);
+  }, [
+    active,
+    base,
+    date,
+    page,
+    revision,
+    history,
+    search,
+    category,
+    scope,
+    refreshToken,
+  ]);
   useEffect(() => {
     if (!requestedMeal || !active) return;
+    if (history || search || category || scope !== "family") {
+      setHistory(false);
+      setQuery("");
+      setSearch("");
+      setCategory("");
+      setScope("family");
+      setPage(1);
+      return;
+    }
     if (date !== requestedMeal.date) {
       setDate(requestedMeal.date);
       setPage(1);
@@ -167,7 +222,18 @@ export function Meals({
             onExpired();
         });
     return () => controller.abort();
-  }, [requestedMeal, active, date, loading, items, base]);
+  }, [
+    requestedMeal,
+    active,
+    date,
+    loading,
+    items,
+    base,
+    history,
+    search,
+    category,
+    scope,
+  ]);
   useEffect(() => {
     if (!active) return;
     const controller = new AbortController();
@@ -223,40 +289,98 @@ export function Meals({
   }
   return (
     <>
-      <div className="meal-day-controls">
-        <button
-          className="icon-button"
-          aria-label="Ziua anterioară"
-          disabled={date === "1900-01-01"}
-          onClick={() => chooseDate(moveDay(date, -1))}
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <div className="meal-day-picker">
-          <DatePicker
-            label="Ziua meselor"
-            hideLabel
-            value={date}
-            min="1900-01-01"
-            max="2100-12-31"
-            onChange={chooseDate}
+      <div className="meal-journal-toolbar">
+        <label className="search">
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            aria-label="Caută mese"
+            placeholder="Caută mese"
+            value={query}
+            maxLength={120}
+            onChange={(event) => setQuery(event.target.value)}
           />
-        </div>
-        <button
-          className="icon-button"
-          aria-label="Ziua următoare"
-          disabled={date === "2100-12-31"}
-          onClick={() => chooseDate(moveDay(date, 1))}
-        >
-          <ChevronRight size={20} />
-        </button>
-        <button
-          className="button secondary"
-          onClick={() => chooseDate(bucharestToday())}
-        >
-          Azi
-        </button>
+        </label>
+        <label className="field">
+          Perioadă
+          <select
+            value={history ? "history" : "day"}
+            onChange={(event) => {
+              setHistory(event.target.value === "history");
+              setPage(1);
+            }}
+          >
+            <option value="history">Tot istoricul</option>
+            <option value="day">O zi</option>
+          </select>
+        </label>
+        <label className="field">
+          Categorie
+          <select
+            value={category}
+            onChange={(event) => {
+              setCategory(event.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">Toate</option>
+            {Object.entries(dishCategories).map(([key, label]) => (
+              <option value={key} key={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="field">
+          Mese
+          <select
+            value={scope}
+            onChange={(event) => {
+              setScope(event.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="family">Toate mesele accesibile</option>
+            <option value="mine">Adăugate de mine</option>
+          </select>
+        </label>
       </div>
+      {!history && (
+        <div className="meal-day-controls">
+          <button
+            className="icon-button"
+            aria-label="Ziua anterioară"
+            disabled={date === "1900-01-01"}
+            onClick={() => chooseDate(moveDay(date, -1))}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <div className="meal-day-picker">
+            <DatePicker
+              label="Ziua meselor"
+              hideLabel
+              value={date}
+              min="1900-01-01"
+              max="2100-12-31"
+              onChange={chooseDate}
+            />
+          </div>
+          <button
+            className="icon-button"
+            aria-label="Ziua următoare"
+            disabled={date === "2100-12-31"}
+            onClick={() => chooseDate(moveDay(date, 1))}
+          >
+            <ChevronRight size={20} />
+          </button>
+          <button
+            className="button secondary"
+            onClick={() => chooseDate(bucharestToday())}
+          >
+            Azi
+          </button>
+        </div>
+      )}
       {notice && (
         <p className="notice" role="status">
           {notice}
@@ -265,20 +389,14 @@ export function Meals({
       <section aria-labelledby="meals-title" aria-busy={loading}>
         <div className="section-header">
           <h2 id="meals-title">
-            {dateLabel(date, {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
+            {history
+              ? "Istoric"
+              : dateLabel(date, {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })}
           </h2>
-          <button
-            className="icon-button"
-            aria-label="Actualizează mesele"
-            disabled={loading}
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            <RefreshCw size={18} />
-          </button>
         </div>
         {loading && !items.length ? (
           <p className="loading-text" role="status">
@@ -299,35 +417,86 @@ export function Meals({
         ) : !items.length ? (
           <div className="empty">
             <UtensilsCrossed size={34} aria-hidden="true" />
-            <h3>Nicio masă în această zi</h3>
+            <h3>
+              {search || category
+                ? "Nicio masă găsită"
+                : history
+                  ? "Nicio masă înregistrată"
+                  : "Nicio masă în această zi"}
+            </h3>
             {family.role !== "limited" && (
-              <button className="button primary" onClick={onChooseRecipe}>
-                Alege o rețetă
-              </button>
+              <div className="meal-vote-actions">
+                <button
+                  className="button primary"
+                  onClick={() => setQuickAdding(true)}
+                >
+                  Adaugă masă
+                </button>
+                <button className="button secondary" onClick={onChooseRecipe}>
+                  Alege o rețetă
+                </button>
+              </div>
             )}
           </div>
         ) : (
           <>
-            <div className="recipe-grid recipe-showcase">
+            <div className="meal-journal-list">
               {items.map((meal) => (
-                <KitchenCard
+                <button
                   key={meal.id}
-                  title={meal.dish_title}
-                  visibility={meal.visibility}
-                  onOpen={() => setSelected(meal)}
-                  ariaLabel={`Deschide masa ${meal.dish_title}`}
-                  photo={<KitchenPhoto resource={meal} base={base} />}
+                  className="meal-journal-row"
+                  onClick={() => setSelected(meal)}
+                  aria-label={`Deschide masa ${meal.dish_title}`}
                 >
-                  <VoteCounts meal={meal} compact />
-                  <div className="recipe-tags">
-                    <span className="recipe-category">
-                      {mealTypes[meal.meal_type]}
+                  <span className="meal-journal-image" aria-hidden="true">
+                    {meal.photo_status ? (
+                      <KitchenPhoto resource={meal} base={base} />
+                    ) : (
+                      <UtensilsCrossed size={22} />
+                    )}
+                  </span>
+                  <span className="meal-journal-copy">
+                    <strong>{meal.dish_title}</strong>
+                    <span className="meal-journal-meta">
+                      {history && (
+                        <time dateTime={meal.meal_date}>
+                          {dateLabel(meal.meal_date, {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}{" "}
+                          ·{" "}
+                        </time>
+                      )}
+                      {meal.restaurant
+                        ? meal.restaurant.name
+                        : mealTypes[meal.meal_type]}
+                    </span>
+                    <VoteCounts meal={meal} compact />
+                  </span>
+                  <span className="meal-journal-end">
+                    {meal.rating_count > 0 && meal.rating_average !== null && (
+                      <span className="meal-card-rating">
+                        <Star size={15} aria-hidden="true" />
+                        {diningScore(meal.rating_average)} · {meal.rating_count}
+                      </span>
+                    )}
+                    <span
+                      aria-label={visibilityLabel[meal.visibility]}
+                      title={visibilityLabel[meal.visibility]}
+                    >
+                      {meal.visibility === "private" ? (
+                        <LockKeyhole size={15} />
+                      ) : (
+                        <Users size={15} />
+                      )}
                     </span>
                     {meal.photo_is_example && (
                       <span className="recipe-example">Exemplu</span>
                     )}
-                  </div>
-                </KitchenCard>
+                  </span>
+                  <ChevronRight size={17} aria-hidden="true" />
+                </button>
               ))}
             </div>
             {(page > 1 || hasMore) && (
@@ -352,6 +521,26 @@ export function Meals({
           </>
         )}
       </section>
+      {quickAdding && (
+        <QuickMealForm
+          base={base}
+          initialDate={history ? bucharestToday() : date}
+          onClose={() => setQuickAdding(false)}
+          onExpired={onExpired}
+          onSaved={(meal) => {
+            setQuickAdding(false);
+            setDate(meal.meal_date);
+            setQuery("");
+            setSearch("");
+            setCategory("");
+            setScope("family");
+            setPage(1);
+            setNotice("Masa a fost adăugată.");
+            setRevision((value) => value + 1);
+            setSelected(meal);
+          }}
+        />
+      )}
       {requestedRecipe && (
         <MealForm
           recipe={requestedRecipe}
@@ -650,6 +839,23 @@ export function MealDetail({
           · {mealTypes[current.meal_type]} ·{" "}
           {visibilityLabel[current.visibility]}
         </p>
+        {current.restaurant && (
+          <p className="meal-restaurant-name">
+            {current.restaurant.name}
+            {current.restaurant.city ? ` · ${current.restaurant.city}` : ""}
+          </p>
+        )}
+        {data && (
+          <MealRatingPanel
+            meal={data}
+            base={base}
+            onChanged={(value) => receive(value, false)}
+            onExpired={() => {
+              onClose();
+              onExpired();
+            }}
+          />
+        )}
         {current.photo_is_example && current.photo_status === "ready" && (
           <p className="meal-example">Imagine de exemplu, generată.</p>
         )}

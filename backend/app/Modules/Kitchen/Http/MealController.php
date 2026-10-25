@@ -16,10 +16,12 @@ final class MealController
 
     public function index(Request $request, string $family): array
     {
-        $filters = $request->validate(['date' => 'sometimes|date_format:Y-m-d|after_or_equal:1900-01-01|before_or_equal:2100-12-31', 'page' => 'sometimes|integer|min:1|max:10000']);
+        $filters = $request->validate(['date' => 'sometimes|date_format:Y-m-d|after_or_equal:1900-01-01|before_or_equal:2100-12-31', 'page' => 'sometimes|integer|min:1|max:10000',
+            'history' => 'sometimes|boolean', 'q' => 'nullable|string|max:160', 'category' => ['nullable', Rule::in(MealCatalog::CATEGORIES)],
+            'scope' => ['sometimes', Rule::in(['mine', 'family'])]]);
 
         return $this->meals->listing($family, $request->user()->id, $request->attributes->get('membership')->id,
-            $filters['date'] ?? CarbonImmutable::now('Europe/Bucharest')->toDateString(), (int) ($filters['page'] ?? 1));
+            $filters['date'] ?? CarbonImmutable::now('Europe/Bucharest')->toDateString(), (int) ($filters['page'] ?? 1), $filters);
     }
 
     public function show(Request $request, string $family, string $meal): array
@@ -33,12 +35,15 @@ final class MealController
     {
         abort_if($request->attributes->get('membership')->role === 'limited', 403);
         $data = $request->validate([
-            'recipe_id' => 'required|uuid', 'recipe_version_id' => 'required|uuid',
-            'meal_date' => 'required|date_format:Y-m-d|after_or_equal:1900-01-01|before_or_equal:2100-12-31',
-            'meal_type' => ['required', Rule::in(['breakfast', 'lunch', 'dinner', 'snack'])],
-            'visibility' => ['required', Rule::in(['private', 'family'])],
-            'family_id' => 'prohibited', 'owner_id' => 'prohibited', 'dish_title' => 'prohibited', 'version' => 'prohibited',
+            'recipe_id' => 'nullable|required_with:recipe_version_id|uuid', 'recipe_version_id' => 'nullable|required_with:recipe_id|uuid',
+            'dish_title' => [Rule::prohibitedIf($request->filled('recipe_id')), 'required_without:recipe_id', 'string', 'max:160'],
+            'meal_date' => 'sometimes|date_format:Y-m-d|after_or_equal:1900-01-01|before_or_equal:2100-12-31',
+            'meal_type' => ['sometimes', Rule::in(['breakfast', 'lunch', 'dinner', 'snack'])],
+            'visibility' => ['sometimes', Rule::in(['private', 'family'])],
+            'category' => ['sometimes', Rule::in(MealCatalog::CATEGORIES)], 'score' => 'nullable|integer|min:1|max:10', 'comment' => 'nullable|string|max:1000',
+            'family_id' => 'prohibited', 'owner_id' => 'prohibited', 'version' => 'prohibited', 'visit_id' => 'prohibited', 'restaurant_id' => 'prohibited',
         ]);
+        $data += ['meal_date' => CarbonImmutable::now('Europe/Bucharest')->toDateString(), 'meal_type' => 'snack', 'visibility' => 'family', 'category' => 'other'];
 
         return response()->json($this->meals->create($family, $request->user()->id, $request->attributes->get('membership')->id, $data), 201);
     }
@@ -59,6 +64,21 @@ final class MealController
         $request->validate(['family_id' => 'prohibited', 'meal_id' => 'prohibited', 'membership_id' => 'prohibited', 'user_id' => 'prohibited', 'owner_id' => 'prohibited']);
 
         return $this->meals->vote($family, $request->user()->id, $request->attributes->get('membership')->id, $meal, [], $request->header('If-Match'), true);
+    }
+
+    public function rate(Request $request, string $family, string $meal): array
+    {
+        $data = $request->validate(['score' => 'required|integer|min:1|max:10', 'comment' => 'nullable|string|max:1000',
+            'family_id' => 'prohibited', 'meal_id' => 'prohibited', 'membership_id' => 'prohibited', 'user_id' => 'prohibited', 'owner_id' => 'prohibited', 'version' => 'prohibited']);
+
+        return $this->meals->rate($family, $request->user()->id, $request->attributes->get('membership')->id, $meal, $data, $request->header('If-Match'));
+    }
+
+    public function withdrawRating(Request $request, string $family, string $meal): array
+    {
+        $request->validate(['family_id' => 'prohibited', 'meal_id' => 'prohibited', 'membership_id' => 'prohibited', 'user_id' => 'prohibited', 'owner_id' => 'prohibited']);
+
+        return $this->meals->rate($family, $request->user()->id, $request->attributes->get('membership')->id, $meal, [], $request->header('If-Match'), true);
     }
 
     public function photo(Request $request, string $family, string $meal): StreamedResponse

@@ -16,6 +16,10 @@ final class KitchenActivitySource implements ActivitySource
                 $join->on('m.family_id', '=', 'activity.family_id')->on('m.id', '=', 'activity.resource_id');
             })->whereNull('m.archived_at')
             ->where(fn (Builder $access) => $access->where('m.owner_id', $actor)->orWhere('m.visibility', 'family'))
+            ->where(fn (Builder $access) => $access->whereNull('m.visit_id')
+                ->orWhereExists(fn (Builder $visit) => $visit->selectRaw('1')->from('kitchen_dining_visits as meal_visit')
+                    ->whereColumn('meal_visit.family_id', 'm.family_id')->whereColumn('meal_visit.id', 'm.visit_id')
+                    ->where(fn (Builder $visible) => $visible->where('meal_visit.owner_id', $actor)->orWhere('meal_visit.visibility', 'family'))))
             ->whereExists(fn (Builder $member) => $member->selectRaw('1')->from('family_memberships as reader')
                 ->whereColumn('reader.family_id', 'm.family_id')->where('reader.user_id', $actor)->whereNull('reader.revoked_at'))
             ->addSelect('m.dish_title as title', 'm.meal_date');

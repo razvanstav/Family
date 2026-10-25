@@ -27,9 +27,27 @@ export type Meal = {
   disliked_count: number;
   voting_open: boolean;
   my_vote: MealVote | null;
+  category: DishCategory;
+  visit_id: string | null;
+  restaurant: Pick<Restaurant, "id" | "name" | "city"> | null;
+  rating_average: number | null;
+  rating_count: number;
+  my_rating: {
+    score: number | null;
+    comment: string | null;
+    version: number;
+  } | null;
 };
 export type MealList = { items: Meal[]; page: number; has_more: boolean };
 export type MealDetailData = Meal & {
+  ratings: {
+    membership_id: string;
+    author_name: string;
+    score: number;
+    comment: string | null;
+  }[];
+  rating_page: number;
+  rating_has_more: boolean;
   feedback: {
     membership_id: string;
     author_name: string;
@@ -39,3 +57,4 @@ export type MealDetailData = Meal & {
   feedback_page: number;
   feedback_has_more: boolean;
 };
+import type { DishCategory, Restaurant } from "./diningTypes";

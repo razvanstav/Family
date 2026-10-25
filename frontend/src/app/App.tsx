@@ -80,7 +80,7 @@ import {
 const pageLabels = {
   home: "Acasă",
   family: "Familia mea",
-  kitchen: "Bucătărie",
+  kitchen: "Mese",
   memory: "Amintiri",
   expenses: "Cheltuieli",
   subscriptions: "Abonamente",
@@ -480,7 +480,7 @@ export default function App() {
               >
                 <UtensilsCrossed size={21} />
               </span>
-              Bucătărie
+              Mese
             </button>
             <button
               className={page === "expenses" ? "active" : ""}
