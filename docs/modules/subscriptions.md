@@ -1,5 +1,9 @@
 # Abonamente
 
+## SB3 — Detaliu abonament, 25 octombrie 2026
+
+**În lucru.** Utilizatorul cere un design mai îngrijit pentru fereastra SkyShowtime din captura furnizată. Se modifică un singur layout: detaliul abonamentului, cu iconiță oficială locală, metadate grupate compact și acțiuni aliniate, păstrând funcțiile, accesul și dezvăluirea explicită a secretelor. Formularele și lista nu sunt redesenate. Se arată rezultatul local pentru feedback; această cerere nouă nu include publicarea noului design.
+
 ## SB2 — Pagină separată și navigare fluidă, 25 octombrie 2026
 
 **Publicat:** commit `08c60f8` pe `origin/codex/documente-design`; [deploy 40141536615](https://github.com/razvanstav/Family/actions/runs/40141536615) reușit. HTTPS `/up`, `/app/`, JS/CSS și iconițele Netflix/Spotify răspund 200. Bundle-ul public `BrH9asnZ/DJO_Wuan` coincide cu buildul verificat și include navigarea, filele, iconițele și meniurile noi. Fără migrații noi sau probe pe date reale; granturile runtime/workerii nu sunt declarați verificați independent.

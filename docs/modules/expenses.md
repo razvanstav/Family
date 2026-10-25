@@ -2,6 +2,8 @@
 
 ## CH4 — Filtru și totaluri pe membru, 25 octombrie 2026
 
+**Publicat:** implementare `1cf46f7`, [deploy40191874224](https://github.com/razvanstav/Family/actions/runs/40191874224) reușit; versiunea finală cu logo BH1 este `b8385ba`/[deploy40197755657](https://github.com/razvanstav/Family/actions/runs/40197755657), HTTPS200 și bundle `BKGHsVqB/BXFcCO3E` confirmate. Verificările locale de mai jos rămân baza probelor funcționale; fără date financiare ori evenimente reale de test în producție.
+
 **Implementat și verificat local; acceptarea vizuală așteaptă feedback.** „Plătitor” filtrează după membrul din câmpul existent „Cine a plătit”, cu Toți membrii implicit. Panoul „Pe membri” afișează sumele întregii luni, pentru accesul Familie / Personale și starea Plătite / De plătit selectate. Apăsarea unui rând filtrează lista după acel membru; o nouă apăsare elimină filtrul. Totalul principal, categoriile și lista urmează filtrul. Sumele per membru includ toate paginile, nu numai cele încărcate în browser; cheltuielile private ale altor autori rămân excluse.
 
 `GET /families/{family}/expenses` acceptă opțional `payer_membership_id` UUID și întoarce selecția sau null, plus `member_totals: [{payer_membership_id, payer_name, total_bani, count}]`, agregate în SQL înaintea filtrului membru. `payers` rămâne lista membrilor activi cu cont pentru formular. Foștii membri cu cheltuieli autorizate apar în totaluri și pot fi filtrați; nu redevin opțiuni la adăugare. Selecția se păstrează între luni, inclusiv într-o lună goală; deschiderea din Calendar/Acasă elimină filtrul pentru a arăta cheltuiala cerută. Fără migrații, polling sau schimbări ale regulilor de acces.

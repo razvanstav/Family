@@ -2,6 +2,8 @@
 
 ## CO1 — Evenimente descrescător după dată și oră, 25 octombrie 2026
 
+**Publicat:** implementare `1cf46f7`, [deploy40191874224](https://github.com/razvanstav/Family/actions/runs/40191874224) reușit; versiunea finală cu logo BH1 este `b8385ba`/[deploy40197755657](https://github.com/razvanstav/Family/actions/runs/40197755657), HTTPS200 și bundle `BKGHsVqB/BXFcCO3E` confirmate. Verificările locale de mai jos rămân baza probelor funcționale; fără date financiare ori evenimente reale de test în producție.
+
 **Implementat și verificat local.** Utilizatorul a cerut inversarea listei pentru lună, săptămână și zi și a confirmat explicit „Toate descrescător după dată și oră”. Lista afișează mai întâi datele mai mari, apoi pe cele mai vechi; în aceeași zi, orele sunt descrescătoare. Evenimentele fără oră rămân primele în ziua lor, iar ID-ul oferă ordine stabilă la aceeași oră.
 
 `sortCalendarEvents` din `calendarTypes.ts` sortează o copie a listei filtrate, într-un singur punct din `Calendar.tsx`. Grupurile săptămânii se extrag din aceeași listă ordonată, deci și zilele lor sunt descrescătoare. Grila lunară, selectorul Lu–Du, selecția perioadei, accesul, căutarea și deschiderea surselor rămân existente. API-ul și lista de evenimente apropiate de pe Acasă nu sunt modificate; nu sunt schimbate datele, permisiunile sau reminderele și nu se adaugă polling.

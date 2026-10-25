@@ -1,5 +1,7 @@
 # Operare și verificare
 
+**25 octombrie — CH4/UW2/NV1/CO1/BH1 publicate:** `1cf46f7`/[deploy40191874224](https://github.com/razvanstav/Family/actions/runs/40191874224), apoi `b8385ba`/[deploy40197755657](https://github.com/razvanstav/Family/actions/runs/40197755657), ambele completed/success cu SHA confirmate. HTTPS `/up`, `/app/`, JS și CSS200; bundle final `BKGHsVqB/BXFcCO3E`, sidebar-home/member_totals/modal-panel prezente și data-page-navigation absent. Fără migrații noi, schimbări de configurație/workeri sau probe pe date reale. Inspecția independentă a granturilor/workerilor și tastatura pe iPhone fizic nu sunt declarate verificate. Secretele, fixture-urile și capturile locale rămân excluse din Git/deploy.
+
 ## Solicitări publice și GDPR, 25 octombrie 2026
 
 **Implementat, verificat și publicat în848ceaa.** `POST /api/v1/public/requests` primește tipul `support`, `privacy`, `withdrawal` sau `illegal-content`, numele, emailul, subiectul și mesajul. Formularul înregistrează solicitarea direct în aplicație și returnează numai referința `AMR-…`, starea `received` și data înregistrării stabilită de server. Nu trimite email și nu confirmă expedierea unui răspuns. Protecția CSRF web, limita de șase cereri/minut și limitele de 100/254/160/8000 caractere se aplică și vizitatorilor neautentificați; fișierele și metadatele de stare impuse de client sunt refuzate.
