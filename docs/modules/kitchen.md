@@ -2,7 +2,7 @@
 
 ## H8 — Adăugare din Acasă, 25 octombrie 2026
 
-**Implementat și verificat local; publicare autorizată la26octombrie împreună cu [DS2](interface.md#ds2--dropdownuri-amora-26-octombrie-2026).** App trimite `MealRequest` cu `id: "new"` și data curentă în România când utilizatorul alege Masă din plusul Acasă. Meals consumă cererea înaintea încărcării unui detaliu și deschide QuickMealForm existent, cu Gustare și fără rețetă. Kitchen furnizează butonul său de adăugare pentru restabilirea focusului la închidere; deschiderea obișnuită a formularului păstrează comportamentul existent. Guardul limited se aplică în meniu, App și consumator. Nu sunt schimbate API-ul, salvarea, schema sau permisiunile. [Verificări și captură H8](interface.md#h8--masă-din-acasă-25-octombrie-2026).
+**Implementat, verificat și publicat la26octombrie împreună cu [DS2](interface.md#ds2--dropdownuri-amora-26-octombrie-2026), în `def4fa8`/deploy40239139388.** Actions success/SHA exact și HTTPS/asseturi identice cu buildul local confirmate. App trimite `MealRequest` cu `id: "new"` și data curentă în România când utilizatorul alege Masă din plusul Acasă. Meals consumă cererea înaintea încărcării unui detaliu și deschide QuickMealForm existent, cu Gustare și fără rețetă. Kitchen furnizează butonul său de adăugare pentru restabilirea focusului la închidere; deschiderea obișnuită a formularului păstrează comportamentul existent. Guardul limited se aplică în meniu, App și consumator. Nu sunt schimbate API-ul, salvarea, schema sau permisiunile. [Verificări și captură H8](interface.md#h8--masă-din-acasă-25-octombrie-2026).
 
 ## ME1 — Mese libere, restaurante și note, 25 octombrie 2026
 
