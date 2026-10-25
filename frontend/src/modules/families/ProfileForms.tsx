@@ -13,6 +13,16 @@ import {
   type Entry,
 } from "./profileData";
 
+const sports = [
+  "Alergare",
+  "Ciclism",
+  "Înot",
+  "Sală",
+  "Fotbal",
+  "Tenis",
+  "Drumeție",
+];
+
 export function ProfileSettings({
   profile,
   members,
@@ -165,6 +175,7 @@ export function ProfileSettings({
 export function ProfileEntryModal({
   entry,
   defaultKind,
+  returnFocus,
   base,
   onClose,
   onSaved,
@@ -172,6 +183,7 @@ export function ProfileEntryModal({
 }: {
   entry: Entry | null;
   defaultKind: Kind;
+  returnFocus?: HTMLElement | null;
   base: string;
   onClose: () => void;
   onSaved: (entry: Entry) => void;
@@ -217,7 +229,14 @@ export function ProfileEntryModal({
   }
   return (
     <Modal
-      title={entry ? entry.title : "Adaugă însemnare"}
+      returnFocus={returnFocus}
+      title={
+        entry
+          ? entry.title
+          : kind === "activity"
+            ? "Adaugă activitate"
+            : "Adaugă însemnare"
+      }
       onClose={() => {
         if (!busy) onClose();
       }}
@@ -254,6 +273,22 @@ export function ProfileEntryModal({
                 required
               />
             </label>
+            {kind === "activity" && (
+              <fieldset className="profile-sport-options">
+                <legend>Sport</legend>
+                {sports.map((sport) => (
+                  <button
+                    key={sport}
+                    type="button"
+                    className={`button ${title === sport ? "primary" : "secondary"}`}
+                    aria-pressed={title === sport}
+                    onClick={() => setTitle(sport)}
+                  >
+                    {sport}
+                  </button>
+                ))}
+              </fieldset>
+            )}
             <DatePicker
               label="Data"
               value={date}

@@ -24,6 +24,58 @@
 .home-date time::first-letter {
   text-transform: uppercase;
 }
+.home-add-menu {
+  position: fixed;
+  inset: auto;
+  z-index: 20;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 12px 36px #2d403525;
+  animation: page-enter 160ms var(--ease-out);
+}
+.home-add-action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+}
+.home-add-action:hover:not(:disabled),
+.home-add-action:focus-visible {
+  background: var(--panel);
+}
+.home-add-action:focus-visible {
+  outline-offset: -2px;
+}
+.home-add-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+.home-add-icon--activity {
+  color: #58795a;
+}
+.home-add-icon--expense {
+  color: #a27839;
+}
+.home-add-icon--memory {
+  color: #8c657d;
+}
 .home-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(330px, 1fr);

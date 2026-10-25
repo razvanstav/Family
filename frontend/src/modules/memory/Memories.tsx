@@ -57,10 +57,16 @@ export function Memories({
   const [searchOpen, setSearchOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
+  const addButton = useRef<HTMLButtonElement>(null);
   const loadedPosition = useRef("");
 
   useEffect(() => {
     if (!requestedMoment) return;
+    if (requestedMoment === "new") {
+      if (family.role !== "limited") setView({ mode: "form" });
+      onMomentOpened();
+      return;
+    }
     const existing = items.find((item) => item.id === requestedMoment);
     if (existing) {
       setView({ mode: "detail", moment: existing });
@@ -182,6 +188,7 @@ export function Memories({
             </button>
             {family.role !== "limited" && (
               <button
+                ref={addButton}
                 className="button primary"
                 aria-label="Adaugă amintire"
                 onClick={() => setView({ mode: "form" })}
@@ -466,6 +473,7 @@ export function Memories({
       )}
       {view?.mode === "form" && (
         <MomentForm
+          returnFocus={!view.moment ? addButton.current : undefined}
           base={base}
           actorId={actorId}
           moment={view.moment}

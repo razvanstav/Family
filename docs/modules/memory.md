@@ -1,5 +1,7 @@
 # Amintiri
 
+**Integrare H7, 25 octombrie 2026:** meniul plus din [Acasă](interface.md#h7--adăugare-din-acasă-25-octombrie-2026) deschide formularul existent prin `requestedMoment: "new"`, fără GET de detaliu. Accesul inițial rămâne privat; rolul limited rămâne fără creare. Anularea restabilește focusul pe Adaugă amintire. Build/72 teste frontend, gărzi modulare și browser desktop1280/mobil320 fără overflow trecute; fără salvări/DB/SMTP sau deploy. Detaliile probelor sunt în H7.
+
 ## MT1 — Album fără Cronologie, 24 octombrie 2026
 
 **Publicat:** `c5c81a2`, [deploy40130862434](https://github.com/razvanstav/Family/actions/runs/40130862434) reușit; HTTPS și bundle `btuOof81/BB7XjicJ` confirmate.

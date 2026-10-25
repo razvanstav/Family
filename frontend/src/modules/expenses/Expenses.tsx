@@ -193,6 +193,11 @@ export function Expenses({
       return;
     }
     if (loading || !current) return;
+    if (requestedExpense.id === "new") {
+      if (canCreate) setEditor({ expense: null });
+      onExpenseOpened();
+      return;
+    }
     const controller = new AbortController();
     function open(expense: Expense) {
       setMonth(expense.spent_on.slice(0, 7));
@@ -619,6 +624,7 @@ export function Expenses({
         <ExpenseForm
           family={family}
           expense={editor.expense}
+          returnFocus={!editor.expense ? addButton.current : undefined}
           initialPaymentStatus={paymentStatus}
           payers={current.payers}
           onClose={() => setEditor(null)}

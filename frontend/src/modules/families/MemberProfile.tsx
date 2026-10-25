@@ -98,6 +98,7 @@ export function MemberProfile({
   const [metadataRevision, setMetadataRevision] = useState(0);
   const [storyReset, setStoryReset] = useState(0);
   const loadedPosition = useRef("");
+  const addButton = useRef<HTMLButtonElement>(null);
   const [dialog, setDialog] = useState<
     "configure" | "photo" | "new" | Entry | null
   >(null);
@@ -169,6 +170,13 @@ export function MemberProfile({
     if (requestedProfile.category && tab !== requestedProfile.category) {
       setTab(requestedProfile.category);
       setPage(1);
+      return;
+    }
+    if (requestedProfile.entryId === "new") {
+      if (!profile) return;
+      if (profile.can_write) setDialog("new");
+      else setError("Nu poți adăuga însemnări în acest profil.");
+      onProfileOpened();
       return;
     }
     if (!profile || (tab !== "overview" && tab !== "documents" && loading))
@@ -439,6 +447,7 @@ export function MemberProfile({
                   </button>
                   {profile.can_write && (
                     <button
+                      ref={addButton}
                       className="icon-button primary"
                       aria-label="Adaugă însemnare"
                       onClick={() => setDialog("new")}
@@ -561,6 +570,9 @@ export function MemberProfile({
           {(dialog === "new" || (dialog && typeof dialog === "object")) && (
             <ProfileEntryModal
               entry={typeof dialog === "object" ? dialog : null}
+              returnFocus={
+                dialog === "new" ? (addButton.current ?? undefined) : undefined
+              }
               defaultKind={
                 tab === "learning"
                   ? "book"

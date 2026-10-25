@@ -27,6 +27,7 @@ import { PrivatePhoto, type PhotoStatus } from "../../shared/PrivatePhoto";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { observePageResume } from "../../shared/pageResume";
 import { HomeActivityCard } from "./HomeActivityCard";
+import { HomeAddMenu, type HomeCreateAction } from "./HomeAddMenu";
 import type { ActivityTarget, HomeActivity } from "./homeActivity";
 import "./home.css";
 
@@ -74,6 +75,8 @@ export function Home<Task, Payment>({
   onMemories,
   onKitchen,
   onActivity,
+  canAddActivity,
+  onCreate,
   renderTasks,
   renderUpcomingPayments,
 }: {
@@ -83,6 +86,8 @@ export function Home<Task, Payment>({
   onMemories: (id?: string) => void;
   onKitchen: () => void;
   onActivity: (target: ActivityTarget) => void;
+  canAddActivity: boolean;
+  onCreate: (action: HomeCreateAction) => void;
   renderTasks: (props: {
     tasks: Task[] | null;
     today: string;
@@ -186,15 +191,11 @@ export function Home<Task, Payment>({
             >
               <RefreshCw size={18} />
             </button>
-            <button
-              className="button primary"
-              aria-label="Adaugă eveniment"
-              disabled={family.role === "limited"}
-              onClick={() => onCalendar({ id: "new", date: today })}
-            >
-              <Plus size={18} />
-              <span>Adaugă eveniment</span>
-            </button>
+            <HomeAddMenu
+              canAddActivity={canAddActivity}
+              canAddFamilyContent={family.role !== "limited"}
+              onCreate={onCreate}
+            />
           </div>
         </section>
       </PageBackdrop>

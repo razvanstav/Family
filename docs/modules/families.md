@@ -6,6 +6,14 @@
 
 Stare: **FS1 — Povestea profilului și arbore genealogic**, implementat și verificat local la 23 octombrie 2026; acceptarea vizuală așteaptă feedback. FW1, F3b și F4a/FD3 rămân existente. F4a închide numai adăugarea copilului sub 14 ani fără email; persoanele genealogice fără cont din FS1 sunt un registru separat, fără apartenență sau autentificare. Legarea ulterioară la cont și restul F4 rămân separate.
 
+## AS1 — Activități sportive, 25 octombrie 2026
+
+**Implementat, verificat local și acceptat vizual.** Utilizatorul a aprobat explicit publicarea la 25 octombrie 2026; deployul este în lucru. Formularul de tip Activitate are opțiuni rapide pentru Alergare, Ciclism, Înot, Sală, Fotbal, Tenis și Drumeție. Apăsarea completează titlul editabil; utilizatorul poate scrie orice altă activitate. Data, detaliile și accesul păstrează valorile curente, iar salvarea folosește tipul existent `activity`, fără migrare sau înregistrări demonstrative.
+
+`ProfileForms.tsx` și `memberProfile.css` păstrează butoane native, selecție accesibilă și controale de minimum 44 px. [Acasă H7](interface.md#h7--adăugare-din-acasă-25-octombrie-2026) deschide formularul în profilul propriu, categoria Activități, prin `ProfileRequest` cu `entryId: "new"`; `can_write` se verifică înaintea deschiderii, fără GET pentru o însemnare inexistentă. Focusul după anulare revine pe adăugare, cu fallbackul normal în Prezentare.
+
+Verificare integrată: 72 teste frontend, 4 teste backend de limite/32 aserțiuni, TypeScript/Vite `cY83OUhs/2ml7Txeu`, Prettier/diff/review trecute. Browser desktop1280 și mobil360/320: opțiuni sportive44px fără overflow, alegerea Înot păstrează nota, Alergare completează titlul, acces privat și profil propriu, inclusiv dreptul existent al membrului limited. Captură ignorată `.runtime/h7-sports-mobile.png`; fără salvări/DB/SMTP, probe pe iPhone fizic sau deploy. Fără modificări ale politicilor, notificărilor sau backendului.
+
 ## FS1 — Povestea profilului și arbore genealogic, 23 octombrie 2026
 
 **P1a.2, 24 octombrie:** Documentele din profil sunt compuse în App prin `ProfileDocumentsSlot`, fără import Familie → Documente. Sunt păstrate subiectul, permisiunile, cheia de remontare și deschiderea directă din căutare. 23 teste frontend și build trecute; [detalii P1a](platform.md#p1a2--familie-ui-verificat-la-24-octombrie-2026).

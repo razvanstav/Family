@@ -10,6 +10,7 @@ export function MomentForm({
   base,
   actorId,
   moment: initialMoment,
+  returnFocus,
   onClose,
   onSaved,
   onReloaded,
@@ -18,6 +19,7 @@ export function MomentForm({
   base: string;
   actorId: number;
   moment?: Moment;
+  returnFocus?: HTMLElement | null;
   onClose: () => void;
   onSaved: (moment: Moment) => void;
   onReloaded: (moment: Moment) => void;
@@ -196,6 +198,7 @@ export function MomentForm({
 
   return (
     <Modal
+      returnFocus={returnFocus}
       title={moment ? "Editează amintirea" : "Adaugă amintire"}
       onClose={onClose}
       wide

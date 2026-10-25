@@ -52,6 +52,7 @@ import {
 import { SectionTabs } from "../shared/SectionTabs";
 import { observeSessionLifecycle } from "./sessionLifecycle";
 import { observeVisualViewport } from "../shared/visualViewport";
+import { bucharestToday } from "../shared/calendarDates";
 import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
 import { Home } from "../modules/home/Home";
@@ -698,6 +699,34 @@ export default function App() {
                 key={`${session.user.id}:${family.id}`}
                 family={family}
                 onExpired={() => void refresh()}
+                canAddActivity={currentProfile?.can_write ?? false}
+                onCreate={(action) => {
+                  if (action === "activity") {
+                    if (!currentProfile?.can_write) return;
+                    setDocumentTarget(null);
+                    setProfileTarget({
+                      memberId: family.membership_id,
+                      entryId: "new",
+                      category: "activities",
+                    });
+                    setFamilySection("members");
+                    navigatePage("family");
+                  } else if (action === "expense") {
+                    if (family.role === "limited") return;
+                    setSubscriptionTarget(null);
+                    setExpenseTarget({
+                      id: "new",
+                      date: bucharestToday(),
+                      visibility: "family",
+                      payment_status: "paid",
+                    });
+                    navigatePage("expenses");
+                  } else {
+                    if (family.role === "limited") return;
+                    setMemoryTarget("new");
+                    navigatePage("memory");
+                  }
+                }}
                 onMemories={(id) => {
                   setMemoryTarget(id ?? null);
                   navigatePage("memory");

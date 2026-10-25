@@ -22,6 +22,7 @@ export function ExpenseForm({
   expense,
   payers,
   initialPaymentStatus = "paid",
+  returnFocus,
   onClose,
   onSaved,
   onUnavailable,
@@ -30,6 +31,7 @@ export function ExpenseForm({
   expense: Expense | null;
   payers: Payer[];
   initialPaymentStatus?: ExpensePaymentStatus;
+  returnFocus?: HTMLElement | null;
   onClose: () => void;
   onSaved: (result: Expense | null) => void;
   onUnavailable: () => void;
@@ -147,6 +149,7 @@ export function ExpenseForm({
   }
   return (
     <Modal
+      returnFocus={returnFocus}
       title={
         deleting
           ? "Șterge cheltuiala"
