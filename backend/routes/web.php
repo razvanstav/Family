@@ -34,8 +34,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::get('/session', [SessionController::class, 'show']);
-    Route::post('/login', [SessionController::class, 'login'])->middleware('throttle:6,1');
-    Route::post('/register', RegistrationController::class)->middleware('throttle:6,1');
+    Route::post('/login', [SessionController::class, 'login'])->middleware('throttle:login');
+    Route::post('/register', RegistrationController::class)->middleware('throttle:registration');
     Route::post('/public/requests', [SupportRequestController::class, 'store'])->middleware('throttle:6,1');
     Route::post('/logout', [SessionController::class, 'logout'])->middleware('auth');
     Route::patch('/account', [AccountController::class, 'update'])->middleware(['auth', 'throttle:20,1']);

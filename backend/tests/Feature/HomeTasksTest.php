@@ -169,8 +169,9 @@ final class HomeTasksTest extends TestCase
         $this->getJson($this->home())->assertOk()->assertJsonPath('tasks.0.id', $created['id']);
         $this->withHeader('If-Match', '"1"')->patchJson($this->base.'/tasks/'.$created['id'].'/completion', ['completed' => true])
             ->assertOk()->assertJsonPath('next_due_on', '2026-10-31');
-        $this->getJson($this->home())->assertOk()->assertJsonCount(1, 'tasks')->assertJsonMissing(['id' => $created['id']])
+        $response = $this->getJson($this->home())->assertOk()->assertJsonCount(1, 'tasks')
             ->assertJsonPath('tasks.0.due_on', '2026-10-31')->assertJsonPath('tasks.0.recurrence', 'weekly');
+        $this->assertNotContains($created['id'], array_column($response->json('tasks'), 'id'));
     }
 
     public function test_home_task_reads_are_bounded_without_per_row_queries(): void

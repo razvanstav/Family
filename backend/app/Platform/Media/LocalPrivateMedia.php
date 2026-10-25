@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class LocalPrivateMedia implements PrivateMedia
 {
-    public function __construct(private Scanner $scanner) {}
+    public function __construct(private Scanner $scanner, private UploadBudget $budget) {}
 
     public function receive(string $familyId, int $actorId, UploadedFile $file): array
     {
@@ -40,12 +40,12 @@ final class LocalPrivateMedia implements PrivateMedia
         $id = (string) Str::uuid();
         $key = $familyId.'/'.$id;
         $disk = Storage::disk('local');
-        $disk->putFileAs($familyId, $file, $id);
-        if (! $disk->exists($key)) {
-            abort(503, 'Fișierul nu a putut fi salvat.');
-        }
-        DB::afterRollBack(fn () => $disk->delete($key));
         try {
+            $this->budget->write($disk, $file->getSize(), function () use ($disk, $familyId, $file, $id, $key): void {
+                $disk->putFileAs($familyId, $file, $id);
+                abort_unless($disk->exists($key), 503, 'Fișierul nu a putut fi salvat.');
+            });
+            DB::afterRollBack(fn () => $disk->delete($key));
             // Keep the client name for display only; it is never a storage path or HTTP header.
             $name = Str::limit(preg_replace('/[\x00-\x1F\x7F]/u', '', basename(str_replace('\\', '/', $file->getClientOriginalName()))) ?: 'document', 200, '');
             DB::table('media_assets')->insert([
@@ -84,8 +84,9 @@ final class LocalPrivateMedia implements PrivateMedia
         clearstatcache(true, $path);
         if ($status === 'ready') {
             $normalizedBytes = filesize($path);
+            $growthAllowed = $this->budget->accountGrowth($disk, max(0, $normalizedBytes - $asset->bytes));
             $otherBytes = DB::table('media_assets')->where('family_id', $familyId)->where('id', '!=', $assetId)->sum('bytes');
-            if ($normalizedBytes > config('memoria.max_upload_bytes') || $otherBytes + $normalizedBytes > config('memoria.family_quota_bytes')) {
+            if (! $growthAllowed || $normalizedBytes > config('memoria.max_upload_bytes') || $otherBytes + $normalizedBytes > config('memoria.family_quota_bytes')) {
                 $status = 'rejected';
             }
         }

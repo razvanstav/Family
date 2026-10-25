@@ -46,6 +46,7 @@
   grid-column: 1 / -1;
 }
 .home-tasks,
+.home-activity,
 .home-payments {
   grid-column: 1 / -1;
   min-width: 0;
@@ -97,6 +98,89 @@
 .home-icon--kitchen {
   color: #58795a;
   background: #edf1e7;
+}
+.home-icon--activity {
+  color: #58795a;
+  background: #edf1e7;
+}
+.home-activity-row {
+  gap: 11px;
+}
+.home-activity-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  color: #58795a;
+  background: var(--surface);
+}
+.home-activity-icon--expense {
+  color: #a27839;
+}
+.home-activity-icon--calendar,
+.home-activity-icon--vehicle,
+.home-activity-icon--vehicle_entry {
+  color: #597c96;
+}
+.home-activity-icon--memory,
+.home-activity-icon--subscription {
+  color: #8c657d;
+}
+.home-activity-icon--pet,
+.home-activity-icon--pet_entry {
+  color: #b86536;
+}
+.home-activity-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.home-activity-action {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.home-activity-action strong {
+  color: var(--ink);
+  font-size: inherit;
+}
+.home-activity-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.home-activity-row:hover strong {
+  text-decoration: none;
+}
+.home-activity-row:hover .home-activity-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.home-activity-row time {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.home-activity-more {
+  width: 100%;
+  justify-content: center;
+  margin-top: 6px;
+}
+.home-activity-more[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+.home-activity-limit {
+  margin-top: 8px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
 }
 .home-icon--memory svg {
   color: inherit;

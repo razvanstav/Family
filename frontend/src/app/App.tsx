@@ -703,6 +703,71 @@ export default function App() {
                   navigatePage("memory");
                 }}
                 onKitchen={() => navigatePage("kitchen")}
+                onActivity={(target) => {
+                  switch (target.kind) {
+                    case "task":
+                      setTaskTarget(target.id);
+                      navigatePage("tasks");
+                      break;
+                    case "expense":
+                      setSubscriptionTarget(null);
+                      setExpenseTarget({
+                        id: target.id,
+                        date: target.date,
+                        visibility: target.visibility,
+                        payment_status: target.payment_status,
+                      });
+                      navigatePage("expenses");
+                      break;
+                    case "meal":
+                      setRecipeTarget(null);
+                      setMealDateTarget({ id: target.id, date: target.date });
+                      navigatePage("kitchen");
+                      break;
+                    case "recipe":
+                      setMealDateTarget(null);
+                      setRecipeTarget(target.id);
+                      navigatePage("kitchen");
+                      break;
+                    case "memory":
+                      setMemoryTarget(target.id);
+                      navigatePage("memory");
+                      break;
+                    case "calendar":
+                      setCalendarTarget({ id: target.id, date: target.date });
+                      navigatePage("calendar");
+                      break;
+                    case "vehicle":
+                      setVehicleTarget({ vehicleId: target.id });
+                      navigatePage("vehicles");
+                      break;
+                    case "vehicle_entry":
+                      setVehicleTarget({
+                        vehicleId: target.parent_id,
+                        entryId: target.id,
+                      });
+                      navigatePage("vehicles");
+                      break;
+                    case "pet":
+                      setPetTarget(null);
+                      setPetProfileTarget(target.id);
+                      navigatePage("pets");
+                      break;
+                    case "pet_entry":
+                      setPetProfileTarget(null);
+                      setPetTarget({
+                        petId: target.parent_id,
+                        entryId: target.id,
+                      });
+                      navigatePage("pets");
+                      break;
+                    case "subscription":
+                      setExpenseTarget(null);
+                      setSubscriptionTarget(target.id);
+                      navigatePage("subscriptions");
+                      break;
+                  }
+                }}
                 renderTasks={({ tasks, today, loading, onChanged }) => (
                   <TaskHomeCard
                     family={family}

@@ -64,7 +64,7 @@ export type CalendarRequest = {
   date: string;
   monthOnly?: boolean;
 };
-export type VehicleRequest = { vehicleId: string; entryId: string };
+export type VehicleRequest = { vehicleId: string; entryId?: string };
 export type PetRequest = { petId: string; entryId: string };
 export type DocumentRequest = {
   id: string;

@@ -26,6 +26,8 @@ import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { PrivatePhoto, type PhotoStatus } from "../../shared/PrivatePhoto";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { observePageResume } from "../../shared/pageResume";
+import { HomeActivityCard } from "./HomeActivityCard";
+import type { ActivityTarget, HomeActivity } from "./homeActivity";
 import "./home.css";
 
 type EventSummary = {
@@ -52,6 +54,7 @@ type Overview<Task, Payment> = {
   reminders: ReminderSummary[];
   tasks: Task[];
   upcoming_payments: Payment[];
+  activity: HomeActivity[];
 };
 
 type MemorySummary = {
@@ -70,6 +73,7 @@ export function Home<Task, Payment>({
   onCalendar,
   onMemories,
   onKitchen,
+  onActivity,
   renderTasks,
   renderUpcomingPayments,
 }: {
@@ -78,6 +82,7 @@ export function Home<Task, Payment>({
   onCalendar: (target: CalendarRequest) => void;
   onMemories: (id?: string) => void;
   onKitchen: () => void;
+  onActivity: (target: ActivityTarget) => void;
   renderTasks: (props: {
     tasks: Task[] | null;
     today: string;
@@ -339,6 +344,7 @@ export function Home<Task, Payment>({
             onChanged: () => setRevision((value) => value + 1),
           })}
         </section>
+        <HomeActivityCard items={data?.activity ?? null} onOpen={onActivity} />
         {!!data?.upcoming_payments.length && (
           <section
             className="home-section home-payments"

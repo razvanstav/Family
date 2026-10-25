@@ -391,6 +391,10 @@ function VehicleProfile({
   }, [base, tab, revision, page, archived, state]);
   useEffect(() => {
     if (!requestedEntry || loading) return;
+    if (!requestedEntry.entryId) {
+      onEntryOpened();
+      return;
+    }
     const existing = [
       ...(planned?.items ?? []),
       ...(history?.items ?? []),

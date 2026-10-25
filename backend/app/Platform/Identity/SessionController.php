@@ -28,6 +28,8 @@ final class SessionController
 
     public function login(Request $request)
     {
+        // Existing sessions must not be used to multiply login attempt budgets.
+        abort_if($request->user(), 409, 'Ești deja autentificat. Deconectează-te înainte de a intra în alt cont.');
         $credentials = $request->validate(['email' => 'required|email|max:254', 'password' => 'required|string|max:200']);
         $credentials['email'] = Str::lower(trim($credentials['email']));
         if (! Auth::attempt($credentials)) {
