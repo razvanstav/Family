@@ -593,9 +593,9 @@ export default function App() {
         <header className="topbar">
           <div className="mobile-brand">
             <button
-              className="mobile-account-brand"
-              aria-label="Contul meu"
-              onClick={(event) => openAccount(event.currentTarget)}
+              className="mobile-home"
+              aria-label="Acasă"
+              onClick={() => navigatePage("home")}
             >
               <Brand compact />
             </button>

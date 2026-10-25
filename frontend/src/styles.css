@@ -332,7 +332,7 @@ input[type="radio"] {
 .sidebar-admin[aria-current="page"] {
   background: var(--panel);
 }
-.mobile-account-brand {
+.mobile-home {
   display: flex;
   padding: 0;
   min-height: 44px;
