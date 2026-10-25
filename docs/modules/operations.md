@@ -1,5 +1,7 @@
 # Operare și verificare
 
+**25 octombrie — SB3 publicat:** `0d521d9`, [deploy 40198839745](https://github.com/razvanstav/Family/actions/runs/40198839745) completed/success cu SHA exact confirmat. HTTPS `/up`, `/app/`, JS `ip7koMdA`, CSS `DKAgpeSX` și iconița Sky `CGt1ccQK` răspund 200; asseturile publice includ modal-title-with-icon, subscription-overview și subscription-detail-actions. Fără backend/migrații schimbate sau probe pe date reale. Inspecția independentă a granturilor/workerilor și iPhone fizic rămân neprobate. [Detaliu Abonamente SB3](subscriptions.md#sb3--detaliu-abonament-25-octombrie-2026).
+
 **25 octombrie — CH4/UW2/NV1/CO1/BH1 publicate:** `1cf46f7`/[deploy40191874224](https://github.com/razvanstav/Family/actions/runs/40191874224), apoi `b8385ba`/[deploy40197755657](https://github.com/razvanstav/Family/actions/runs/40197755657), ambele completed/success cu SHA confirmate. HTTPS `/up`, `/app/`, JS și CSS200; bundle final `BKGHsVqB/BXFcCO3E`, sidebar-home/member_totals/modal-panel prezente și data-page-navigation absent. Fără migrații noi, schimbări de configurație/workeri sau probe pe date reale. Inspecția independentă a granturilor/workerilor și tastatura pe iPhone fizic nu sunt declarate verificate. Secretele, fixture-urile și capturile locale rămân excluse din Git/deploy.
 
 ## Solicitări publice și GDPR, 25 octombrie 2026
