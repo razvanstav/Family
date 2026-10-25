@@ -33,7 +33,7 @@
   margin: -6px 0 20px;
   font-size: 13px;
 }
-.filter-panel select {
+.filter-panel .select-field {
   max-width: 250px;
 }
 .library {
@@ -135,7 +135,7 @@
     align-items: flex-start;
     gap: 8px;
   }
-  .filter-panel select {
+  .filter-panel .select-field {
     max-width: none;
   }
   .library {

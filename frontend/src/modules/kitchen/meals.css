@@ -183,7 +183,7 @@
   margin: 0;
   min-width: 0;
 }
-.meal-journal-toolbar select {
+.meal-journal-toolbar .select-field {
   width: 100%;
 }
 .quick-meal-fields {

@@ -519,19 +519,18 @@ input[type="radio"] {
   font-weight: 700;
   color: #4e654f;
 }
-.family-selector select {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  min-height: 44px;
+.family-selector .select-field {
   max-width: 170px;
   color: inherit;
 }
+.family-selector .select-menu-trigger {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  padding: 0;
+}
 .family-selector > svg {
   flex-shrink: 0;
-}
-.family-selector > svg:last-child {
-  pointer-events: none;
 }
 .profile-button {
   border-radius: 50%;
@@ -807,9 +806,9 @@ main {
   font-weight: 500;
 }
 .field input,
-.field select,
+.field .select-field .select-menu-trigger,
 .field textarea,
-.filter-panel select {
+.filter-panel .select-field .select-menu-trigger {
   width: 100%;
   min-height: 44px;
   padding: 11px 12px;
@@ -1431,7 +1430,7 @@ button.avatar > .avatar {
   .family-selector > svg:first-child {
     display: none;
   }
-  .family-selector select {
+  .family-selector .select-field {
     max-width: 190px;
     min-width: 0;
     width: 100%;
@@ -1453,9 +1452,9 @@ button.avatar > .avatar {
   }
   .search input,
   .field input,
-  .field select,
+  .field .select-field .select-menu-trigger,
   .field textarea,
-  .filter-panel select {
+  .filter-panel .select-field .select-menu-trigger {
     font-size: 16px;
   }
   .section-header .text-button span {

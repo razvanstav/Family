@@ -4,14 +4,10 @@
   gap: 12px;
   margin-bottom: 15px;
 }
-.kitchen-toolbar > select {
-  min-height: 44px;
+.kitchen-toolbar > .select-field .select-menu-trigger {
   padding: 0 12px;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  background: #fffefa;
-  color: var(--ink);
   font-size: 13px;
+  font-weight: 400;
 }
 .kitchen-categories {
   display: flex;
@@ -422,7 +418,7 @@
     grid-template-columns: minmax(0, 1fr) 112px;
     gap: 8px;
   }
-  .kitchen-toolbar > select {
+  .kitchen-toolbar > .select-field .select-menu-trigger {
     font-size: 12px;
     padding-inline: 6px;
   }

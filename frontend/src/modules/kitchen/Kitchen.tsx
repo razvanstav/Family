@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState } from "react";
 import {
   CookingPot,
@@ -69,6 +70,7 @@ export function Kitchen({
   const [selected, setSelected] = useState<Recipe | null>(null);
   const [browsing, setBrowsing] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
+  const addButton = useRef<HTMLButtonElement>(null);
   const loadedPosition = useRef("");
   useEffect(() => {
     if (requestedMeal) setSection("meals");
@@ -201,6 +203,7 @@ export function Kitchen({
             </button>
             {family.role !== "limited" && (
               <button
+                ref={addButton}
                 className="button primary"
                 aria-label={
                   section === "recipes"
@@ -268,7 +271,7 @@ export function Kitchen({
                     </button>
                   )}
                 </label>
-                <select
+                <SelectField
                   aria-label="Filtrează după acces"
                   value={visibility}
                   onChange={(e) => {
@@ -280,7 +283,7 @@ export function Kitchen({
                   <option value="private">Doar eu</option>
                   <option value="family">Familia mea</option>
                   <option value="selected">Persoane alese</option>
-                </select>
+                </SelectField>
               </div>
               <label className="recipe-archive-filter">
                 <input
@@ -472,6 +475,7 @@ export function Kitchen({
             setDiningMealTarget(null);
             onMealOpened();
           }}
+          getCreateReturnFocus={() => addButton.current}
           requestedNewMeal={newMeal}
           onNewMealOpened={() => setNewMeal(false)}
           onRecipeConsumed={() => setMealTarget(null)}

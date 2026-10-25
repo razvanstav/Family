@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useState, type FormEvent } from "react";
 import { api, ApiError } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
@@ -391,7 +392,7 @@ export function VehicleEntryForm({
         >
           <label className="field">
             Tip
-            <select
+            <SelectField
               value={kind}
               onChange={(e) => {
                 const k = e.target.value as EntryKind;
@@ -406,7 +407,7 @@ export function VehicleEntryForm({
                   {item.label}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </label>
           <label className="field">
             Titlu
@@ -420,7 +421,7 @@ export function VehicleEntryForm({
           <div className="vehicle-field-pair">
             <label className="field">
               Stare
-              <select
+              <SelectField
                 value={state}
                 onChange={(e) => setState(e.target.value as typeof state)}
               >
@@ -431,7 +432,7 @@ export function VehicleEntryForm({
                   Planificat
                 </option>
                 <option value="completed">Efectuat</option>
-              </select>
+              </SelectField>
             </label>
             <DatePicker
               label={state === "planned" ? "Scadență" : "Data efectuării"}

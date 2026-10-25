@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { api, ApiError, errorMessage, type Family } from "../../shared/api";
@@ -215,7 +216,7 @@ export function ExpenseForm({
               </label>
               <label className="field">
                 Categorie
-                <select
+                <SelectField
                   name="category"
                   value={category}
                   onChange={(event) =>
@@ -227,13 +228,13 @@ export function ExpenseForm({
                       {item.label}
                     </option>
                   ))}
-                </select>
+                </SelectField>
               </label>
             </div>
             <div className="expense-form-pair">
               <label className="field">
                 Stare
-                <select
+                <SelectField
                   name="payment_status"
                   value={paymentStatus}
                   disabled={source !== null}
@@ -243,11 +244,11 @@ export function ExpenseForm({
                 >
                   <option value="paid">Plătită</option>
                   <option value="planned">De plătit</option>
-                </select>
+                </SelectField>
               </label>
               <label className="field">
                 Repetare
-                <select
+                <SelectField
                   name="recurrence"
                   value={recurrence ?? ""}
                   disabled={Boolean(source?.has_next_payment)}
@@ -268,7 +269,7 @@ export function ExpenseForm({
                       {item.label}
                     </option>
                   ))}
-                </select>
+                </SelectField>
                 {(source?.has_next_payment || recurrence) && (
                   <small id="expense-recurrence-hint">
                     {source?.has_next_payment
@@ -292,7 +293,7 @@ export function ExpenseForm({
                 {paymentStatus === "planned"
                   ? "Cine plătește"
                   : "Cine a plătit"}
-                <select
+                <SelectField
                   name="payer"
                   value={payer}
                   onChange={(event) => setPayer(event.target.value)}
@@ -303,7 +304,7 @@ export function ExpenseForm({
                       {item.name}
                     </option>
                   ))}
-                </select>
+                </SelectField>
               </label>
             </div>
             <label className="field">
@@ -317,7 +318,7 @@ export function ExpenseForm({
             </label>
             <label className="field">
               Acces
-              <select
+              <SelectField
                 name="visibility"
                 aria-label="Acces"
                 value={visibility}
@@ -328,7 +329,7 @@ export function ExpenseForm({
               >
                 <option value="family">Familie</option>
                 <option value="private">Privat</option>
-              </select>
+              </SelectField>
               <small id="expense-access-hint">
                 {visibility === "family"
                   ? "Membrii activi ai familiei o pot vedea. Numai tu o poți modifica."

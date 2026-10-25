@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import {
   useEffect,
   useRef,
@@ -188,7 +189,7 @@ export function Documents({
       {member && filterOpen && (
         <div className="filter-panel">
           <label htmlFor="privacy">Cine poate vedea</label>
-          <select
+          <SelectField
             id="privacy"
             value={privacy}
             onChange={(e) => setPrivacy(e.target.value)}
@@ -199,7 +200,7 @@ export function Documents({
                 {label}
               </option>
             ))}
-          </select>
+          </SelectField>
         </div>
       )}
       <section className="library" aria-labelledby="library-title">
@@ -437,7 +438,7 @@ export function DocumentCreateDialog({
         </label>
         <label className="field">
           Categorie
-          <select
+          <SelectField
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             disabled={busy || !!created}
@@ -449,7 +450,7 @@ export function DocumentCreateDialog({
                   {c.label}
                 </option>
               ))}
-          </select>
+          </SelectField>
         </label>
         <ExpirationField
           value={expiresOn}

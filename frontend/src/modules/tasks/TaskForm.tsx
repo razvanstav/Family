@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { api, ApiError, errorMessage, type Family } from "../../shared/api";
@@ -216,7 +217,7 @@ export function TaskForm({
             </label>
             <label className="field">
               Responsabil
-              <select
+              <SelectField
                 name="assignee_membership_id"
                 value={assignee}
                 disabled={visibility === "private"}
@@ -228,7 +229,7 @@ export function TaskForm({
                     {person.name}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
             <DatePicker
               label={recurrence ? "Termen" : "Termen (opțional)"}
@@ -240,7 +241,7 @@ export function TaskForm({
             />
             <label className="field">
               Repetare
-              <select
+              <SelectField
                 name="recurrence"
                 value={recurrence ?? ""}
                 aria-describedby={
@@ -258,7 +259,7 @@ export function TaskForm({
                     {label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
               {recurrence && !source?.completed_at && (
                 <small id="task-recurrence-hint">
                   {due
@@ -269,7 +270,7 @@ export function TaskForm({
             </label>
             <label className="field">
               Acces
-              <select
+              <SelectField
                 name="visibility"
                 aria-label="Acces"
                 value={visibility}
@@ -282,7 +283,7 @@ export function TaskForm({
               >
                 <option value="family">Familie</option>
                 <option value="private">Personal</option>
-              </select>
+              </SelectField>
               <small id="task-access-hint">
                 {visibility === "family"
                   ? "Membrii activi o pot vedea. Tu și responsabilul o puteți finaliza; numai tu o poți modifica."

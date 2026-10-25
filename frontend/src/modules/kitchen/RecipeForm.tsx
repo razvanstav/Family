@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ImagePlus } from "lucide-react";
 import { api, ApiError } from "../../shared/api";
@@ -161,17 +162,20 @@ export function RecipeForm({
         <div className="recipe-form-row">
           <label className="field">
             Categorie
-            <select name="category" defaultValue={recipe?.category ?? "main"}>
+            <SelectField
+              name="category"
+              defaultValue={recipe?.category ?? "main"}
+            >
               {Object.entries(recipeCategories).map(([key, label]) => (
                 <option key={key} value={key}>
                   {label}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </label>
           <label className="field">
             Dificultate
-            <select
+            <SelectField
               name="difficulty"
               defaultValue={recipe?.difficulty ?? "easy"}
             >
@@ -180,7 +184,7 @@ export function RecipeForm({
                   {label}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </label>
         </div>
         <div className="recipe-form-row">
@@ -234,7 +238,7 @@ export function RecipeForm({
         {recipe && (
           <label className="field">
             Fotografie
-            <select
+            <SelectField
               name="photo_action"
               value={photoAction}
               onChange={(e) => setPhotoAction(e.target.value)}
@@ -252,7 +256,7 @@ export function RecipeForm({
               {recipe.photo_status && (
                 <option value="remove">Elimină din versiunea nouă</option>
               )}
-            </select>
+            </SelectField>
           </label>
         )}
         {(!recipe || photoAction === "replace") && (
@@ -276,7 +280,7 @@ export function RecipeForm({
         {!recipe && (
           <label className="field">
             Acces
-            <select
+            <SelectField
               name="visibility"
               value={visibility}
               onChange={(e) => setVisibility(e.target.value)}
@@ -284,7 +288,7 @@ export function RecipeForm({
             >
               <option value="private">Doar eu</option>
               <option value="family">Familia mea</option>
-            </select>
+            </SelectField>
             <small id="recipe-access-hint">
               {visibility === "private"
                 ? "Numai tu poți vedea rețeta și fotografia."

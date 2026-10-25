@@ -38,6 +38,7 @@ import { MobileNavigation } from "./MobileNavigation";
 import { AccountDialog } from "./AccountDialog";
 import { AuthEntry, type AuthMode } from "./AuthEntry";
 import { Brand } from "../shared/Brand";
+import { SelectField } from "../shared/SelectField";
 import {
   Administration,
   type AdministrationMemory,
@@ -620,7 +621,7 @@ export default function App() {
             {page !== "admin" && session.families.length > 0 && (
               <label className="family-selector">
                 <Users size={16} aria-hidden="true" />
-                <select
+                <SelectField
                   aria-label="Familia activă"
                   value={familyId}
                   onChange={(e) => {
@@ -640,8 +641,7 @@ export default function App() {
                       {f.name}
                     </option>
                   ))}
-                </select>
-                <ChevronDown size={14} />
+                </SelectField>
               </label>
             )}
             {family && page !== "admin" && (
@@ -711,6 +711,11 @@ export default function App() {
                     });
                     setFamilySection("members");
                     navigatePage("family");
+                  } else if (action === "meal") {
+                    if (family.role === "limited") return;
+                    setRecipeTarget(null);
+                    setMealDateTarget({ id: "new", date: bucharestToday() });
+                    navigatePage("kitchen");
                   } else if (action === "expense") {
                     if (family.role === "limited") return;
                     setSubscriptionTarget(null);

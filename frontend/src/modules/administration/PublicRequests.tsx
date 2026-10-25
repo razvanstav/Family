@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { api, ApiError, errorMessage } from "../../shared/api";
@@ -79,7 +80,7 @@ export function PublicRequests({ onExpired }: { onExpired: () => void }) {
       </div>
       <label className="field public-request-filter">
         Stare
-        <select
+        <SelectField
           value={status}
           onChange={(event) => {
             setStatus(event.target.value);
@@ -92,7 +93,7 @@ export function PublicRequests({ onExpired }: { onExpired: () => void }) {
               {label}
             </option>
           ))}
-        </select>
+        </SelectField>
       </label>
       {error && (
         <p className="error" role="alert">
@@ -233,7 +234,7 @@ function RequestDialog({
       >
         <label className="field">
           Stare
-          <select
+          <SelectField
             disabled={busy || stale}
             value={status}
             onChange={(event) =>
@@ -245,7 +246,7 @@ function RequestDialog({
                 {label}
               </option>
             ))}
-          </select>
+          </SelectField>
         </label>
         {error && (
           <p role="alert" className="error">

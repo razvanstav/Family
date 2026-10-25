@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Archive, RotateCcw } from "lucide-react";
 import { api, ApiError, errorMessage } from "../../shared/api";
@@ -448,7 +449,7 @@ export function PetEntryForm({
           <fieldset className="pet-fields" disabled={state.busy || state.stale}>
             <label className="field">
               Tip
-              <select
+              <SelectField
                 name="kind"
                 value={kind}
                 onChange={(event) => setKind(event.target.value as CareKind)}
@@ -458,7 +459,7 @@ export function PetEntryForm({
                     {item.label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
             <label className="field">
               Titlu

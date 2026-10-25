@@ -59,14 +59,10 @@
   color: var(--muted);
   font-size: 13px;
 }
-.memory-year-filter select {
-  min-height: 44px;
-  padding: 8px 30px 8px 12px;
+.memory-year-filter .select-field {
   max-width: 150px;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  background: var(--surface);
-  color: var(--ink);
+}
+.memory-year-filter .select-menu-trigger {
   font-size: 13px;
 }
 .memory-years {
@@ -105,13 +101,7 @@
   gap: 12px;
   margin-bottom: 8px;
 }
-.memory-toolbar > select {
-  min-height: 44px;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  padding: 0 12px;
-  background: var(--surface);
-  color: var(--ink);
+.memory-toolbar .select-menu-trigger {
   font-size: 13px;
 }
 .memory-kind-filter {
@@ -652,7 +642,7 @@
     justify-content: space-between;
     width: 100%;
   }
-  .memory-year-filter select {
+  .memory-year-filter .select-menu-trigger {
     font-size: 16px;
   }
   .memory-year-heading {
@@ -662,7 +652,7 @@
   .memory-toolbar {
     gap: 8px;
   }
-  .memory-toolbar > select {
+  .memory-toolbar .select-menu-trigger {
     font-size: 16px;
   }
   .memory-kind-filter {

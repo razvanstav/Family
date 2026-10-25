@@ -85,3 +85,28 @@ test("modules stay independent and shared code has no module or app dependencies
   }
   assert.deepEqual(violations, []);
 });
+
+test("native select controls stay inside the shared styled form adapter", async () => {
+  const violations = [];
+  for (const filename of await files(root)) {
+    if (!filename.endsWith(".tsx")) continue;
+    if (path.relative(root, filename) === "shared/SelectField.tsx") continue;
+    const source = ts.createSourceFile(
+      filename,
+      await readFile(filename, "utf8"),
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
+    function visit(node) {
+      if (
+        (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) &&
+        node.tagName.getText(source) === "select"
+      )
+        violations.push(path.relative(root, filename));
+      ts.forEachChild(node, visit);
+    }
+    visit(source);
+  }
+  assert.deepEqual(violations, []);
+});

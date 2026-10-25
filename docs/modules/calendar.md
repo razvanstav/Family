@@ -1,5 +1,11 @@
 # Calendar
 
+## ND1 — Alertă neprocesată în producție, 25 octombrie 2026
+
+**Investigație în curs, fără remediere declarată.** Utilizatorul a raportat o alertă lipsă pentru un eveniment de la22:00. Inspecția read-only în sesiunea sa existentă confirmă data25octombrie, momentul ales cu o oră înainte (21:00 România), contul propriu selectat, Calendar — În aplicație activ și Email inactiv. Evenimentul arată încă `Reminder: programat` după momentul scadent, iar clopoțelul este gol. În cod, această etichetă corespunde intenției `pending`, iar clopoțelul listează numai intenții livrate în aplicație. Este confirmată lipsa procesării; cauza exactă din runtime nu este încă observată.
+
+Procesele locale există, dar nu probează serverul extern. Deployul precedent raportează `Runtime diagnostics unavailable: Docker access denied`; configurația Docker din `/srv/family` nu este în repository și nu trebuie confundată cu exemplele systemd din ops/linux. Utilizatorul a confirmat că nu are acces la consola serverului. Verificarea procesului și erorilor necesită administratorul serverului, prin drepturile sale existente; nu se extind automat privilegiile contului de deploy. Nu s-au schimbat evenimentul, destinatarii sau preferințele, nu s-au executat livrări/reporniri/mutații SQL și nu s-au trimis emailuri de probă. Comanda centrală poate trimite și email, deci nu se rulează pentru diagnostic read-only. Urmează inspecția serviciului efectiv și remedierea cauzei observate, apoi verificarea unei alerte reale autorizate; cazul rămâne deschis până atunci.
+
 ## CO1 — Evenimente descrescător după dată și oră, 25 octombrie 2026
 
 **Publicat:** implementare `1cf46f7`, [deploy40191874224](https://github.com/razvanstav/Family/actions/runs/40191874224) reușit; versiunea finală cu logo BH1 este `b8385ba`/[deploy40197755657](https://github.com/razvanstav/Family/actions/runs/40197755657), HTTPS200 și bundle `BKGHsVqB/BXFcCO3E` confirmate. Verificările locale de mai jos rămân baza probelor funcționale; fără date financiare ori evenimente reale de test în producție.

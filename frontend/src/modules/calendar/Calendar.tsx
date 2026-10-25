@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   Archive,
@@ -845,7 +846,7 @@ function EventEditor({
                 )}
                 <label className="field">
                   Acces
-                  <select
+                  <SelectField
                     value={visibility}
                     onChange={(e) =>
                       setVisibility(e.target.value as "private" | "family")
@@ -853,7 +854,7 @@ function EventEditor({
                   >
                     <option value="private">Doar eu</option>
                     <option value="family">Familia mea</option>
-                  </select>
+                  </SelectField>
                   <small>
                     {visibility === "family"
                       ? "Toți membrii activi pot vedea evenimentul. Doar tu îl poți modifica."
@@ -969,7 +970,7 @@ function EventEditor({
                     >
                       <label className="field">
                         Reminder pentru mine
-                        <select
+                        <SelectField
                           aria-label="Reminder pentru mine"
                           value={
                             birthdayOffset === null ? "off" : birthdayOffset
@@ -990,7 +991,7 @@ function EventEditor({
                           <option value="10080">
                             Cu 7 zile înainte, la 09:00
                           </option>
-                        </select>
+                        </SelectField>
                         <small>
                           Ora României. Alegerea se păstrează anual. Dacă
                           momentul a trecut, reminderul nu se trimite.

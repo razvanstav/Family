@@ -4,6 +4,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type ButtonHTMLAttributes,
   type KeyboardEvent,
 } from "react";
 import { Check, ChevronDown } from "lucide-react";
@@ -30,12 +31,24 @@ export function SelectMenu({
   options,
   onChange,
   disabled = false,
+  triggerProps,
 }: {
-  label: string;
+  label?: string;
   value: string;
   options: readonly SelectOption[];
   onChange: (value: string) => void;
   disabled?: boolean;
+  triggerProps?: Pick<
+    ButtonHTMLAttributes<HTMLButtonElement>,
+    | "id"
+    | "title"
+    | "autoFocus"
+    | "tabIndex"
+    | "aria-labelledby"
+    | "aria-describedby"
+    | "aria-required"
+    | "aria-invalid"
+  >;
 }) {
   const id = useId();
   const container = useRef<HTMLDivElement>(null);
@@ -215,6 +228,7 @@ export function SelectMenu({
   return (
     <div className="select-menu" ref={container}>
       <button
+        {...triggerProps}
         ref={trigger}
         type="button"
         className="select-menu-trigger"
@@ -240,6 +254,7 @@ export function SelectMenu({
           popover="manual"
           role="listbox"
           aria-label={label}
+          aria-labelledby={label ? undefined : triggerProps?.id}
           className="select-menu-options"
         >
           {options.map((option, index) => (
@@ -258,7 +273,10 @@ export function SelectMenu({
                 if (event.pointerType === "mouse" && !option.disabled)
                   setActive(index);
               }}
-              onClick={() => choose(index)}
+              onClick={(event) => {
+                event.preventDefault();
+                choose(index);
+              }}
             >
               <span>{option.label}</span>
               {option.value === value && <Check size={17} aria-hidden="true" />}

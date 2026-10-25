@@ -340,7 +340,7 @@
   min-width: 0;
 }
 .calendar-fields input,
-.calendar-fields select,
+.calendar-fields .select-field,
 .calendar-fields textarea {
   min-width: 0;
   max-width: 100%;

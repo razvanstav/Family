@@ -20,15 +20,12 @@
   font-size: 13px;
   flex: 1;
 }
-.vehicle-picker select,
-.vehicle-state-filter select {
-  min-height: 44px;
+.vehicle-picker .select-field,
+.vehicle-state-filter .select-field {
   max-width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 8px 12px;
-  background: var(--surface);
-  color: var(--ink);
+}
+.vehicle-picker .select-menu-trigger,
+.vehicle-state-filter .select-menu-trigger {
   font: inherit;
 }
 .vehicle-archive-filter {

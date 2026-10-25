@@ -2,6 +2,27 @@
   display: inline-flex;
   min-width: 0;
 }
+.select-field {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.select-field > .select-menu {
+  width: 100%;
+}
+.field .select-field,
+.filter-panel .select-field {
+  width: 100%;
+}
+.select-field > .select-menu > .select-menu-trigger[aria-invalid="true"] {
+  border-color: #993d36;
+}
+.select-field-error {
+  color: #993d36;
+  font-size: 13px;
+  font-weight: 400;
+}
 .select-menu-trigger {
   display: flex;
   align-items: center;

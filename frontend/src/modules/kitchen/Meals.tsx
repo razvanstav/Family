@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   ChevronLeft,
@@ -85,6 +86,7 @@ export function Meals({
   onExpired,
   requestedMeal,
   onMealOpened,
+  getCreateReturnFocus,
   requestedNewMeal,
   onNewMealOpened,
   refreshToken,
@@ -98,6 +100,7 @@ export function Meals({
   onExpired: () => void;
   requestedMeal: MealRequest | null;
   onMealOpened: () => void;
+  getCreateReturnFocus: () => HTMLElement | null;
   requestedNewMeal: boolean;
   onNewMealOpened: () => void;
   refreshToken: number;
@@ -110,6 +113,7 @@ export function Meals({
   const [category, setCategory] = useState("");
   const [scope, setScope] = useState("family");
   const [quickAdding, setQuickAdding] = useState(false);
+  const quickReturnFocus = useRef<HTMLElement | null>(null);
   const [items, setItems] = useState<Meal[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -178,6 +182,15 @@ export function Meals({
   ]);
   useEffect(() => {
     if (!requestedMeal || !active) return;
+    if (requestedMeal.id === "new") {
+      setDate(requestedMeal.date);
+      if (family.role !== "limited") {
+        quickReturnFocus.current = getCreateReturnFocus();
+        setQuickAdding(true);
+      }
+      onMealOpened();
+      return;
+    }
     if (history || search || category || scope !== "family") {
       setHistory(false);
       setQuery("");
@@ -233,6 +246,7 @@ export function Meals({
     search,
     category,
     scope,
+    family.role,
   ]);
   useEffect(() => {
     if (!active) return;
@@ -303,7 +317,7 @@ export function Meals({
         </label>
         <label className="field">
           Perioadă
-          <select
+          <SelectField
             value={history ? "history" : "day"}
             onChange={(event) => {
               setHistory(event.target.value === "history");
@@ -312,11 +326,11 @@ export function Meals({
           >
             <option value="history">Tot istoricul</option>
             <option value="day">O zi</option>
-          </select>
+          </SelectField>
         </label>
         <label className="field">
           Categorie
-          <select
+          <SelectField
             value={category}
             onChange={(event) => {
               setCategory(event.target.value);
@@ -329,11 +343,11 @@ export function Meals({
                 {label}
               </option>
             ))}
-          </select>
+          </SelectField>
         </label>
         <label className="field">
           Mese
-          <select
+          <SelectField
             value={scope}
             onChange={(event) => {
               setScope(event.target.value);
@@ -342,7 +356,7 @@ export function Meals({
           >
             <option value="family">Toate mesele accesibile</option>
             <option value="mine">Adăugate de mine</option>
-          </select>
+          </SelectField>
         </label>
       </div>
       {!history && (
@@ -525,10 +539,15 @@ export function Meals({
         <QuickMealForm
           base={base}
           initialDate={history ? bucharestToday() : date}
-          onClose={() => setQuickAdding(false)}
+          returnFocus={quickReturnFocus.current ?? undefined}
+          onClose={() => {
+            setQuickAdding(false);
+            quickReturnFocus.current = null;
+          }}
           onExpired={onExpired}
           onSaved={(meal) => {
             setQuickAdding(false);
+            quickReturnFocus.current = null;
             setDate(meal.meal_date);
             setQuery("");
             setSearch("");
@@ -648,24 +667,24 @@ function MealForm({
         />
         <label className="field">
           Masă
-          <select name="meal_type" defaultValue="lunch">
+          <SelectField name="meal_type" defaultValue="lunch">
             {Object.entries(mealTypes).map(([key, label]) => (
               <option key={key} value={key}>
                 {label}
               </option>
             ))}
-          </select>
+          </SelectField>
         </label>
         <label className="field">
           Acces
-          <select
+          <SelectField
             value={visibility}
             onChange={(e) => setVisibility(e.target.value)}
             aria-describedby="meal-access-hint"
           >
             <option value="family">Familia mea</option>
             <option value="private">Doar eu</option>
-          </select>
+          </SelectField>
           <small id="meal-access-hint">
             {visibility === "family"
               ? "Membrii activi văd masa, voturile și comentariile. Rețeta și fotografia își păstrează accesul."

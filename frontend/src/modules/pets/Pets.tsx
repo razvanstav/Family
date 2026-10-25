@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState } from "react";
 import { documentFileState } from "../../shared/documentFiles";
 import type {
@@ -162,7 +163,7 @@ export function Pets({
         {items.length > 0 && (
           <label className="field pets-picker">
             Animal
-            <select
+            <SelectField
               value={pet?.id ?? ""}
               onChange={(event) => setSelected(event.target.value)}
             >
@@ -171,12 +172,12 @@ export function Pets({
                   {pet.name}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </label>
         )}
         <label className="field pets-status-filter">
           Listă
-          <select
+          <SelectField
             value={archived ? "archived" : "active"}
             onChange={(event) => {
               setArchived(event.target.value === "archived");
@@ -186,7 +187,7 @@ export function Pets({
           >
             <option value="active">Active</option>
             <option value="archived">Arhivate</option>
-          </select>
+          </SelectField>
         </label>
         <button
           className="icon-button"
@@ -604,7 +605,7 @@ function PetProfile({
             <div className="pet-care-filters">
               <label className="field">
                 Tip
-                <select
+                <SelectField
                   value={kind}
                   onChange={(event) => setKind(event.target.value)}
                 >
@@ -614,7 +615,7 @@ function PetProfile({
                       {item.label}
                     </option>
                   ))}
-                </select>
+                </SelectField>
               </label>
               <label className="pet-archive-check">
                 <input

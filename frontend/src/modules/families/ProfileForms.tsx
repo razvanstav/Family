@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useState, type FormEvent } from "react";
 import { LockKeyhole, Users, Pencil } from "lucide-react";
 import { api, ApiError, visibilityLabel, type Member } from "../../shared/api";
@@ -251,7 +252,7 @@ export function ProfileEntryModal({
           <fieldset className="profile-form-fields" disabled={busy || stale}>
             <label className="field">
               Tip
-              <select
+              <SelectField
                 value={kind}
                 onChange={(e) => setKind(e.target.value as Kind)}
               >
@@ -262,7 +263,7 @@ export function ProfileEntryModal({
                     </option>
                   ),
                 )}
-              </select>
+              </SelectField>
             </label>
             <label className="field">
               Titlu
@@ -308,7 +309,7 @@ export function ProfileEntryModal({
             </label>
             <label className="field">
               Acces
-              <select
+              <SelectField
                 value={visibility}
                 onChange={(e) =>
                   setVisibility(e.target.value as "private" | "family")
@@ -316,7 +317,7 @@ export function ProfileEntryModal({
               >
                 <option value="private">Privat</option>
                 <option value="family">Familia mea</option>
-              </select>
+              </SelectField>
               <small>
                 {visibility === "private"
                   ? "Doar tu poți vedea însemnarea."

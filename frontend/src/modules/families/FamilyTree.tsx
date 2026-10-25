@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowUpLeft,
@@ -353,7 +354,7 @@ export function FamilyTree({
                   <>
                     <label className="field">
                       Relația cu {selected.name}
-                      <select
+                      <SelectField
                         value={relation}
                         onChange={(e) => setRelation(e.target.value)}
                       >
@@ -361,11 +362,11 @@ export function FamilyTree({
                         <option value="child">Copil</option>
                         <option value="partner">Partener</option>
                         <option value="sibling">Frate sau soră</option>
-                      </select>
+                      </SelectField>
                     </label>
                     <label className="field">
                       Persoană
-                      <select
+                      <SelectField
                         value={target}
                         onChange={(e) => setTarget(e.target.value)}
                       >
@@ -377,7 +378,7 @@ export function FamilyTree({
                               {node.name}
                             </option>
                           ))}
-                      </select>
+                      </SelectField>
                     </label>
                   </>
                 )}

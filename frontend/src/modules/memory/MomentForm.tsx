@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, ApiError, shareableMembers, type Member } from "../../shared/api";
 import { bucharestToday } from "../../shared/calendarDates";
@@ -208,7 +209,7 @@ export function MomentForm({
           <div className="moment-form-row">
             <label className="field">
               Tip
-              <select
+              <SelectField
                 value={kind}
                 onChange={(event) =>
                   setKind(event.target.value as Moment["kind"])
@@ -219,7 +220,7 @@ export function MomentForm({
                     {label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
             <DatePicker
               label="Data"
@@ -268,7 +269,7 @@ export function MomentForm({
           />
           <div className="field">
             <label htmlFor="moment-access">Acces</label>
-            <select
+            <SelectField
               id="moment-access"
               value={visibility}
               onChange={(event) =>
@@ -279,7 +280,7 @@ export function MomentForm({
               <option value="private">Doar eu</option>
               <option value="family">Familia mea</option>
               <option value="selected">Persoane alese</option>
-            </select>
+            </SelectField>
             {moment && (
               <small id="moment-access-hint">
                 Schimbarea accesului se aplică tuturor fotografiilor. Copiile

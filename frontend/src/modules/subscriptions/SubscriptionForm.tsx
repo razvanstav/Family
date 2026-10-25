@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError, errorMessage } from "../../shared/api";
 import { DatePicker } from "../../shared/DatePicker";
@@ -240,7 +241,7 @@ export function SubscriptionForm({
           <fieldset className="subscription-fields" disabled={busy || stale}>
             <label className="field">
               Serviciu
-              <select
+              <SelectField
                 value={service}
                 onChange={(event) => changedService(event.target.value)}
               >
@@ -250,7 +251,7 @@ export function SubscriptionForm({
                   </option>
                 ))}
                 <option value="custom">Alt serviciu</option>
-              </select>
+              </SelectField>
             </label>
             {service === "custom" && (
               <label className="field">
@@ -288,7 +289,7 @@ export function SubscriptionForm({
               </label>
               <label className="field">
                 Monedă
-                <select
+                <SelectField
                   value={currency}
                   onChange={(event) =>
                     setCurrency(event.target.value as SubscriptionCurrency)
@@ -297,13 +298,13 @@ export function SubscriptionForm({
                   <option value="RON">Lei</option>
                   <option value="EUR">Euro</option>
                   <option value="USD">Dolari americani</option>
-                </select>
+                </SelectField>
               </label>
             </div>
             <div className="subscription-form-pair">
               <label className="field">
                 Repetare
-                <select
+                <SelectField
                   value={recurrence}
                   onChange={(event) =>
                     setRecurrence(event.target.value as SubscriptionRecurrence)
@@ -314,7 +315,7 @@ export function SubscriptionForm({
                       {item.label}
                     </option>
                   ))}
-                </select>
+                </SelectField>
               </label>
               <DatePicker
                 value={date}
@@ -338,7 +339,7 @@ export function SubscriptionForm({
             {source && (
               <label className="field">
                 Date de acces
-                <select
+                <SelectField
                   value={secretAction}
                   onChange={(event) => {
                     setSecretAction(event.target.value as typeof secretAction);
@@ -348,7 +349,7 @@ export function SubscriptionForm({
                   <option value="keep">Păstrează datele existente</option>
                   <option value="replace">Înlocuiește datele de acces</option>
                   <option value="remove">Șterge datele de acces</option>
-                </select>
+                </SelectField>
               </label>
             )}
             {secretAction === "replace" && (

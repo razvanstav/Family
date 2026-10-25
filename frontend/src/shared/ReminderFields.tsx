@@ -1,3 +1,4 @@
+import { SelectField } from "./SelectField";
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { api, ApiError, shareableMembers, type Member } from "./api";
 import "./reminderFields.css";
@@ -65,7 +66,7 @@ export function ReminderFields({
     <div className="reminder-fields">
       <label className="field">
         Reminder
-        <select
+        <SelectField
           value={offset === null ? "off" : offset}
           onChange={(e) => {
             const value =
@@ -99,7 +100,7 @@ export function ReminderFields({
           ) : (
             <option value="1440">Cu 24 de ore înainte</option>
           )}
-        </select>
+        </SelectField>
         {offset !== null && (
           <small>
             {allDay ? "Ora României. " : ""}Dacă momentul ales a trecut la

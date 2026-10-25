@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState } from "react";
 import {
   BookHeart,
@@ -280,7 +281,7 @@ export function Memories({
         <div className="memory-filter-actions">
           <label className="memory-year-filter">
             <span>An</span>
-            <select
+            <SelectField
               value={year}
               onChange={(event) => {
                 setYear(event.target.value);
@@ -296,7 +297,7 @@ export function Memories({
                   {value}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </label>
           <button
             className={`icon-button memory-filter-toggle${visibility || archived ? " active" : ""}`}
@@ -312,7 +313,7 @@ export function Memories({
       {filtersOpen && (
         <div className="memory-options" id="memory-filters">
           <div className="memory-toolbar">
-            <select
+            <SelectField
               aria-label="Filtrează după acces"
               value={visibility}
               onChange={(event) => {
@@ -324,7 +325,7 @@ export function Memories({
               <option value="private">Doar eu</option>
               <option value="family">Familia mea</option>
               <option value="selected">Persoane alese</option>
-            </select>
+            </SelectField>
             <button
               className="icon-button"
               aria-label="Actualizează amintirile"

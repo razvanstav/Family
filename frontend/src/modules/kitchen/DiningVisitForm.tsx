@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { api, ApiError, errorMessage, type Family } from "../../shared/api";
@@ -213,7 +214,7 @@ export function DiningVisitForm({
               </label>
               <label className="field">
                 Restaurant
-                <select
+                <SelectField
                   value={restaurant?.id ?? ""}
                   onChange={(event) =>
                     setRestaurant(
@@ -230,7 +231,7 @@ export function DiningVisitForm({
                       {item.city ? ` · ${item.city}` : ""}
                     </option>
                   ))}
-                </select>
+                </SelectField>
               </label>
               {directoryLoading && (
                 <p role="status">Se încarcă restaurantele…</p>
@@ -271,7 +272,7 @@ export function DiningVisitForm({
             />
             <label className="field">
               Tipul mesei
-              <select
+              <SelectField
                 value={mealType}
                 onChange={(event) =>
                   setMealType(event.target.value as keyof typeof mealTypes)
@@ -282,7 +283,7 @@ export function DiningVisitForm({
                     {label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
           </div>
           <div className="dining-dish-drafts">
@@ -328,7 +329,7 @@ export function DiningVisitForm({
                 <div className="dining-form-grid">
                   <label className="field">
                     Categorie
-                    <select
+                    <SelectField
                       value={dish.category}
                       onChange={(event) =>
                         changeDish(dish.key, {
@@ -341,7 +342,7 @@ export function DiningVisitForm({
                           {label}
                         </option>
                       ))}
-                    </select>
+                    </SelectField>
                   </label>
                   <ScorePicker
                     value={dish.score}
@@ -402,7 +403,7 @@ export function DiningVisitForm({
           )}
           <label className="field">
             Acces
-            <select
+            <SelectField
               value={visibility}
               onChange={(event) =>
                 setVisibility(event.target.value as "private" | "family")
@@ -410,7 +411,7 @@ export function DiningVisitForm({
             >
               <option value="family">Familia mea</option>
               <option value="private">Doar eu</option>
-            </select>
+            </SelectField>
             <small>
               {visibility === "family"
                 ? "Membrii activi ai familiei văd vizita, preparatele și evaluările."

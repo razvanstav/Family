@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ChevronDown } from "lucide-react";
 import { api, ApiError, errorMessage } from "../../shared/api";
@@ -11,12 +12,14 @@ import { mealTypes, type MealDetailData } from "./mealTypes";
 export function QuickMealForm({
   base,
   initialDate,
+  returnFocus,
   onClose,
   onSaved,
   onExpired,
 }: {
   base: string;
   initialDate: string;
+  returnFocus?: HTMLElement | null;
   onClose: () => void;
   onSaved: (meal: MealDetailData) => void;
   onExpired: () => void;
@@ -73,7 +76,11 @@ export function QuickMealForm({
     }
   }
   return (
-    <Modal title="Adaugă masă" onClose={() => !busy && onClose()}>
+    <Modal
+      title="Adaugă masă"
+      onClose={() => !busy && onClose()}
+      returnFocus={returnFocus}
+    >
       <form onSubmit={(event) => void save(event)}>
         <fieldset className="quick-meal-fields" disabled={busy}>
           <label className="field">
@@ -89,7 +96,7 @@ export function QuickMealForm({
           </label>
           <label className="field">
             Masă
-            <select
+            <SelectField
               value={type}
               onChange={(event) =>
                 setType(event.target.value as keyof typeof mealTypes)
@@ -100,7 +107,7 @@ export function QuickMealForm({
                   {label}
                 </option>
               ))}
-            </select>
+            </SelectField>
           </label>
           <details className="quick-meal-options">
             <summary>
@@ -119,7 +126,7 @@ export function QuickMealForm({
             />
             <label className="field">
               Categorie
-              <select
+              <SelectField
                 value={category}
                 onChange={(event) =>
                   setCategory(event.target.value as DishCategory)
@@ -130,7 +137,7 @@ export function QuickMealForm({
                     {label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
             <ScorePicker
               label="Nota preparatului (opțional)"
@@ -141,14 +148,14 @@ export function QuickMealForm({
           </details>
           <label className="field">
             Acces
-            <select
+            <SelectField
               value={visibility}
               onChange={(event) => setVisibility(event.target.value)}
               aria-describedby="quick-meal-access"
             >
               <option value="family">Familia mea</option>
               <option value="private">Doar eu</option>
-            </select>
+            </SelectField>
             <small id="quick-meal-access">
               {visibility === "family"
                 ? "Membrii activi văd masa și evaluările."

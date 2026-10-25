@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState } from "react";
 import {
   CalendarDays,
@@ -280,7 +281,7 @@ export function Tasks({
         </div>
         <label className="field tasks-assignee-filter">
           Responsabil
-          <select
+          <SelectField
             aria-label="Responsabil"
             value={assigneeFilter?.id ?? ""}
             onChange={(event) => {
@@ -313,7 +314,7 @@ export function Tasks({
                   {data ? " (fost membru)" : ""}
                 </option>
               )}
-          </select>
+          </SelectField>
         </label>
       </div>
       {message && (

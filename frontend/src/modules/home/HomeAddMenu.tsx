@@ -6,12 +6,19 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { Activity, BookHeart, Plus, Receipt } from "lucide-react";
+import {
+  Activity,
+  BookHeart,
+  Plus,
+  Receipt,
+  UtensilsCrossed,
+} from "lucide-react";
 
-export type HomeCreateAction = "activity" | "expense" | "memory";
+export type HomeCreateAction = "activity" | "meal" | "expense" | "memory";
 
 const actions = [
   { value: "activity", label: "Activitate", icon: Activity },
+  { value: "meal", label: "Masă", icon: UtensilsCrossed },
   { value: "expense", label: "Cheltuială", icon: Receipt },
   { value: "memory", label: "Amintire", icon: BookHeart },
 ] as const;

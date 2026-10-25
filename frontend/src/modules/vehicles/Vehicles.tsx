@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useState } from "react";
 import { documentFileState } from "../../shared/documentFiles";
 import type {
@@ -187,7 +188,7 @@ export function Vehicles({
           {items.length > 1 && (
             <label className="vehicle-picker">
               Mașină
-              <select
+              <SelectField
                 value={vehicle?.id ?? ""}
                 onChange={(e) => setSelected(e.target.value)}
               >
@@ -196,7 +197,7 @@ export function Vehicles({
                     {v.name}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
           )}
           {searchOpen && (
@@ -646,7 +647,7 @@ function VehicleProfile({
             {tab === "maintenance" && (
               <label className="vehicle-state-filter">
                 Stare
-                <select
+                <SelectField
                   value={state}
                   onChange={(e) => {
                     setState(e.target.value);
@@ -656,7 +657,7 @@ function VehicleProfile({
                   <option value="all">Toate</option>
                   <option value="planned">Planificate</option>
                   <option value="completed">Efectuate</option>
-                </select>
+                </SelectField>
               </label>
             )}
             <label className="vehicle-archive-filter">

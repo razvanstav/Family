@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowLeft, Download, Printer } from "lucide-react";
 import { Brand } from "../shared/Brand";
+import { SelectField } from "../shared/SelectField";
 import { api, errorMessage } from "../shared/api";
 import { ActionButton } from "../shared/ActionButton";
 import { FocusInput } from "../shared/FocusInput";
@@ -209,7 +210,7 @@ function PublicRequestForm() {
           <fieldset disabled={busy}>
             <label className="field">
               Tipul solicitării
-              <select
+              <SelectField
                 value={type}
                 onChange={(event) =>
                   setType(event.target.value as PublicRequestType)
@@ -220,7 +221,7 @@ function PublicRequestForm() {
                     {label}
                   </option>
                 ))}
-              </select>
+              </SelectField>
             </label>
             <label className="field">
               Nume

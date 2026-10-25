@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 export function ScorePicker({
   label = "Notă (1–10)",
   value,
@@ -14,7 +15,7 @@ export function ScorePicker({
   return (
     <label className="field">
       {label}
-      <select
+      <SelectField
         value={value ?? ""}
         onChange={(event) =>
           onChange(event.target.value ? Number(event.target.value) : null)
@@ -28,7 +29,7 @@ export function ScorePicker({
             {score}
           </option>
         ))}
-      </select>
+      </SelectField>
     </label>
   );
 }

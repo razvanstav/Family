@@ -67,7 +67,8 @@
   height: 30px;
   flex-shrink: 0;
 }
-.home-add-icon--activity {
+.home-add-icon--activity,
+.home-add-icon--meal {
   color: #58795a;
 }
 .home-add-icon--expense {

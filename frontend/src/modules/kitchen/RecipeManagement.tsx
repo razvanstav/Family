@@ -1,3 +1,4 @@
+import { SelectField } from "../../shared/SelectField";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   api,
@@ -146,7 +147,7 @@ export function RecipeManagement({
           <>
             <label className="field">
               Acces
-              <select
+              <SelectField
                 value={visibility}
                 disabled={busy || conflict || wrongState}
                 onChange={(e) =>
@@ -159,7 +160,7 @@ export function RecipeManagement({
                     {visibilityLabel[value]}
                   </option>
                 ))}
-              </select>
+              </SelectField>
               <small id="recipe-sharing-hint">
                 {visibility === "private"
                   ? "Numai tu poți vedea rețeta, istoricul și fotografiile."
