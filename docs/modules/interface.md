@@ -1,5 +1,13 @@
 # Interfață comună
 
+## BH1 — Logo desktop spre Acasă, 25 octombrie 2026
+
+**Implementat și verificat local; publicare în curs**, la cererea nouă a utilizatorului în timpul deployului CH4/UW2/NV1/CO1. Logo-ul Amora din sidebar este un buton cu nume accesibil Acasă, care folosește aceeași navigare React directă ca meniul. Clickul sau Enter deschide Acasă. Stilul wrapperului păstrează poziția/dimensiunile imaginii, fundalul transparent și focusul comun; `Brand.tsx` rămâne componenta comună. Logo-ul mobil păstrează accesul Contul meu cerut anterior; pagina implicită după autentificare și regulile administratorului nu se schimbă.
+
+**Verificat:** TypeScript/Vite `BKGHsVqB/BXFcCO3E`, Prettier și diff check trecute. Browser cu API fictiv GET8006, desktop1280×900: Cheltuieli→logo/click→Acasă, Bucătărie→logo/Enter→Acasă, focus vizibil; imagine148×88px la x22/y29, fără deplasarea layoutului sau overflow. Mobil390×844: sidebar ascuns, logo cu numele Contul meu, fără overflow; consolă fără erori/warninguri. Fără salvări/DB/SMTP. Nu se adaugă teste care repetă un handler simplu; suita72frontend a fost trecută în CO1, iar buildul este repetat pentru BH1. Captură ignorată `.runtime/bh1-logo-home-desktop.png`; viewport resetat, previzualizarea8006 păstrată pe Acasă cu date fictive. Fără probă pe dispozitiv fizic.
+
+**Publicare anterioară confirmată:** CH4/UW2/NV1/CO1 au fost publicate în commit `1cf46f7`; [deploy40191874224](https://github.com/razvanstav/Family/actions/runs/40191874224) a reușit. HTTPS `/up`, `/app/`, JS `DnT8weRv` și CSS `DY3ju2yD` răspund200; bundle-ul conține member_totals/modal-panel, fără data-page-navigation. Nu s-au executat scrieri sau probe financiare în producție; runtime grants/workerii nu sunt declarați inspectați independent.
+
 ## NV1 — Schimbarea secțiunilor fără efect de refresh, 25 octombrie 2026
 
 **Implementat și verificat local.** Utilizatorul raportează un efect de refresh la schimbarea butoanelor din meniul de jos, în context Chrome pe iPhone. Butoanele nu făceau reload al documentului: cheia `main` includea pagina, iar recrearea containerului și captura ViewTransition porneau fade-ul întregii pagini înainte de răspunsul API, urmat de apariția listei.

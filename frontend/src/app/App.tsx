@@ -431,7 +431,13 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Brand />
+        <button
+          className="sidebar-home"
+          aria-label="Acasă"
+          onClick={() => navigatePage("home")}
+        >
+          <Brand />
+        </button>
         {family && (
           <div className="sidebar-family">
             <span className="family-symbol">
