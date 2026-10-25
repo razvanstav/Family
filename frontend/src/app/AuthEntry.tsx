@@ -3,6 +3,9 @@ import { CalendarDays, FolderHeart, Wallet } from "lucide-react";
 import { api, errorMessage, type Session } from "../shared/api";
 import { SectionTabs } from "../shared/SectionTabs";
 import { Brand } from "../shared/Brand";
+import { ActionButton } from "../shared/ActionButton";
+import { FocusInput } from "../shared/FocusInput";
+import { FeedbackMessage } from "../shared/FeedbackMessage";
 
 const countryside = new URL(
   "../assets/home/warm-countryside.png",
@@ -77,15 +80,15 @@ export function AuthEntry({
               {registering ? "Creează cont" : "Autentificare"}
             </h1>
             {expired && (
-              <p className="notice" role="status">
+              <FeedbackMessage variant="notice">
                 Sesiunea nu mai este activă. Intră din nou în cont.
-              </p>
+              </FeedbackMessage>
             )}
             <form onSubmit={submit}>
               {registering && (
                 <label className="field">
                   Nume
-                  <input
+                  <FocusInput
                     required
                     maxLength={100}
                     autoComplete="name"
@@ -97,7 +100,7 @@ export function AuthEntry({
               )}
               <label className="field">
                 Adresa de email
-                <input
+                <FocusInput
                   type="email"
                   required
                   maxLength={254}
@@ -111,7 +114,7 @@ export function AuthEntry({
               </label>
               <label className="field">
                 Parola
-                <input
+                <FocusInput
                   type="password"
                   required
                   minLength={registering ? 12 : undefined}
@@ -150,7 +153,7 @@ export function AuthEntry({
                   />
                   <label className="field">
                     Numele familiei
-                    <input
+                    <FocusInput
                       required
                       maxLength={100}
                       autoComplete="off"
@@ -162,7 +165,7 @@ export function AuthEntry({
                   {familyMode === "join" && (
                     <label className="field">
                       Cod de invitație
-                      <input
+                      <FocusInput
                         required
                         maxLength={200}
                         autoComplete="off"
@@ -177,19 +180,18 @@ export function AuthEntry({
                 </>
               )}
               {error && (
-                <p className="error" role="alert">
-                  {error}
-                </p>
+                <FeedbackMessage variant="error">{error}</FeedbackMessage>
               )}
-              <button className="button primary full" disabled={busy}>
-                {busy
-                  ? registering
-                    ? "Se creează contul…"
-                    : "Se conectează…"
-                  : registering
-                    ? "Creează cont"
-                    : "Intră în cont"}
-              </button>
+              <ActionButton
+                type="submit"
+                className="button primary full"
+                loading={busy}
+                loadingLabel={
+                  registering ? "Se creează contul…" : "Se conectează…"
+                }
+              >
+                {registering ? "Creează cont" : "Intră în cont"}
+              </ActionButton>
             </form>
             <button
               className="text-button auth-switch"

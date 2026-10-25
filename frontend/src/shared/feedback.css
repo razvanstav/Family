@@ -1,0 +1,51 @@
+.action-button {
+  position: relative;
+}
+.action-button-label,
+.action-button-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: inherit;
+}
+.action-button-label {
+  transition: opacity var(--motion-fast) var(--ease-out);
+}
+.action-button[data-loading] > .action-button-label {
+  opacity: 0;
+}
+.action-button-loading {
+  position: absolute;
+  inset: 0;
+  padding: inherit;
+  pointer-events: none;
+  animation: feedback-enter var(--motion-fast) var(--ease-out);
+}
+.action-button-spinner {
+  flex-shrink: 0;
+  animation: spin 1s linear infinite;
+}
+.focus-input:focus-visible {
+  animation: input-focus-enter var(--motion-fast) var(--ease-out);
+}
+[data-feedback-message] {
+  animation: feedback-enter var(--motion-fast) var(--ease-out);
+}
+@keyframes feedback-enter {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes input-focus-enter {
+  from {
+    outline-color: transparent;
+  }
+  to {
+    outline-color: var(--accent);
+  }
+}

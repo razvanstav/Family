@@ -30,6 +30,7 @@ import {
 } from "../shared/api";
 import {
   Documents,
+  DocumentCreateDialog,
   DocumentDetailDialog,
 } from "../modules/documents/Documents";
 import { FamilyPage } from "../modules/families/Family";
@@ -68,6 +69,10 @@ import { Tasks } from "../modules/tasks/Tasks";
 import { TaskHomeCard } from "../modules/tasks/TaskHomeCard";
 import type { Task } from "../modules/tasks/taskData";
 import { Pets } from "../modules/pets/Pets";
+import type {
+  DocumentCreationRender,
+  DocumentDetailRender,
+} from "../shared/documentIntegration";
 import {
   FamilySearch,
   type SearchResult,
@@ -429,6 +434,27 @@ export default function App() {
       onChange={setFamilySection}
     />
   );
+  const renderDocumentCreation: DocumentCreationRender = (props) =>
+    family && (
+      <DocumentCreateDialog
+        endpoint={`/families/${family.id}`}
+        categoryIds={familyDocumentCategories}
+        initialCategory="home"
+        {...props}
+        onAccessChanged={() => void refresh()}
+      />
+    );
+  const renderDocumentDetail: DocumentDetailRender = (props) =>
+    family && (
+      <DocumentDetailDialog
+        key={props.id}
+        endpoint={`/families/${family.id}`}
+        userId={session.user!.id}
+        canEdit={family.role !== "limited"}
+        initialDocument={null}
+        {...props}
+      />
+    );
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -816,6 +842,8 @@ export default function App() {
                 onEntryOpened={() => setVehicleTarget(null)}
                 onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
+                renderDocumentCreation={renderDocumentCreation}
+                renderDocumentDetail={renderDocumentDetail}
               />
             ) : page === "pets" ? (
               <Pets
@@ -828,6 +856,8 @@ export default function App() {
                 onEntryOpened={() => setPetTarget(null)}
                 onChanged={() => setCalendarRevision((value) => value + 1)}
                 onExpired={() => void refresh()}
+                renderDocumentCreation={renderDocumentCreation}
+                renderDocumentDetail={renderDocumentDetail}
               />
             ) : page === "calendar" ? (
               <CalendarPage

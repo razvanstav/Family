@@ -1,5 +1,13 @@
 # Animale
 
+## AN5 — Adăugare directă de documente, 25 octombrie 2026
+
+**Implementat; verificarea integrată și publicarea sunt în curs.** În fila Documente, „Adaugă document” deschide formularul canonic Documente, compus în App prin slotul tipizat `DocumentCreationRender`. Nu se mai încarcă lista documentelor pentru a alege un element existent. Salvarea creează documentul și îl asociază animalului prin endpointul existent, cu autorizarea Documente păstrată. Fișierul este opțional; numele, categoria, expirarea și accesul urmează regulile canonice. Reîncercarea asocierii reutilizează documentul deja creat, fără o a doua creare.
+
+Titlul fiecărui document deschide detaliul canonic prin `DocumentDetailRender`, inclusiv când fișierul lipsește sau este în verificare/respins, astfel încât un fișier poate fi atașat ulterior. Starea fișierului și eliminarea asocierii rămân disponibile; eliminarea păstrează documentul original. Formularul vechi `PetDocumentForm`, importul și selectorii pentru linkurile înlocuite au fost eliminate. Pets nu importă modulul Documente și nu schimbă permisiunile documentului.
+
+**Verificat până acum:** cele 3 teste de payload Pets și cele 3 gărzi frontend de module trecute. Verificarea TypeScript/build/browser și rezultatul deployului se completează după integrarea în App; nu sunt declarate observate în acest punct.
+
 **DC1, 24 octombrie 2026:** nașterea animalului, data îngrijirii și scadența următoare, inclusiv încheiată, apar în Calendar prin `PetDatedRecords`, fără dubluri cu proiecțiile active. Arhivarea rămâne respectată; accesul documentelor asociate nu se lărgește, iar cele fără fișier au stare neutră. [Contract și verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
 
 Stare la 24 octombrie 2026: **implementat și verificat local**. Utilizatorul a cerut Animale după Sarcini recurente, fără întrebări sau feedback intermediar, apoi push. Modulul este în **Mai multe pe mobil și desktop**. Livrează un singur layout: fotografie și identitate, cu filele stabile **Prezentare / Îngrijire / Documente**. Acceptarea vizuală rămâne pentru utilizator.
@@ -10,7 +18,7 @@ Identitatea animalului și istoricul aparțin modulului Pets, separat de profilu
 
 - **AN1 — Profil, implementat.** Creare, listă, detaliu, editare, fotografie privată și arhivare/restaurare. Numele și specia sunt obligatorii; rasa și data nașterii sunt opționale. Filtrul Active/Arhivate și selecția animalului păstrează pagina curentă la schimbarea familiei.
 - **AN2 — Greutate și îngrijire, implementat.** Înregistrări Greutate, Vaccinare, Vizită și Îngrijire, cu titlu, dată, greutate în kg, cost opțional în lei și notițe. Prezentare afișează înregistrările recente; Îngrijire are filtrare după tip, Arhivate și paginare. Modificările și arhivarea folosesc versiuni; istoricul nu este șters.
-- **AN3 — Document și scadență, implementat.** Se asociază documente existente prin contractul public Documents. Următoarea scadență este opțională și publicată în Calendar prin contractele sale. Calendarul deschide direct înregistrarea canonică din Animale.
+- **AN3 — Document și scadență, implementat.** Documentele se adaugă direct din Animale prin formularul canonic Documente și contractul public Documents (AN5); asocierile existente sunt păstrate. Următoarea scadență este opțională și publicată în Calendar prin contractele sale. Calendarul deschide direct înregistrarea canonică din Animale.
 - **AN4 — Flux in-app, implementat și verificat.** Reminder în aplicație în ziua scadenței sau cu o zi înainte, la 09:00, Ora României, pentru destinatari autorizați. Editarea, încheierea, redeschiderea și arhivarea actualizează proiecția și livrările. Emailul nu este inclus în livrarea curentă.
 
 ## Reguli de date și acces

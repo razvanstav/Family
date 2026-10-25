@@ -6,6 +6,14 @@
 
 Stare: **VC1 — scadențe Auto în Calendar și notificări in-app**, implementat și verificat local. V1a rămâne existent, iar restul V1–V4 (inclusiv emailul) rămâne separat.
 
+## VD1 — Adăugare directă a documentelor, 25 octombrie 2026
+
+**Implementat și verificat local.** Cerere explicită pentru Auto și Animale, cu publicarea tuturor modificărilor locale. „Adaugă document” deschide formularul comun în context, fără citirea/alegerea unei liste existente. Nume, Casă/Amintiri, expirare opțională și fișier opțional; accesul categoriei este explicat înainte de salvare. Asocierile existente, inclusiv private, își păstrează accesul. Titlul deschide detaliul canonic, inclusiv pentru atașarea ulterioară. Eliminarea asocierii păstrează documentul.
+
+App compune `DocumentCreateDialog` și `DocumentDetailDialog` prin contractele UI `shared/documentIntegration.ts`; modulele nu importă între ele. Auto/Pets dețin requestul de asociere prin endpointul existent, autorizat prin `DocumentLinks`. Dacă documentul este creat dar asocierea eșuează, se păstrează ID-ul și câmpurile salvate; Reîncearcă repetă numai asocierea idempotentă. Selectorii vechi, importurile și stilurile fără apelanți au fost eliminate.
+
+**Verificări:** 73 teste frontend și TypeScript/Vite trecute; review independent, limite modulare frontend și diff/format verificate. Browser izolat numai în memorie pe8004, desktop1280 și mobil390/320: câte un document fără fișier creat în fiecare secțiune, eroare503 la prima asociere și succes la retry; exact2 cereri de creare în total și câte2 asocieri, fără GET la lista familiei sau duplicate. Detaliul și Adaugă fișier accesibile, formular minimum44px și fără overflow. Rolul limited nu are acțiunea de creare. Fără DB/SMTP în proba UI; nu reprezintă iPhone fizic. 23 teste backend/414 aserțiuni trecute (Pets13/255, Auto6/127, limite4/32); migrațiile locale lipsă au fost aplicate aditiv numai în memoria_test. Publicarea este consemnată în STATE.
+
 ## VC1 — Scadențe Auto în Calendar, 23 octombrie 2026
 
 - Cerere explicită: ITP/RCA/rovinietă introduse o singură dată, reminder opțional și actualizare fără dubluri. Se includ și reviziile service planificate existente. Alimentările/costurile efectuate nu produc evenimente.
@@ -24,7 +32,7 @@ Stare: **VC1 — scadențe Auto în Calendar și notificări in-app**, implement
 - Profil: nume, marcă, model, număr de înmatriculare opțional, an opțional, fotografie privată scanată/recodată prin `PrivateMedia`. Adulții cu rol owner/adult pot modifica; rolul limited consultă. Toți membrii activi ai familiei pot vedea profilurile și înregistrările. Numărul nu este inclus în audit.
 - Înregistrări ITP/RCA/rovinietă/service/alimentare/alt cost: planificat sau efectuat, dată, cost RON și kilometraj opționale numai după efectuare, notițe. Scadențele restante rămân vizibile cu stare distinctă; intervalele se calculează din data curentă a României. Costurile nu sunt estimate; istoricul include și înregistrări fără cost. Kilometrajul este o citire consemnată la înregistrare, fără calcul de consum sau validarea unei serii istorice V2.
 - Liste paginate de 20, filtre, detaliu/editare din payloadul listei, versiuni If-Match, draft păstrat și salvare blocată la conflict până la reîncărcare explicită. Arhivare/restaurare pentru mașină și înregistrări; mașina arhivată nu mai primește modificări ale conținutului.
-- Documente: asociază un document existent, deschide bytes prin ruta canonică și elimină numai asocierea. `Contracts/DocumentLinks::references` oferă metadatele autorizate în lot; niciun query per document. Asocierea nu schimbă accesul: titlul și bytes nu devin vizibile altui membru prin mașină. Uploadul și partajarea documentului rămân în dosarele existente.
+- Documente: adaugă direct prin formularul canonic Documente, deschide detaliul și elimină numai asocierea. `Contracts/DocumentLinks::references` oferă metadatele autorizate în lot; niciun query per document. Asocierea nu schimbă accesul: titlul și bytes nu devin vizibile altui membru prin mașină. Crearea și partajarea rămân deținute de modulul Documente, prin compoziția tipizată din App.
 - Backend: `Modules/Vehicles/Http/VehicleController.php`, rutele `/families/{family}/vehicles`, migrația `2026_10_22_215356_create_vehicles_tables.php`. Trei tabele cu FK compuse și RLS forțat, autorizare în TenantContext, audit fără identificatori. Migrație și granturi aplicate aditiv pe `memoria_test` și `memoria`, fără seed/reset al aplicației.
 - Frontend: `modules/vehicles/{Vehicles,VehicleForms,vehicleData,vehicles.css}`; numai integrarea de navigație în App și varianta existentă de file comune. Fără dependențe noi.
 

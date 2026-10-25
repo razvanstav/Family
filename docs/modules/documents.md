@@ -1,5 +1,7 @@
 # Documente
 
+**VD1/AN5, 25 octombrie 2026:** formularul canonic este reutilizat direct în Auto și Animale prin sloturi tipizate compuse în App. Fișierul rămâne opțional, categoriile comune sunt Casă/Amintiri, iar accesul existent nu se lărgește. Retry după eroarea asocierii păstrează documentul creat; detaliul permite atașarea ulterioară din context. [Auto VD1](vehicles.md#vd1--adăugare-directă-a-documentelor-25-octombrie-2026), [Animale AN5](pets.md#an5--adăugare-directă-a-documentelor-25-octombrie-2026).
+
 ## DC1 — Fișier opțional și date în Calendar, 24 octombrie 2026
 
 **Implementat și verificat local**, la cererea explicită a utilizatorului; acceptare vizuală deschisă. Un document poate rămâne doar cu nume/categorie și expirare opțională; fișierul se poate atașa ulterior, fără termen sau obligație. `asset_id` devine nullable, fără rând media fictiv, consum de cotă ori scanare pentru metadate. Listele, căutarea, detaliul și asocierile păstrează documentele fără fișier; MIME/starea sunt null și UI arată „Fără fișier”. Accesul pe categorii și subiect rămâne existent.

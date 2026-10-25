@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { api, ApiError, type Document } from "../../shared/api";
+import { api, ApiError } from "../../shared/api";
 import { Modal } from "../../shared/Modal";
 import { DatePicker } from "../../shared/DatePicker";
 import { bucharestToday } from "../../shared/calendarDates";
@@ -532,111 +532,6 @@ export function VehicleEntryForm({
         </div>
       )}
       <FormError error={save.error} stale={save.stale} reload={onSaved} />
-    </Modal>
-  );
-}
-
-export function VehicleDocumentForm({
-  base,
-  familyId,
-  linked,
-  onClose,
-  onSaved,
-}: {
-  base: string;
-  familyId: string;
-  linked: string[];
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const [items, setItems] = useState<Document[] | null>(null);
-  const [selected, setSelected] = useState("");
-  const [loadError, setLoadError] = useState("");
-  const [revision, setRevision] = useState(0);
-  const save = useSave();
-  useEffect(() => {
-    const controller = new AbortController();
-    setLoadError("");
-    api<Document[]>(`/families/${familyId}/documents`, {
-      signal: controller.signal,
-    })
-      .then((rows) => {
-        if (!controller.signal.aborted) setItems(rows);
-      })
-      .catch((e) => {
-        if (!controller.signal.aborted)
-          setLoadError(
-            e instanceof Error ? e.message : "Nu am putut încărca documentele.",
-          );
-      });
-    return () => controller.abort();
-  }, [familyId, revision]);
-  const available = items?.filter((d) => !linked.includes(d.id)) ?? [];
-  return (
-    <Modal title="Asociază document" onClose={onClose}>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save.run(async () => {
-            await api(`${base}/documents`, {
-              method: "POST",
-              body: JSON.stringify({ document_id: selected }),
-            });
-            onSaved();
-          });
-        }}
-      >
-        <fieldset className="vehicle-fields" disabled={save.busy}>
-          {items === null ? (
-            !loadError && <p role="status">Se încarcă documentele…</p>
-          ) : (
-            <label className="field">
-              Document
-              <select
-                required
-                value={selected}
-                onChange={(e) => setSelected(e.target.value)}
-              >
-                <option value="">Alege documentul</option>
-                {available.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.title}
-                  </option>
-                ))}
-              </select>
-              {available.length === 0 && (
-                <small>
-                  Niciun document disponibil. Adaugă documentul în dosarul
-                  familiei sau în profilul tău.
-                </small>
-              )}
-            </label>
-          )}
-          <p className="vehicle-access-note">
-            Asocierea nu schimbă accesul documentului. Fiecare membru vede numai
-            documentele la care are deja acces.
-          </p>
-          <button
-            className="button primary full"
-            disabled={!selected}
-            type="submit"
-          >
-            Asociază
-          </button>
-        </fieldset>
-      </form>
-      {loadError && (
-        <div className="error" role="alert">
-          {loadError}
-          <button
-            className="text-button"
-            onClick={() => setRevision((v) => v + 1)}
-          >
-            Reîncarcă documentele
-          </button>
-        </div>
-      )}
-      <FormError error={save.error} stale={false} reload={onSaved} />
     </Modal>
   );
 }

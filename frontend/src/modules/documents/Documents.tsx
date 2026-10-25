@@ -301,7 +301,7 @@ export function Documents({
         )}
       </section>
       {upload && (
-        <UploadModal
+        <DocumentCreateDialog
           endpoint={endpoint}
           categoryIds={categoryIds}
           initialCategory={category}
@@ -347,7 +347,7 @@ export function Documents({
   );
 }
 
-function UploadModal({
+export function DocumentCreateDialog({
   endpoint,
   categoryIds,
   initialCategory,
@@ -361,7 +361,7 @@ function UploadModal({
   initialCategory: string;
   subjectId?: string;
   onClose: () => void;
-  onSaved: (doc: Document) => void;
+  onSaved: (doc: Document) => void | Promise<void>;
   onAccessChanged: (status: number) => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
@@ -372,9 +372,12 @@ function UploadModal({
   const [expiresOn, setExpiresOn] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [created, setCreated] = useState<Document | null>(null);
+  const submitting = useRef(false);
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim() || busy) return;
+    if (!title.trim() || submitting.current) return;
+    submitting.current = true;
     setBusy(true);
     setError("");
     const data = new FormData();
@@ -383,22 +386,34 @@ function UploadModal({
     data.set("category", category);
     if (subjectId) data.set("subject_membership_id", subjectId);
     data.set("expires_on", expiresOn);
+    let document = created;
     try {
-      onSaved(
-        await api<Document>(`${endpoint}/documents`, {
+      if (!document) {
+        document = await api<Document>(`${endpoint}/documents`, {
           method: "POST",
           body: data,
-        }),
-      );
+        });
+        setCreated(document);
+      }
+      await onSaved(document);
     } catch (e) {
-      if (e instanceof ApiError && [401, 403, 404, 419].includes(e.status)) {
+      if (
+        !document &&
+        e instanceof ApiError &&
+        [401, 403, 404, 419].includes(e.status)
+      ) {
         onAccessChanged(e.status);
         return;
       }
       setError(
-        e instanceof Error ? e.message : "Nu am putut salva documentul.",
+        document
+          ? "Documentul este salvat în dosar, dar nu a putut fi adăugat aici. Reîncearcă."
+          : e instanceof Error
+            ? e.message
+            : "Nu am putut salva documentul.",
       );
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -417,7 +432,7 @@ function UploadModal({
             onChange={(e) => setTitle(e.target.value)}
             required
             maxLength={160}
-            disabled={busy}
+            disabled={busy || !!created}
           />
         </label>
         <label className="field">
@@ -425,7 +440,7 @@ function UploadModal({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            disabled={busy}
+            disabled={busy || !!created}
           >
             {categories
               .filter((c) => categoryIds.includes(c.id))
@@ -439,7 +454,7 @@ function UploadModal({
         <ExpirationField
           value={expiresOn}
           onChange={setExpiresOn}
-          disabled={busy}
+          disabled={busy || !!created}
         />
         <DocumentFileField
           file={file}
@@ -449,7 +464,7 @@ function UploadModal({
               setTitle(chosen.name.replace(/\.[^.]+$/, "").slice(0, 160));
           }}
           onError={setError}
-          disabled={busy}
+          disabled={busy || !!created}
           optional
         />
         <div className="privacy-hint">
@@ -479,11 +494,11 @@ function UploadModal({
           {busy ? (
             <>
               <RefreshCw className="spin" size={18} />{" "}
-              {file ? "Se încarcă și se verifică…" : "Se salvează…"}
+              {file && !created ? "Se încarcă și se verifică…" : "Se salvează…"}
             </>
           ) : (
             <>
-              <Plus size={18} /> Salvează
+              <Plus size={18} /> {created ? "Reîncearcă" : "Salvează"}
             </>
           )}
         </button>

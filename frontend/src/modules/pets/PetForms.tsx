@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Archive, RotateCcw } from "lucide-react";
-import { api, ApiError, errorMessage, type Document } from "../../shared/api";
+import { api, ApiError, errorMessage } from "../../shared/api";
 import { bucharestToday, dateLabel } from "../../shared/calendarDates";
 import { DatePicker } from "../../shared/DatePicker";
 import { Modal } from "../../shared/Modal";
@@ -697,120 +697,6 @@ export function PetEntryForm({
         </div>
       )}
       <MutationFeedback state={state} onReload={() => void reload()} />
-    </Modal>
-  );
-}
-
-export function PetDocumentForm({
-  base,
-  familyId,
-  linked,
-  onClose,
-  onSaved,
-  onUnavailable,
-}: {
-  base: string;
-  familyId: string;
-  linked: string[];
-  onClose: () => void;
-  onSaved: () => void;
-  onUnavailable: () => void;
-}) {
-  const [items, setItems] = useState<Document[] | null>(null);
-  const [selected, setSelected] = useState("");
-  const [error, setError] = useState("");
-  const [revision, setRevision] = useState(0);
-  const state = useMutation(onUnavailable);
-  useEffect(() => {
-    const controller = new AbortController();
-    setItems(null);
-    setError("");
-    api<Document[]>(`/families/${familyId}/documents`, {
-      signal: controller.signal,
-    })
-      .then((items) => {
-        if (!controller.signal.aborted) setItems(items);
-      })
-      .catch((error) => {
-        if (!controller.signal.aborted) setError(errorMessage(error));
-      });
-    return () => controller.abort();
-  }, [familyId, revision]);
-  const available =
-    items?.filter((document) => !linked.includes(document.id)) ?? [];
-  return (
-    <Modal
-      title="Asociază document"
-      onClose={() => {
-        if (!state.busy) onClose();
-      }}
-    >
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!selected) return;
-          void state.run(async () => {
-            await api(`${base}/documents`, {
-              method: "POST",
-              body: JSON.stringify({ document_id: selected }),
-            });
-            onSaved();
-          });
-        }}
-      >
-        <fieldset className="pet-fields" disabled={state.busy}>
-          {!items && !error ? (
-            <p role="status">Se încarcă documentele…</p>
-          ) : (
-            items && (
-              <label className="field">
-                Document
-                <select
-                  required
-                  value={selected}
-                  onChange={(event) => setSelected(event.target.value)}
-                >
-                  <option value="">Alege documentul</option>
-                  {available.map((document) => (
-                    <option key={document.id} value={document.id}>
-                      {document.title}
-                    </option>
-                  ))}
-                </select>
-                {available.length === 0 && (
-                  <small>
-                    Niciun document disponibil. Adaugă documentul în dosarul
-                    familiei sau în profilul tău.
-                  </small>
-                )}
-              </label>
-            )
-          )}
-          <p className="pet-access-note">
-            Asocierea nu schimbă accesul documentului. Fiecare membru vede numai
-            documentele la care are deja acces.
-          </p>
-          <button
-            type="submit"
-            className="button primary full"
-            disabled={!selected}
-          >
-            Asociază
-          </button>
-        </fieldset>
-      </form>
-      {error && (
-        <div className="error" role="alert">
-          {error}
-          <button
-            className="text-button"
-            onClick={() => setRevision((value) => value + 1)}
-          >
-            Reîncarcă documentele
-          </button>
-        </div>
-      )}
-      <MutationFeedback state={state} />
     </Modal>
   );
 }

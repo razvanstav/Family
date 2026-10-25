@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { documentFileState } from "../../shared/documentFiles";
+import type {
+  DocumentCreationRender,
+  DocumentDetailRender,
+} from "../../shared/documentIntegration";
 import {
   Camera,
   CalendarDays,
@@ -23,12 +27,7 @@ import { money } from "../../shared/numbers";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { PrivatePhoto } from "../../shared/PrivatePhoto";
 import { SectionTabs } from "../../shared/SectionTabs";
-import {
-  PetDocumentForm,
-  PetEntryForm,
-  PetForm,
-  PetPhotoForm,
-} from "./PetForms";
+import { PetEntryForm, PetForm, PetPhotoForm } from "./PetForms";
 import {
   careKinds,
   type Pet,
@@ -59,6 +58,8 @@ export function Pets({
   onExpired,
   requestedProfile,
   onProfileOpened,
+  renderDocumentCreation,
+  renderDocumentDetail,
 }: {
   family: Family;
   userId: number;
@@ -68,6 +69,8 @@ export function Pets({
   onExpired: () => void;
   requestedProfile: string | null;
   onProfileOpened: () => void;
+  renderDocumentCreation: DocumentCreationRender;
+  renderDocumentDetail: DocumentDetailRender;
 }) {
   const base = `/families/${family.id}/pets`;
   const [items, setItems] = useState<Pet[]>([]);
@@ -223,6 +226,8 @@ export function Pets({
           onUpdated={updated}
           onChanged={onChanged}
           onExpired={onExpired}
+          renderDocumentCreation={renderDocumentCreation}
+          renderDocumentDetail={renderDocumentDetail}
         />
       ) : (
         !error && (
@@ -274,6 +279,8 @@ function PetProfile({
   onUpdated,
   onChanged,
   onExpired,
+  renderDocumentCreation,
+  renderDocumentDetail,
 }: {
   pet: Pet;
   base: string;
@@ -284,6 +291,8 @@ function PetProfile({
   onUpdated: (pet: Pet) => void;
   onChanged: () => void;
   onExpired: () => void;
+  renderDocumentCreation: DocumentCreationRender;
+  renderDocumentDetail: DocumentDetailRender;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [kind, setKind] = useState("");
@@ -297,8 +306,9 @@ function PetProfile({
   const [unlinking, setUnlinking] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+  const [openedDocument, setOpenedDocument] = useState<string | null>(null);
   const [dialog, setDialog] = useState<
-    "new" | "edit" | "photo" | "link" | PetEntry | null
+    "new" | "edit" | "photo" | "document" | PetEntry | null
   >(null);
   const sequence = useRef(0);
   const morePending = useRef(false);
@@ -520,10 +530,10 @@ function PetProfile({
             {canManage && (
               <button
                 className="button secondary"
-                onClick={() => setDialog("link")}
+                onClick={() => setDialog("document")}
               >
                 <Plus size={17} />
-                <span>Asociază document</span>
+                <span>Adaugă document</span>
               </button>
             )}
           </div>
@@ -539,17 +549,12 @@ function PetProfile({
                     <FileText size={22} aria-hidden="true" />
                   </span>
                   <div className="pet-row-copy">
-                    {document.status === "ready" ? (
-                      <a
-                        href={`/api/v1/families/${familyId}/documents/${document.id}/content`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {document.title}
-                      </a>
-                    ) : (
-                      <strong>{document.title}</strong>
-                    )}
+                    <button
+                      className="text-button"
+                      onClick={() => setOpenedDocument(document.id)}
+                    >
+                      {document.title}
+                    </button>
                     {document.status !== "ready" && (
                       <span>{documentFileState(document.status)}</span>
                     )}
@@ -568,9 +573,7 @@ function PetProfile({
               ))}
             </div>
           ) : (
-            <p className="pet-list-empty">
-              Niciun document asociat la care ai acces.
-            </p>
+            <p className="pet-list-empty">Niciun document la care ai acces.</p>
           )}
         </section>
       ) : (
@@ -683,19 +686,28 @@ function PetProfile({
           onUnavailable={unavailable}
         />
       )}
-      {dialog === "link" && (
-        <PetDocumentForm
-          base={base}
-          familyId={familyId}
-          linked={documents.map((document) => document.id)}
-          onClose={() => setDialog(null)}
-          onSaved={() => {
+      {dialog === "document" &&
+        renderDocumentCreation({
+          onClose: () => setDialog(null),
+          onSaved: async (document) => {
+            await api(`${base}/documents`, {
+              method: "POST",
+              body: JSON.stringify({ document_id: document.id }),
+            });
             setDialog(null);
             setRevision((value) => value + 1);
-          }}
-          onUnavailable={unavailable}
-        />
-      )}
+            onChanged();
+          },
+        })}
+      {openedDocument &&
+        renderDocumentDetail({
+          id: openedDocument,
+          onClose: () => setOpenedDocument(null),
+          onChanged: () => {
+            setRevision((value) => value + 1);
+            onChanged();
+          },
+        })}
       {dialog && (dialog === "new" || typeof dialog === "object") && (
         <PetEntryForm
           key={typeof dialog === "object" ? dialog.id : "new"}

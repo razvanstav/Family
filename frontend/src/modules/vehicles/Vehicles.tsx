@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import { documentFileState } from "../../shared/documentFiles";
+import type {
+  DocumentCreationRender,
+  DocumentDetailRender,
+} from "../../shared/documentIntegration";
 import {
   CarFront,
   Plus,
@@ -35,7 +39,6 @@ import {
   VehicleForm,
   VehiclePhotoForm,
   VehicleEntryForm,
-  VehicleDocumentForm,
 } from "./VehicleForms";
 import "./vehicles.css";
 
@@ -56,6 +59,8 @@ export function Vehicles({
   onEntryOpened,
   onChanged,
   onExpired,
+  renderDocumentCreation,
+  renderDocumentDetail,
 }: {
   family: Family;
   userId: number;
@@ -63,6 +68,8 @@ export function Vehicles({
   onEntryOpened: () => void;
   onChanged: () => void;
   onExpired: () => void;
+  renderDocumentCreation: DocumentCreationRender;
+  renderDocumentDetail: DocumentDetailRender;
 }) {
   const base = `/families/${family.id}/vehicles`;
   const [items, setItems] = useState<Vehicle[]>([]);
@@ -247,6 +254,8 @@ export function Vehicles({
           base={`${base}/${vehicle.id}`}
           onUpdated={updated}
           onExpired={onExpired}
+          renderDocumentCreation={renderDocumentCreation}
+          renderDocumentDetail={renderDocumentDetail}
         />
       ) : (
         !error && (
@@ -299,6 +308,8 @@ function VehicleProfile({
   base,
   onUpdated,
   onExpired,
+  renderDocumentCreation,
+  renderDocumentDetail,
 }: {
   vehicle: Vehicle;
   familyId: string;
@@ -309,6 +320,8 @@ function VehicleProfile({
   base: string;
   onUpdated: (v: Vehicle) => void;
   onExpired: () => void;
+  renderDocumentCreation: DocumentCreationRender;
+  renderDocumentDetail: DocumentDetailRender;
 }) {
   const [tab, setTab] = useState<Tab>("overview");
   const [revision, setRevision] = useState(0);
@@ -317,11 +330,12 @@ function VehicleProfile({
   const [planned, setPlanned] = useState<EntryPage | null>(null);
   const [history, setHistory] = useState<EntryPage | null>(null);
   const [documents, setDocuments] = useState<VehicleDocument[]>([]);
+  const [openedDocument, setOpenedDocument] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [archived, setArchived] = useState(false);
   const [state, setState] = useState("all");
   const [dialog, setDialog] = useState<
-    "edit" | "photo" | "new" | "link" | VehicleEntry | null
+    "edit" | "photo" | "new" | "document" | VehicleEntry | null
   >(null);
   const canManage = vehicle.can_manage && !vehicle.archived_at;
   useEffect(() => {
@@ -560,8 +574,8 @@ function VehicleProfile({
             {canManage && (
               <button
                 className="icon-button primary"
-                aria-label="Asociază document"
-                onClick={() => setDialog("link")}
+                aria-label="Adaugă document"
+                onClick={() => setDialog("document")}
               >
                 <Plus size={20} />
               </button>
@@ -573,7 +587,7 @@ function VehicleProfile({
             </p>
           ) : !documents.length ? (
             <p className="vehicle-list-empty">
-              Niciun document asociat la care ai acces.
+              Niciun document la care ai acces.
             </p>
           ) : (
             <div className="vehicle-list">
@@ -583,17 +597,13 @@ function VehicleProfile({
                     <FileText size={21} />
                   </span>
                   <div className="vehicle-row-body">
-                    {doc.status === "ready" ? (
-                      <a
-                        target="_blank"
-                        rel="noreferrer"
-                        href={`/api/v1/families/${familyId}/documents/${doc.id}/content`}
-                      >
-                        {doc.title}
-                      </a>
-                    ) : (
-                      <strong>{doc.title}</strong>
-                    )}
+                    <button
+                      type="button"
+                      className="text-button"
+                      onClick={() => setOpenedDocument(doc.id)}
+                    >
+                      {doc.title}
+                    </button>
                     {doc.status !== "ready" && (
                       <span>{documentFileState(doc.status)}</span>
                     )}
@@ -722,15 +732,26 @@ function VehicleProfile({
           onSaved={saved}
         />
       )}
-      {dialog === "link" && (
-        <VehicleDocumentForm
-          base={base}
-          familyId={familyId}
-          linked={documents.map((d) => d.id)}
-          onClose={() => setDialog(null)}
-          onSaved={saved}
-        />
-      )}
+      {dialog === "document" &&
+        renderDocumentCreation({
+          onClose: () => setDialog(null),
+          onSaved: async (document) => {
+            await api(`${base}/documents`, {
+              method: "POST",
+              body: JSON.stringify({ document_id: document.id }),
+            });
+            saved();
+          },
+        })}
+      {openedDocument &&
+        renderDocumentDetail({
+          id: openedDocument,
+          onClose: () => setOpenedDocument(null),
+          onChanged: () => {
+            setRevision((value) => value + 1);
+            onChanged();
+          },
+        })}
     </>
   );
 }
