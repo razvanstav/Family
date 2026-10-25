@@ -1,6 +1,6 @@
 # Cheltuieli
 
-**Integrare H7, 25 octombrie 2026:** meniul plus din [Acasă](interface.md#h7--adăugare-din-acasă-25-octombrie-2026) deschide formularul existent cu `ExpenseRequest.id: "new"`, data curentă, Familie și Plătită. Lista furnizează plătitorii; nu se cere GET de detaliu pentru `new`. Rolul limited rămâne fără creare. Anularea restabilește focusul pe Adaugă cheltuială. Build/72 teste frontend, gărzi modulare și browser desktop1280/mobil320 fără overflow trecute; fără salvări/DB/SMTP sau deploy. Detaliile probelor sunt în H7.
+**Integrare H7, 25 octombrie 2026:** meniul plus din [Acasă](interface.md#h7--adăugare-din-acasă-25-octombrie-2026) deschide formularul existent cu `ExpenseRequest.id: "new"`, data curentă, Familie și Plătită. Lista furnizează plătitorii; nu se cere GET de detaliu pentru `new`. Rolul limited rămâne fără creare. Anularea restabilește focusul pe Adaugă cheltuială. Build/72 teste frontend, gărzi modulare și browser desktop1280/mobil320 fără overflow trecute; fără salvări/DB/SMTP. Publicat ulterior în `345d55e`, deploy40228864082 reușit și HTTPS200 cu bundle verificat. Detaliile probelor sunt în H7.
 
 ## CH4 — Filtru și totaluri pe membru, 25 octombrie 2026
 

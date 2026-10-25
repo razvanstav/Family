@@ -1,5 +1,7 @@
 # Operare și verificare
 
+**25 octombrie — H7/AS1 publicat:** `345d55e`, [deploy40228864082](https://github.com/razvanstav/Family/actions/runs/40228864082) completed/success cu headSHA exact și toate etapele confirmate. HTTPS `/up`, `/app/`, JS `cY83OUhs` și CSS `2ml7Txeu` răspund 200; asseturile publice sunt identice SHA-256 cu buildul local verificat și includ meniul plus/cele șapte sporturi. Numai frontend și documentație, fără backend/migrații/configurație/workeri noi sau autentificare/salvări de probă în producție. [Interfață H7](interface.md#h7--adăugare-din-acasă-25-octombrie-2026). Inspecția runtime independentă și iPhone fizic rămân neprobate.
+
 ## SR2 — Protecții login, înscriere și upload, 25 octombrie 2026
 
 **Implementat, verificat și publicat împreună cu H6.** Commit `6f51349`, [deploy 40210148504](https://github.com/razvanstav/Family/actions/runs/40210148504) completed/success cu headSHA exact confirmat; toate etapele jobului au reușit. HTTPS `/up`, `/app/`, JS `BFKMY26o` și CSS `CV-Buh5J` răspund 200, iar bundle-ul conține Activitatea de azi și home-activity. Logurile jobului cer autentificare (403 la citirea anonimă), astfel încât `144658 DONE` nu este declarat observat independent în log. Fără scrieri ori încercări de atac în producție.
