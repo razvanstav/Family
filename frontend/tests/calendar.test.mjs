@@ -16,6 +16,87 @@ const { bucharestToday, monthDays, moveMonth, dateLabel, clampCalendarValue } =
   await import(
     `data:text/javascript;base64,${Buffer.from(js).toString("base64")}`
   );
+const orderSource = await readFile(
+  new URL("../src/modules/calendar/calendarTypes.ts", import.meta.url),
+  "utf8",
+);
+const orderJs = ts.transpileModule(orderSource, {
+  compilerOptions: {
+    target: ts.ScriptTarget.ES2022,
+    module: ts.ModuleKind.ES2022,
+  },
+}).outputText;
+const { sortCalendarEvents } = await import(
+  `data:text/javascript;base64,${Buffer.from(orderJs).toString("base64")}`
+);
+
+test("Calendar lists newest dates first across month and year boundaries without mutating input", () => {
+  const events = Object.freeze([
+    Object.freeze({
+      id: "past",
+      event_date: "2026-12-28",
+      all_day: true,
+      time: null,
+    }),
+    Object.freeze({
+      id: "year",
+      event_date: "2027-01-01",
+      all_day: true,
+      time: null,
+    }),
+    Object.freeze({
+      id: "newest",
+      event_date: "2027-01-03",
+      all_day: true,
+      time: null,
+    }),
+  ]);
+  const ordered = sortCalendarEvents(events);
+  assert.deepEqual(
+    ordered.map((item) => item.id),
+    ["newest", "year", "past"],
+  );
+  assert.deepEqual(
+    events.map((item) => item.id),
+    ["past", "year", "newest"],
+  );
+});
+
+test("Calendar day lists keep all-day entries first then descending hours with stable ties", () => {
+  const event = (id, time, source = null) => ({
+    id,
+    event_date: "2026-10-25",
+    all_day: time === null,
+    time,
+    source,
+  });
+  assert.deepEqual(
+    sortCalendarEvents([
+      event("morning", "08:00"),
+      event("equal-b", "18:30"),
+      event("source", null, { type: "expense", virtual: true }),
+      event("equal-a", "18:30"),
+      event("noon", "12:00"),
+    ]).map((item) => item.id),
+    ["source", "equal-a", "equal-b", "noon", "morning"],
+  );
+});
+
+test("Calendar date-only order stays civil through both DST changes and handles empty lists", () => {
+  assert.deepEqual(sortCalendarEvents([]), []);
+  const dates = ["2026-03-29", "2026-10-25", "2026-03-28", "2026-10-24"];
+  assert.deepEqual(
+    sortCalendarEvents(
+      dates.map((event_date) => ({
+        id: event_date,
+        event_date,
+        all_day: true,
+        time: null,
+      })),
+    ).map((item) => item.event_date),
+    ["2026-10-25", "2026-10-24", "2026-03-29", "2026-03-28"],
+  );
+});
 test("C1: today is determined in Bucharest at UTC day boundaries", () => {
   assert.equal(bucharestToday(new Date("2026-10-20T22:30:00Z")), "2026-10-21");
   assert.equal(bucharestToday(new Date("2026-12-20T21:30:00Z")), "2026-12-20");

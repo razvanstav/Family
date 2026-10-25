@@ -1,6 +1,7 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { lockPageScroll } from "./pageScroll";
+import { revealModalFocus } from "./modalFocus";
 
 export function Modal({
   title,
@@ -16,7 +17,9 @@ export function Modal({
   returnFocus?: HTMLElement | null;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  useLayoutEffect(() => {
     const dialog = ref.current!;
     const previous =
       returnFocus === undefined
@@ -24,7 +27,27 @@ export function Modal({
         : returnFocus;
     const releaseScroll = lockPageScroll(document, window);
     dialog.showModal();
+    const panel = panelRef.current!;
+    let frame: number | undefined;
+    const reveal = () => {
+      if (frame !== undefined) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = undefined;
+        if (Math.abs((window.visualViewport?.scale ?? 1) - 1) < 0.01)
+          revealModalFocus(panel, document.activeElement);
+      });
+    };
+    const observer = new ResizeObserver(reveal);
+    observer.observe(panel);
+    panel.addEventListener("focusin", reveal);
     return () => {
+      observer.disconnect();
+      panel.removeEventListener("focusin", reveal);
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+      // Dismiss the keyboard before unlocking the page. Otherwise WebKit can
+      // finish panning the document after its original scroll was restored.
+      if (dialog.contains(document.activeElement))
+        (document.activeElement as HTMLElement | null)?.blur();
       dialog.close();
       releaseScroll();
       previous?.focus({ preventScroll: true });
@@ -38,15 +61,21 @@ export function Modal({
         event.preventDefault();
         onClose();
       }}
-      aria-labelledby="modal-title"
+      aria-labelledby={titleId}
     >
-      <div className="modal-heading">
-        <h2 id="modal-title">{title}</h2>
-        <button className="icon-button" aria-label="Închide" onClick={onClose}>
-          <X size={20} />
-        </button>
+      <div className="modal-panel" ref={panelRef}>
+        <div className="modal-heading">
+          <h2 id={titleId}>{title}</h2>
+          <button
+            className="icon-button"
+            aria-label="Închide"
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+        </div>
+        {children}
       </div>
-      {children}
     </dialog>
   );
 }

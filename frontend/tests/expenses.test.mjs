@@ -19,12 +19,53 @@ async function moduleUrl(path, imports = {}) {
 }
 const apiUrl = await moduleUrl("../src/shared/api.ts");
 const datesUrl = await moduleUrl("../src/shared/calendarDates.ts");
-const { markExpensePaid, expensePaymentMessage } = await import(
-  await moduleUrl("../src/modules/expenses/expenseData.ts", {
-    "../../shared/api": apiUrl,
-    "../../shared/calendarDates": datesUrl,
-  })
-);
+const { markExpensePaid, expensePaymentMessage, expensePayerOptions } =
+  await import(
+    await moduleUrl("../src/modules/expenses/expenseData.ts", {
+      "../../shared/api": apiUrl,
+      "../../shared/calendarDates": datesUrl,
+    })
+  );
+
+test("payer filters include historical payers once and retain a selected member in an empty month", () => {
+  const totals = [
+    {
+      payer_membership_id: "ana",
+      payer_name: "Ana",
+      total_bani: 1800,
+      count: 2,
+    },
+    {
+      payer_membership_id: "former",
+      payer_name: "Bogdan",
+      total_bani: 500,
+      count: 1,
+    },
+  ];
+  assert.deepEqual(
+    expensePayerOptions(
+      [
+        { id: "ana", name: "Ana" },
+        { id: "mihai", name: "Mihai" },
+      ],
+      totals,
+      { id: "former", name: "Bogdan" },
+    ),
+    [
+      { value: "", label: "Toți membrii" },
+      { value: "ana", label: "Ana" },
+      { value: "former", label: "Bogdan" },
+      { value: "mihai", label: "Mihai" },
+    ],
+  );
+  assert.deepEqual(
+    expensePayerOptions([], [], { id: "former", name: "Bogdan" }),
+    [
+      { value: "", label: "Toți membrii" },
+      { value: "former", label: "Bogdan" },
+    ],
+  );
+});
 
 test("payment action preserves family, version, and original due date", async (t) => {
   const controller = new AbortController();

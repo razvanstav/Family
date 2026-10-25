@@ -12,16 +12,12 @@ type ViewportWindow = Pick<
 // on iOS without resizing CSS viewport units or the layout viewport.
 export function observeVisualViewport(
   window: ViewportWindow,
-  root: Pick<HTMLElement, "style">,
+  root: Pick<HTMLElement, "style" | "clientHeight">,
 ) {
   const viewport = window.visualViewport;
   if (!viewport) return () => {};
   let frame: number | undefined;
-  const properties = [
-    "--visual-viewport-height",
-    "--visual-viewport-top",
-    "--visual-viewport-bottom",
-  ];
+  const properties = ["--visual-viewport-height", "--visual-viewport-top"];
   const previous = properties.map((property) => [
     root.style.getPropertyValue(property),
     root.style.getPropertyPriority(property),
@@ -33,17 +29,24 @@ export function observeVisualViewport(
       properties.forEach((property) => root.style.removeProperty(property));
       return;
     }
-    const height = Math.min(window.innerHeight, Math.max(0, viewport.height));
+    // innerHeight can follow Safari's keyboard pan rather than the layout
+    // viewport. Keep the fixed dialog's coordinate system tied to CSS layout.
+    const layoutHeight = root.clientHeight || window.innerHeight;
+    if (viewport.height <= 0 || layoutHeight <= 0) return;
+    const height = Math.min(layoutHeight, viewport.height);
     // A few WebKit versions retain offsetTop after dismissing the keyboard.
     // Bound it to the missing height so a stale offset cannot leave a gap.
     const top = Math.min(
       Math.max(0, viewport.offsetTop),
-      Math.max(0, window.innerHeight - height),
+      Math.max(0, layoutHeight - height),
     );
-    const bottom = Math.max(0, window.innerHeight - height - top);
-    root.style.setProperty(properties[0], `${height}px`);
-    root.style.setProperty(properties[1], `${top}px`);
-    root.style.setProperty(properties[2], `${bottom}px`);
+    [height, top].forEach((value, index) => {
+      const next = `${Math.round(value)}px`;
+      // Scroll can fire without a geometry change. Do not invalidate the
+      // entire document's styles repeatedly while the keyboard is animating.
+      if (root.style.getPropertyValue(properties[index]) !== next)
+        root.style.setProperty(properties[index], next);
+    });
   };
   const schedule = () => {
     if (frame === undefined) frame = window.requestAnimationFrame(update);

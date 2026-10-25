@@ -187,3 +187,15 @@ export type CalendarItem = {
     deliveries: ReminderDelivery[];
   } | null;
 };
+
+export function sortCalendarEvents(
+  items: readonly CalendarItem[],
+): CalendarItem[] {
+  return [...items].sort(
+    (a, b) =>
+      b.event_date.localeCompare(a.event_date) ||
+      Number(b.all_day) - Number(a.all_day) ||
+      (b.time ?? "").localeCompare(a.time ?? "") ||
+      a.id.localeCompare(b.id),
+  );
+}

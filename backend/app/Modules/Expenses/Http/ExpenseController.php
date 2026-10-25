@@ -41,7 +41,7 @@ final class ExpenseController
     {
         $data = $request->validate(['month' => ['sometimes', 'regex:/^(19|20)\d{2}-(0[1-9]|1[0-2])$/'],
             'visibility' => ['sometimes', Rule::in(['family', 'private'])], 'payment_status' => ['sometimes', Rule::in(['paid', 'planned'])],
-            'page' => 'sometimes|integer|min:1|max:100000']);
+            'payer_membership_id' => 'sometimes|uuid', 'page' => 'sometimes|integer|min:1|max:100000']);
         $month = $data['month'] ?? now('Europe/Bucharest')->format('Y-m');
         $visibility = $data['visibility'] ?? 'family';
         $status = $data['payment_status'] ?? 'paid';
@@ -49,6 +49,17 @@ final class ExpenseController
         $query = $this->query($request, $family)->where('e.visibility', $visibility)
             ->where('e.payment_status', $status)
             ->where('e.spent_on', '>=', $month.'-01')->where('e.spent_on', '<', $date->modify('+1 month')->format('Y-m-d'));
+        $memberTotals = (clone $query)->join('family_memberships as payer', function ($join) {
+            $join->on('payer.family_id', '=', 'e.family_id')->on('payer.id', '=', 'e.payer_membership_id');
+        })->join('users as paid_by', 'paid_by.id', '=', 'payer.user_id')
+            ->select('e.payer_membership_id', 'paid_by.name as payer_name')->selectRaw('SUM(e.amount_bani) AS total_bani, COUNT(*) AS count')
+            ->groupBy('e.payer_membership_id', 'paid_by.name')->orderByDesc('total_bani')->orderBy('paid_by.name')->orderBy('e.payer_membership_id')->get()
+            ->map(fn (object $row) => ['payer_membership_id' => $row->payer_membership_id, 'payer_name' => $row->payer_name,
+                'total_bani' => (int) $row->total_bani, 'count' => (int) $row->count]);
+        $payerMembershipId = $data['payer_membership_id'] ?? null;
+        if ($payerMembershipId !== null) {
+            $query->where('e.payer_membership_id', $payerMembershipId);
+        }
         $categories = (clone $query)->select('e.category')->selectRaw('SUM(e.amount_bani) AS total_bani, COUNT(*) AS count')
             ->groupBy('e.category')->orderByDesc('total_bani')->orderBy('e.category')->get()
             ->map(fn (object $row) => ['category' => $row->category, 'total_bani' => (int) $row->total_bani, 'count' => (int) $row->count]);
@@ -57,7 +68,7 @@ final class ExpenseController
             ->offset(($page - 1) * 50)->limit(51)->get();
 
         return response()->json(['month' => $month, 'visibility' => $visibility, 'payment_status' => $status, 'total_bani' => $categories->sum('total_bani'),
-            'count' => $categories->sum('count'), 'categories' => $categories,
+            'count' => $categories->sum('count'), 'categories' => $categories, 'payer_membership_id' => $payerMembershipId, 'member_totals' => $memberTotals,
             'items' => $items->take(50)->map(fn (object $row) => $this->payload($request, $row))->values(),
             'next_page' => $items->count() > 50 ? $page + 1 : null,
             'payers' => $this->payers($family)->orderBy('u.name')->orderBy('m.id')->get(['m.id', 'u.name'])]);

@@ -11,6 +11,19 @@
   gap: 3px;
   min-width: 0;
 }
+.expense-member-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 260px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.expense-member-filter > .select-menu {
+  flex: 1;
+  min-width: 130px;
+}
 .expense-visibility {
   display: flex;
   gap: 4px;
@@ -72,6 +85,13 @@
   font-size: 14px;
   font-weight: 750;
 }
+.expense-total > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.expense-total h2 {
+  overflow-wrap: anywhere;
+}
 .expense-total div > strong {
   display: block;
   margin-top: 3px;
@@ -96,8 +116,13 @@
   grid-column: 1;
   overflow: hidden;
 }
-.expenses-layout:not(:has(.expense-breakdown)) .expense-list {
+.expenses-layout:not(:has(.expense-summaries)) .expense-list {
   grid-column: 1 / -1;
+}
+.expense-summaries {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
 }
 .expense-day h2 {
   margin: 0;
@@ -207,6 +232,42 @@
 .expense-breakdown .expense-category-icon {
   width: 26px;
 }
+.expense-members li {
+  display: block;
+  padding: 0;
+}
+.expense-members li + li {
+  margin-top: 4px;
+}
+.expense-members button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  font-size: 12px;
+}
+.expense-members button[aria-pressed="true"] {
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+.expense-members button > svg {
+  flex-shrink: 0;
+  color: var(--icon-family);
+}
+.expense-members button > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.expense-members button > strong {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
 .expense-empty {
   display: flex;
   flex-direction: column;
@@ -300,7 +361,15 @@
   .expense-visibility button {
     flex: 1;
   }
+  .expense-member-filter {
+    order: 4;
+    width: 100%;
+    max-width: none;
+  }
   .expenses-layout {
+    gap: 14px;
+  }
+  .expense-summaries {
     gap: 14px;
   }
   .expense-total {

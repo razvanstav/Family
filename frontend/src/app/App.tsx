@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import {
   ChevronDown,
   House,
@@ -52,7 +51,6 @@ import {
 } from "../modules/families/profileData";
 import { SectionTabs } from "../shared/SectionTabs";
 import { observeSessionLifecycle } from "./sessionLifecycle";
-import { createPageNavigation } from "./pageNavigation";
 import { observeVisualViewport } from "../shared/visualViewport";
 import { CalendarPage } from "../modules/calendar/Calendar";
 import { CalendarNotifications } from "../modules/calendar/CalendarNotifications";
@@ -98,27 +96,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [familyId, setFamilyId] = useState("");
   const [error, setError] = useState("");
-  const [page, setPage] = useState<keyof typeof pageLabels>("home");
-  const [nativeNavigation, setNativeNavigation] = useState(false);
-  const pageRef = useRef(page);
-  pageRef.current = page;
-  const pageNavigation = useRef<ReturnType<
-    typeof createPageNavigation<keyof typeof pageLabels>
-  > | null>(null);
-  if (!pageNavigation.current)
-    pageNavigation.current = createPageNavigation(
-      document,
-      () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-      (nextPage, native) =>
-        flushSync(() => {
-          pageRef.current = nextPage;
-          setNativeNavigation(native);
-          setPage(nextPage);
-        }),
-      () => pageRef.current,
-    );
-  const navigatePage = pageNavigation.current.navigate;
-  useEffect(() => () => pageNavigation.current?.stop(), []);
+  const [page, navigatePage] = useState<keyof typeof pageLabels>("home");
   const [familySection, setFamilySection] = useState<"members" | "documents">(
     "members",
   );
@@ -177,7 +155,7 @@ export default function App() {
   }
   useEffect(() => {
     if (session?.user && !session.user.is_admin && page === "admin")
-      setPage("home");
+      navigatePage("home");
   }, [session?.user?.is_admin, page]);
   useEffect(() => {
     const changed = () =>
@@ -198,8 +176,6 @@ export default function App() {
     authMode,
   ]);
   function acceptSession(data: Session) {
-    pageNavigation.current?.stop();
-    setNativeNavigation(false);
     sessionRevision.current++;
     if (knownActor.current !== (data.user?.id ?? null) || !data.user?.is_admin)
       adminMemory.current = { section: "overview" };
@@ -207,7 +183,7 @@ export default function App() {
     setSession(data);
     if (!data.user) setAuthMode("login");
     setFamilyId(data.families[0]?.id ?? "");
-    setPage(data.user?.is_admin ? "admin" : "home");
+    navigatePage(data.user?.is_admin ? "admin" : "home");
     setFamilySection("members");
     setCalendarTarget(null);
     setVehicleTarget(null);
@@ -229,7 +205,6 @@ export default function App() {
     sessionChannel.current?.postMessage("changed");
   }
   function refresh(): Promise<void> {
-    pageNavigation.current?.stop();
     if (sessionRequest.current) return sessionRequest.current;
     const revision = ++sessionRevision.current;
     setCheckingSession(true);
@@ -249,7 +224,7 @@ export default function App() {
         )
           adminMemory.current = { section: "overview" };
         if (knownActor.current !== (data.user?.id ?? null))
-          setPage(data.user?.is_admin ? "admin" : "home");
+          navigatePage(data.user?.is_admin ? "admin" : "home");
         knownActor.current = data.user?.id ?? null;
         setSession(data);
         setProfileRevision((value) => value + 1);
@@ -281,7 +256,6 @@ export default function App() {
         void refresh();
       },
       suspend: () => {
-        pageNavigation.current?.stop();
         sessionRevision.current++;
         sessionRequest.current = null;
         setCheckingSession(true);
@@ -317,7 +291,6 @@ export default function App() {
   }, []);
   const family = session?.families.find((f) => f.id === familyId);
   useEffect(() => {
-    pageNavigation.current?.stop();
     setProfileTarget(null);
     setExpenseTarget(null);
     setSubscriptionTarget(null);
@@ -374,7 +347,7 @@ export default function App() {
         onDone={(data, id) => {
           acceptSession(data);
           setFamilyId(id);
-          setPage("family");
+          navigatePage("family");
           setInvitation(null);
           window.history.replaceState(null, "", window.location.pathname);
         }}
@@ -644,7 +617,6 @@ export default function App() {
                   aria-label="Familia activă"
                   value={familyId}
                   onChange={(e) => {
-                    pageNavigation.current?.stop();
                     setFamilyId(e.target.value);
                     setCalendarTarget(null);
                     setVehicleTarget(null);
@@ -696,9 +668,7 @@ export default function App() {
           </div>
         </header>
         <main
-          className="page-view"
-          data-native-navigation={nativeNavigation || undefined}
-          key={`${session.user.id}:${family?.id ?? "none"}:${page}:${contentRevision}`}
+          key={`${session.user.id}:${family?.id ?? "none"}:${contentRevision}`}
         >
           {sessionNotice && (
             <p className="notice" role="status">

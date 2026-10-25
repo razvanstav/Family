@@ -20,14 +20,19 @@ async function load(name) {
 }
 const { observeVisualViewport } = await load("visualViewport");
 const { lockPageScroll } = await load("pageScroll");
+const { revealModalFocus } = await load("modalFocus");
 
 function style() {
   const values = new Map();
+  const writes = [];
   return {
+    writes,
     getPropertyValue: (name) => values.get(name)?.value ?? "",
     getPropertyPriority: (name) => values.get(name)?.priority ?? "",
-    setProperty: (name, value, priority = "") =>
-      values.set(name, { value, priority }),
+    setProperty: (name, value, priority = "") => {
+      writes.push({ name, value, priority });
+      values.set(name, { value, priority });
+    },
     removeProperty: (name) => values.delete(name),
   };
 }
@@ -45,7 +50,7 @@ function viewportFixture() {
     requestAnimationFrame: (callback) => (frames.set(++id, callback), id),
     cancelAnimationFrame: (frame) => frames.delete(frame),
   });
-  const root = { style: style() };
+  const root = { style: style(), clientHeight: 844 };
   const stop = observeVisualViewport(window, root);
   const flush = () => {
     for (const [id, callback] of frames) {
@@ -77,10 +82,6 @@ test("keyboard opens, pans and dismisses without retaining its space", () => {
     "500px",
   );
   assert.equal(f.root.style.getPropertyValue("--visual-viewport-top"), "70px");
-  assert.equal(
-    f.root.style.getPropertyValue("--visual-viewport-bottom"),
-    "274px",
-  );
   f.viewport.height = 844;
   f.viewport.dispatchEvent(new Event("resize"));
   f.flush();
@@ -93,16 +94,12 @@ test("keyboard opens, pans and dismisses without retaining its space", () => {
     "0px",
     "stale iOS offset is bounded",
   );
-  assert.equal(
-    f.root.style.getPropertyValue("--visual-viewport-bottom"),
-    "0px",
-  );
   f.stop();
 });
 
 test("orientation, page restoration, zoom and cleanup do not leave stale dimensions or listeners", () => {
   const f = viewportFixture();
-  f.window.innerHeight = f.viewport.height = 390;
+  f.root.clientHeight = f.window.innerHeight = f.viewport.height = 390;
   f.window.dispatchEvent(new Event("resize"));
   f.flush();
   assert.equal(
@@ -132,6 +129,54 @@ test("orientation, page restoration, zoom and cleanup do not leave stale dimensi
   );
 });
 
+test("Safari keyboard pan does not use a changing innerHeight as layout size", () => {
+  const f = viewportFixture();
+  f.viewport.height = 420;
+  f.viewport.offsetTop = 110;
+  // WebKit can report the visible bottom here, not the layout viewport height.
+  f.window.innerHeight = 530;
+  f.viewport.dispatchEvent(new Event("resize"));
+  f.flush();
+  assert.equal(f.root.style.getPropertyValue("--visual-viewport-top"), "110px");
+  assert.equal(
+    f.root.style.getPropertyValue("--visual-viewport-height"),
+    "420px",
+  );
+  f.window.innerHeight = 420;
+  f.viewport.dispatchEvent(new Event("scroll"));
+  f.flush();
+  assert.equal(f.root.style.getPropertyValue("--visual-viewport-top"), "110px");
+  f.viewport.height = 844;
+  f.viewport.dispatchEvent(new Event("resize"));
+  f.flush();
+  assert.equal(f.root.style.getPropertyValue("--visual-viewport-top"), "0px");
+  assert.equal(
+    f.root.style.getPropertyValue("--visual-viewport-height"),
+    "844px",
+    "restores the whole viewport even before innerHeight catches up",
+  );
+  f.stop();
+});
+
+test("unchanged viewport scroll and transient zero sizes do not relayout a focused form", () => {
+  const f = viewportFixture();
+  const initialWrites = f.root.style.writes.length;
+  for (let index = 0; index < 5; index++) {
+    f.viewport.dispatchEvent(new Event("scroll"));
+    f.flush();
+  }
+  assert.equal(f.root.style.writes.length, initialWrites);
+  f.viewport.height = 0;
+  f.viewport.dispatchEvent(new Event("resize"));
+  f.flush();
+  assert.equal(
+    f.root.style.getPropertyValue("--visual-viewport-height"),
+    "844px",
+  );
+  assert.equal(f.root.style.writes.length, initialWrites);
+  f.stop();
+});
+
 test("nested dialogs restore original page position and inline styles only after the final close", () => {
   const document = { body: { style: style() } };
   document.body.style.setProperty("position", "relative", "important");
@@ -145,6 +190,8 @@ test("nested dialogs restore original page position and inline styles only after
   assert.equal(document.body.style.getPropertyValue("position"), "fixed");
   assert.equal(document.body.style.getPropertyValue("top"), "-620px");
   const closeInner = lockPageScroll(document, window);
+  // Native input reveal may pan the browser while the background stays fixed.
+  window.scrollY = 140;
   closeOuter();
   closeOuter();
   assert.equal(scrolls.length, 0);
@@ -159,4 +206,46 @@ test("nested dialogs restore original page position and inline styles only after
   const closeAgain = lockPageScroll(document, window);
   closeAgain();
   assert.equal(scrolls.length, 2, "a later dialog gets a new balanced lock");
+});
+
+test("keyboard resize and next-field navigation reveal focus by scrolling only the form", () => {
+  const dialog = {};
+  let activeDialog = dialog;
+  let popover = null;
+  const active = {
+    closest: (selector) => (selector === "dialog" ? activeDialog : popover),
+    getBoundingClientRect: () => ({ top: 450, bottom: 494, height: 44 }),
+  };
+  const panel = {
+    closest: () => dialog,
+    scrollTop: 100,
+    contains: (element) => element === active,
+    getBoundingClientRect: () => ({ top: 70, bottom: 420 }),
+  };
+  revealModalFocus(panel, active);
+  assert.equal(panel.scrollTop, 190, "input appears 16px above the keyboard");
+  active.getBoundingClientRect = () => ({ top: 360, bottom: 404, height: 44 });
+  revealModalFocus(panel, active);
+  assert.equal(panel.scrollTop, 190, "visible focus does not keep scrolling");
+  active.getBoundingClientRect = () => ({ top: 30, bottom: 74, height: 44 });
+  revealModalFocus(panel, active);
+  assert.equal(panel.scrollTop, 134, "previous field is revealed at the top");
+  revealModalFocus(panel, null);
+  revealModalFocus(panel, {});
+  assert.equal(panel.scrollTop, 134, "other dialogs do not move this form");
+  activeDialog = {};
+  revealModalFocus(panel, active);
+  assert.equal(
+    panel.scrollTop,
+    134,
+    "a nested dialog's focus does not scroll the containing dialog",
+  );
+  activeDialog = dialog;
+  popover = {};
+  revealModalFocus(panel, active);
+  assert.equal(
+    panel.scrollTop,
+    134,
+    "date picker controls in the top layer do not scroll the underlying form",
+  );
 });

@@ -15,6 +15,7 @@ import {
   ShoppingBasket,
   Smile,
   Ticket,
+  Users,
   Wallet,
   X,
 } from "lucide-react";
@@ -29,10 +30,12 @@ import { SectionTabs } from "../../shared/SectionTabs";
 import { observePageResume } from "../../shared/pageResume";
 import { ExpenseForm } from "./ExpenseForm";
 import { MonthSelect } from "../../shared/MonthSelect";
+import { SelectMenu } from "../../shared/SelectMenu";
 import {
   expenseCategoryLabel,
   expenseMoney,
   expensePaymentMessage,
+  expensePayerOptions,
   expenseRecurrenceLabel,
   markExpensePaid,
   type Expense,
@@ -41,6 +44,7 @@ import {
   type ExpenseVisibility,
   type ExpenseRequest,
   type ExpensePaymentStatus,
+  type Payer,
 } from "./expenseData";
 import "./expenses.css";
 
@@ -92,6 +96,7 @@ export function Expenses({
       "paid",
   );
   const [data, setData] = useState<ExpenseMonth | null>(null);
+  const [payer, setPayer] = useState<Payer | null>(null);
   const [loading, setLoading] = useState(true);
   const [moreBusy, setMoreBusy] = useState(false);
   const [payingId, setPayingId] = useState<string | null>(null);
@@ -106,14 +111,20 @@ export function Expenses({
   const morePending = useRef(false);
   const addButton = useRef<HTMLButtonElement>(null);
   const focusAfterSave = useRef(false);
-  const endpoint = `/families/${family.id}/expenses?month=${month}&visibility=${visibility}&payment_status=${paymentStatus}`;
+  const endpoint = `/families/${family.id}/expenses?month=${month}&visibility=${visibility}&payment_status=${paymentStatus}${payer ? `&payer_membership_id=${encodeURIComponent(payer.id)}` : ""}`;
   const current =
     data?.month === month &&
     data.visibility === visibility &&
-    data.payment_status === paymentStatus
+    data.payment_status === paymentStatus &&
+    data.payer_membership_id === (payer?.id ?? null)
       ? data
       : null;
   const canCreate = family.role !== "limited";
+  const payerOptions = expensePayerOptions(
+    data?.payers ?? [],
+    data?.member_totals ?? [],
+    payer,
+  );
   useEffect(() => {
     if (focusAfterSave.current && !loading && current) {
       focusAfterSave.current = false;
@@ -172,10 +183,12 @@ export function Expenses({
     if (
       month !== targetMonth ||
       visibility !== requestedExpense.visibility ||
+      payer !== null ||
       (targetStatus && paymentStatus !== targetStatus)
     ) {
       setMonth(targetMonth);
       setVisibility(requestedExpense.visibility);
+      setPayer(null);
       if (targetStatus) setPaymentStatus(targetStatus);
       return;
     }
@@ -211,6 +224,7 @@ export function Expenses({
     month,
     visibility,
     paymentStatus,
+    payer,
     loading,
     current,
     family.id,
@@ -338,6 +352,26 @@ export function Expenses({
             Personale
           </button>
         </div>
+        <div className="expense-member-filter">
+          <span aria-hidden="true">Plătitor</span>
+          <SelectMenu
+            label="Plătitor"
+            value={payer?.id ?? ""}
+            options={payerOptions}
+            onChange={(value) =>
+              setPayer(
+                value
+                  ? {
+                      id: value,
+                      name: payerOptions.find(
+                        (option) => option.value === value,
+                      )!.label,
+                    }
+                  : null,
+              )
+            }
+          />
+        </div>
         <button
           className="icon-button"
           aria-label="Actualizează cheltuielile"
@@ -387,10 +421,14 @@ export function Expenses({
               <div>
                 <h2 id="expense-total-label">
                   {paymentStatus === "planned"
-                    ? "Total de plătit"
-                    : visibility === "family"
-                      ? "Total familie"
-                      : "Total personal"}
+                    ? payer
+                      ? `De plătit · ${payer.name}`
+                      : "Total de plătit"
+                    : payer
+                      ? `Total · ${payer.name}`
+                      : visibility === "family"
+                        ? "Total familie"
+                        : "Total personal"}
                 </h2>
                 <strong>{expenseMoney(current.total_bani)}</strong>
               </div>
@@ -486,10 +524,14 @@ export function Expenses({
                   <Receipt size={32} aria-hidden="true" />
                   <p>
                     {paymentStatus === "planned"
-                      ? "Nicio plată de făcut în această lună."
-                      : visibility === "family"
-                        ? "Nicio cheltuială a familiei în această lună."
-                        : "Nicio cheltuială personală în această lună."}
+                      ? payer
+                        ? "Nicio plată de făcut pentru membrul selectat în această lună."
+                        : "Nicio plată de făcut în această lună."
+                      : payer
+                        ? "Nicio cheltuială pentru membrul selectat în această lună."
+                        : visibility === "family"
+                          ? "Nicio cheltuială a familiei în această lună."
+                          : "Nicio cheltuială personală în această lună."}
                   </p>
                   {canCreate && (
                     <button
@@ -511,21 +553,63 @@ export function Expenses({
                 </button>
               )}
             </section>
-            {current.categories.length > 0 && (
+            {(current.member_totals.length > 0 ||
+              current.categories.length > 0) && (
               <aside
-                className="expense-breakdown"
-                aria-labelledby="expense-breakdown-title"
+                className="expense-summaries"
+                aria-label="Totaluri cheltuieli"
               >
-                <h2 id="expense-breakdown-title">Categorii</h2>
-                <ul>
-                  {current.categories.map((item) => (
-                    <li key={item.category}>
-                      <CategoryIcon category={item.category} />
-                      <span>{expenseCategoryLabel(item.category)}</span>
-                      <strong>{expenseMoney(item.total_bani)}</strong>
-                    </li>
-                  ))}
-                </ul>
+                {current.member_totals.length > 0 && (
+                  <section
+                    className="expense-breakdown expense-members"
+                    aria-labelledby="expense-members-title"
+                  >
+                    <h2 id="expense-members-title">Pe membri</h2>
+                    <ul>
+                      {current.member_totals.map((item) => (
+                        <li key={item.payer_membership_id}>
+                          <button
+                            aria-pressed={
+                              payer?.id === item.payer_membership_id
+                            }
+                            aria-label={`${item.payer_name}: ${expenseMoney(item.total_bani)}`}
+                            onClick={() =>
+                              setPayer(
+                                payer?.id === item.payer_membership_id
+                                  ? null
+                                  : {
+                                      id: item.payer_membership_id,
+                                      name: item.payer_name,
+                                    },
+                              )
+                            }
+                          >
+                            <Users size={18} aria-hidden="true" />
+                            <span>{item.payer_name}</span>
+                            <strong>{expenseMoney(item.total_bani)}</strong>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+                {current.categories.length > 0 && (
+                  <section
+                    className="expense-breakdown"
+                    aria-labelledby="expense-breakdown-title"
+                  >
+                    <h2 id="expense-breakdown-title">Categorii</h2>
+                    <ul>
+                      {current.categories.map((item) => (
+                        <li key={item.category}>
+                          <CategoryIcon category={item.category} />
+                          <span>{expenseCategoryLabel(item.category)}</span>
+                          <strong>{expenseMoney(item.total_bani)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
               </aside>
             )}
           </div>
@@ -551,6 +635,11 @@ export function Expenses({
               setMonth(result.spent_on.slice(0, 7));
               setVisibility(result.visibility);
               setPaymentStatus(result.payment_status);
+              if (payer)
+                setPayer({
+                  id: result.payer_membership_id,
+                  name: result.payer_name,
+                });
             }
             setRevision((value) => value + 1);
             focusAfterSave.current = true;

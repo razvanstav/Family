@@ -1,5 +1,15 @@
 # Calendar
 
+## CO1 — Evenimente descrescător după dată și oră, 25 octombrie 2026
+
+**Implementat și verificat local.** Utilizatorul a cerut inversarea listei pentru lună, săptămână și zi și a confirmat explicit „Toate descrescător după dată și oră”. Lista afișează mai întâi datele mai mari, apoi pe cele mai vechi; în aceeași zi, orele sunt descrescătoare. Evenimentele fără oră rămân primele în ziua lor, iar ID-ul oferă ordine stabilă la aceeași oră.
+
+`sortCalendarEvents` din `calendarTypes.ts` sortează o copie a listei filtrate, într-un singur punct din `Calendar.tsx`. Grupurile săptămânii se extrag din aceeași listă ordonată, deci și zilele lor sunt descrescătoare. Grila lunară, selectorul Lu–Du, selecția perioadei, accesul, căutarea și deschiderea surselor rămân existente. API-ul și lista de evenimente apropiate de pe Acasă nu sunt modificate; nu sunt schimbate datele, permisiunile sau reminderele și nu se adaugă polling.
+
+**Verificări:** 72 teste frontend trecute, inclusiv trei regresii noi pentru lună/an și listă nemutată, ore descrescătoare/evenimente fără oră/surse integrate/tie-break și date civile la ambele schimbări DST/listă goală. TypeScript/Vite final `DnT8weRv/DY3ju2yD`, Prettier/diff și review independent trecute; avertismentul anterior JS peste500kB rămâne. Fără teste backend repetate, pentru că pasul modifică numai ordinea UI a rezultatelor deja autorizate.
+
+**Browser:** API fictiv GET/HEAD pe8006, fără DB/SMTP sau salvări. Luna:31→26→25→24→19→18 octombrie; Săptămână:25→24→19 octombrie; săptămâna următoare:1noiembrie→31octombrie→26octombrie; Agendă/25octombrie:Toată ziua→18:30→12:00→08:00. Filtrul Familie scoate24octombrie privat și păstrează ordinea25→19. Mobil390/320 și desktop1280×900 fără overflow ori erori/warninguri de consolă observate. Calendarul/selectorul au ordinea existentă și toate cele trei vederi păstrează același cadru. Captură ignorată `.runtime/co1-calendar-descending.png`; viewport resetat, previzualizarea8006 păstrată în Agendă/25octombrie/Toate pentru feedback. Fără dispozitiv fizic, commit/push/deploy. Buildul comun include și CH4/UW2/NV1 locale.
+
 ## NR1 — Reconciliere la schimbări și email comun, 24 octombrie 2026
 
 **Implementat și verificat local**, cerere explicită pentru eliminarea verificărilor repetate. `calendar:deliver-reminders` procesează loturi de 100 de familii și cel mult 100 de intenții/familie, o dată pe minut. Nu reîncarcă sursele la fiecare trecere: `ReminderReconciler` verifică un checkpoint Calendar per familie și sincronizează numai dacă lipsește, este marcat modificat sau s-a schimbat ziua în România. Acest checkpoint nu păstrează documente ori date private și are RLS/FK spre familie.

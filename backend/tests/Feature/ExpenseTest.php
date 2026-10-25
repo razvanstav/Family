@@ -100,20 +100,27 @@ final class ExpenseTest extends TestCase
         $this->create(['amount' => '999999.99', 'spent_on' => '2026-11-01']);
         $this->getJson($this->base)->assertOk()->assertJsonPath('month', '2026-10')->assertJsonPath('visibility', 'family')
             ->assertJsonPath('total_bani', 8770)->assertJsonPath('count', 3)->assertJsonCount(3, 'items')->assertJsonPath('items.0.spent_on', '2026-10-31')
-            ->assertJsonPath('categories.0.category', 'food')->assertJsonPath('categories.0.total_bani', 8750)->assertJsonPath('categories.1.total_bani', 20);
+            ->assertJsonPath('categories.0.category', 'food')->assertJsonPath('categories.0.total_bani', 8750)->assertJsonPath('categories.1.total_bani', 20)
+            ->assertJsonPath('payer_membership_id', null)->assertJsonPath('member_totals', [
+                ['payer_membership_id' => $this->anaMember, 'payer_name' => 'Ana Popescu', 'total_bani' => 8750, 'count' => 2],
+                ['payer_membership_id' => $this->mihaiMember, 'payer_name' => 'Mihai Popescu', 'total_bani' => 20, 'count' => 1],
+            ]);
         $this->getJson($this->base.'?month=2026-11')->assertOk()->assertJsonPath('total_bani', 99999999)->assertJsonPath('count', 1);
-        $this->getJson($this->base.'?month=2026-12')->assertOk()->assertJsonPath('total_bani', 0)->assertJsonCount(0, 'items');
+        $this->getJson($this->base.'?month=2026-12')->assertOk()->assertJsonPath('total_bani', 0)->assertJsonCount(0, 'items')->assertJsonCount(0, 'member_totals');
     }
 
     public function test_private_rows_never_leak_to_family_totals_payer_or_family_owner(): void
     {
         $family = $this->create();
         $private = $this->create(['amount' => '25', 'visibility' => 'private', 'payer_membership_id' => $this->mihaiMember]);
-        $this->getJson($this->base)->assertJsonPath('total_bani', 8740)->assertJsonCount(1, 'items');
-        $this->getJson($this->base.'?visibility=private')->assertJsonPath('total_bani', 2500)->assertJsonCount(1, 'items');
+        $this->getJson($this->base.'?payer_membership_id='.$this->mihaiMember)->assertOk()->assertJsonPath('total_bani', 0)->assertJsonCount(0, 'items')
+            ->assertJsonPath('member_totals', [['payer_membership_id' => $this->anaMember, 'payer_name' => 'Ana Popescu', 'total_bani' => 8740, 'count' => 1]]);
+        $this->getJson($this->base.'?visibility=private&payer_membership_id='.$this->mihaiMember)->assertOk()->assertJsonPath('total_bani', 2500)->assertJsonCount(1, 'items')
+            ->assertJsonPath('member_totals', [['payer_membership_id' => $this->mihaiMember, 'payer_name' => 'Mihai Popescu', 'total_bani' => 2500, 'count' => 1]]);
         $this->actingAs($this->mihai);
         $this->getJson($this->base)->assertOk()->assertJsonPath('items.0.id', $family['id'])->assertJsonPath('items.0.can_edit', false);
-        $this->getJson($this->base.'?visibility=private')->assertJsonPath('total_bani', 0)->assertJsonCount(0, 'categories');
+        $this->getJson($this->base.'?visibility=private&payer_membership_id='.$this->mihaiMember)->assertOk()->assertJsonPath('total_bani', 0)
+            ->assertJsonCount(0, 'categories')->assertJsonCount(0, 'member_totals');
         $this->getJson($this->base.'/'.$private['id'])->assertNotFound();
         $this->withHeader('If-Match', '"1"')->patchJson($this->base.'/'.$private['id'], $this->content(['visibility' => 'family']))->assertNotFound();
         $this->withHeader('If-Match', '"1"')->deleteJson($this->base.'/'.$family['id'])->assertForbidden();
@@ -191,6 +198,10 @@ final class ExpenseTest extends TestCase
         }
         $this->getJson($this->base.'?visibility=all')->assertUnprocessable();
         $this->getJson($this->base.'?page=0')->assertUnprocessable();
+        foreach (['invalid', ''] as $value) {
+            $this->getJson($this->base.'?payer_membership_id='.$value)->assertUnprocessable()->assertJsonValidationErrors('payer_membership_id');
+        }
+        $this->getJson($this->base.'?payer_membership_id[]='.$this->anaMember)->assertUnprocessable()->assertJsonValidationErrors('payer_membership_id');
         $this->assertSame(0, DB::connection('admin')->table('expenses')->where('family_id', $this->family)->count());
     }
 
@@ -199,7 +210,9 @@ final class ExpenseTest extends TestCase
         $row = $this->create(['payer_membership_id' => $this->mihaiMember]);
         DB::connection('admin')->table('family_memberships')->where('id', $this->mihaiMember)->update(['revoked_at' => now()]);
         $this->postJson($this->base, $this->content(['payer_membership_id' => $this->mihaiMember]))->assertUnprocessable();
-        $this->getJson($this->base)->assertOk()->assertJsonCount(1, 'payers')->assertJsonPath('items.0.payer_name', 'Mihai Popescu');
+        $this->getJson($this->base.'?payer_membership_id='.$this->mihaiMember)->assertOk()->assertJsonCount(1, 'payers')
+            ->assertJsonPath('payer_membership_id', $this->mihaiMember)->assertJsonPath('items.0.payer_name', 'Mihai Popescu')
+            ->assertJsonPath('member_totals', [['payer_membership_id' => $this->mihaiMember, 'payer_name' => 'Mihai Popescu', 'total_bani' => 8740, 'count' => 1]]);
         $this->withHeader('If-Match', '"1"')->patchJson($this->base.'/'.$row['id'], $this->content(['visibility' => 'family', 'payer_membership_id' => $this->mihaiMember]))->assertOk();
     }
 
@@ -210,6 +223,7 @@ final class ExpenseTest extends TestCase
         DB::flushQueryLog();
         $this->getJson($this->base)->assertOk();
         $small = count(DB::getQueryLog());
+        $this->create(['amount' => '0,10', 'category' => 'home', 'payer_membership_id' => $this->mihaiMember]);
         $rows = [];
         for ($index = 0; $index < 52; $index++) {
             $rows[] = ['id' => (string) Str::uuid(), 'family_id' => $this->family, 'owner_id' => $this->ana->id,
@@ -217,11 +231,44 @@ final class ExpenseTest extends TestCase
         }
         DB::connection('admin')->table('expenses')->insert($rows);
         DB::flushQueryLog();
-        $first = $this->getJson($this->base)->assertOk()->assertJsonCount(50, 'items')->assertJsonPath('count', 53)
-            ->assertJsonPath('total_bani', 53)->assertJsonPath('categories.0.total_bani', 53)->assertJsonPath('next_page', 2);
+        $filter = '?payer_membership_id='.$this->anaMember;
+        $first = $this->getJson($this->base.$filter)->assertOk()->assertJsonCount(50, 'items')->assertJsonPath('count', 53)
+            ->assertJsonPath('total_bani', 53)->assertJsonCount(1, 'categories')->assertJsonPath('categories.0.total_bani', 53)->assertJsonPath('next_page', 2)
+            ->assertJsonPath('member_totals', [
+                ['payer_membership_id' => $this->anaMember, 'payer_name' => 'Ana Popescu', 'total_bani' => 53, 'count' => 53],
+                ['payer_membership_id' => $this->mihaiMember, 'payer_name' => 'Mihai Popescu', 'total_bani' => 10, 'count' => 1],
+            ]);
         $this->assertSame($small, count(DB::getQueryLog()));
-        $second = $this->getJson($this->base.'?page=2')->assertOk()->assertJsonCount(3, 'items')->assertJsonPath('next_page', null)->assertJsonPath('total_bani', 53);
+        $second = $this->getJson($this->base.$filter.'&page=2')->assertOk()->assertJsonCount(3, 'items')->assertJsonPath('next_page', null)->assertJsonPath('total_bani', 53)
+            ->assertJsonPath('member_totals', $first->json('member_totals'));
         $ids = array_merge(array_column($first->json('items'), 'id'), array_column($second->json('items'), 'id'));
         $this->assertCount(53, array_unique($ids));
+        $this->getJson($this->base.'?payer_membership_id='.$this->mihaiMember)->assertOk()->assertJsonCount(1, 'items')
+            ->assertJsonPath('count', 1)->assertJsonPath('total_bani', 10)->assertJsonPath('categories.0.category', 'home')->assertJsonPath('next_page', null);
+    }
+
+    public function test_member_filter_and_totals_keep_month_status_deletion_and_family_boundaries(): void
+    {
+        $this->create(['amount' => '1.10']);
+        $this->create(['amount' => '2.20', 'payer_membership_id' => $this->mihaiMember]);
+        $planned = $this->create(['amount' => '3.30', 'payer_membership_id' => $this->mihaiMember, 'payment_status' => 'planned']);
+        $this->create(['amount' => '40', 'payer_membership_id' => $this->mihaiMember, 'spent_on' => '2026-11-01']);
+        $deleted = $this->create(['amount' => '50', 'payer_membership_id' => $this->mihaiMember]);
+        $this->withHeader('If-Match', '"1"')->deleteJson($this->base.'/'.$deleted['id'])->assertNoContent();
+        $paid = $this->getJson($this->base.'?payer_membership_id='.$this->mihaiMember)->assertOk()->assertJsonPath('total_bani', 220)
+            ->assertJsonPath('count', 1)->assertJsonPath('member_totals', [
+                ['payer_membership_id' => $this->mihaiMember, 'payer_name' => 'Mihai Popescu', 'total_bani' => 220, 'count' => 1],
+                ['payer_membership_id' => $this->anaMember, 'payer_name' => 'Ana Popescu', 'total_bani' => 110, 'count' => 1],
+            ])->json();
+        $this->getJson($this->base.'?payment_status=planned&payer_membership_id='.$this->mihaiMember)->assertOk()->assertJsonPath('total_bani', 330)
+            ->assertJsonPath('count', 1)->assertJsonPath('items.0.id', $planned['id'])
+            ->assertJsonPath('member_totals', [['payer_membership_id' => $this->mihaiMember, 'payer_name' => 'Mihai Popescu', 'total_bani' => 330, 'count' => 1]]);
+        foreach ([$this->otherMember, (string) Str::uuid()] as $membership) {
+            $this->getJson($this->base.'?payer_membership_id='.$membership)->assertOk()->assertJsonPath('payer_membership_id', $membership)
+                ->assertJsonPath('total_bani', 0)->assertJsonPath('count', 0)->assertJsonCount(0, 'items')->assertJsonCount(0, 'categories')
+                ->assertJsonPath('next_page', null)->assertJsonPath('member_totals', $paid['member_totals']);
+        }
+        $this->getJson('/api/v1/families/'.$this->otherFamily.'/expenses?payer_membership_id='.$this->mihaiMember)->assertOk()
+            ->assertJsonPath('total_bani', 0)->assertJsonCount(0, 'items')->assertJsonCount(0, 'member_totals');
     }
 }

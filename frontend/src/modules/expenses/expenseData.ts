@@ -48,10 +48,17 @@ export type Expense = {
   recurrence_notice?: string | null;
 };
 export type Payer = { id: string; name: string };
+export type ExpenseMemberTotal = {
+  payer_membership_id: string;
+  payer_name: string;
+  total_bani: number;
+  count: number;
+};
 export type ExpenseMonth = {
   month: string;
   visibility: ExpenseVisibility;
   payment_status: ExpensePaymentStatus;
+  payer_membership_id: string | null;
   total_bani: number;
   count: number;
   categories: {
@@ -62,7 +69,29 @@ export type ExpenseMonth = {
   items: Expense[];
   next_page: number | null;
   payers: Payer[];
+  member_totals: ExpenseMemberTotal[];
 };
+
+export function expensePayerOptions(
+  payers: Payer[],
+  totals: ExpenseMemberTotal[],
+  selected: Payer | null,
+) {
+  const members = new Map(payers.map((payer) => [payer.id, payer.name]));
+  for (const total of totals)
+    members.set(total.payer_membership_id, total.payer_name);
+  if (selected && !members.has(selected.id))
+    members.set(selected.id, selected.name);
+  return [
+    { value: "", label: "Toți membrii" },
+    ...[...members.entries()]
+      .sort(
+        ([idA, nameA], [idB, nameB]) =>
+          nameA.localeCompare(nameB, "ro") || idA.localeCompare(idB),
+      )
+      .map(([value, label]) => ({ value, label })),
+  ];
+}
 export const expenseCategoryLabel = (value: ExpenseCategory) =>
   expenseCategories.find((category) => category.value === value)!.label;
 const money = new Intl.NumberFormat("ro-RO", {

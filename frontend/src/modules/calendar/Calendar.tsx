@@ -31,6 +31,7 @@ import {
   calendarMatchesAccess,
   calendarSourceActions,
   calendarSourceDestination,
+  sortCalendarEvents,
   type CalendarItem,
   type CalendarVisibility,
 } from "./calendarTypes";
@@ -144,18 +145,7 @@ export function CalendarPage({
         ),
     )
       .then((data) => {
-        if (request === sequence.current)
-          setItems(
-            data
-              .flat()
-              .sort(
-                (a, b) =>
-                  a.event_date.localeCompare(b.event_date) ||
-                  Number(b.all_day) - Number(a.all_day) ||
-                  (a.time ?? "").localeCompare(b.time ?? "") ||
-                  a.id.localeCompare(b.id),
-              ),
-          );
+        if (request === sequence.current) setItems(data.flat());
       })
       .catch((e) => {
         if (request !== sequence.current) return;
@@ -193,12 +183,14 @@ export function CalendarPage({
           .toLocaleLowerCase("ro")
           .includes(query.trim().toLocaleLowerCase("ro"))),
   );
-  const visible = matching.filter((item) =>
-    view === "week"
-      ? week.includes(item.event_date)
-      : view === "agenda" || day
-        ? item.event_date === selectedDay
-        : item.event_date.startsWith(month),
+  const visible = sortCalendarEvents(
+    matching.filter((item) =>
+      view === "week"
+        ? week.includes(item.event_date)
+        : view === "agenda" || day
+          ? item.event_date === selectedDay
+          : item.event_date.startsWith(month),
+    ),
   );
   const markers: Record<string, ("family" | "private")[]> = {};
   for (const item of matching)
@@ -446,11 +438,8 @@ export function CalendarPage({
             </div>
           ) : view === "week" ? (
             <div className="calendar-week-agenda">
-              {week
-                .filter((date) =>
-                  visible.some((item) => item.event_date === date),
-                )
-                .map((date) => (
+              {[...new Set(visible.map((item) => item.event_date))].map(
+                (date) => (
                   <section key={date} aria-label={dateLabel(date)}>
                     <h3>
                       {dateLabel(date, {
@@ -465,7 +454,8 @@ export function CalendarPage({
                       onOpen={openItem}
                     />
                   </section>
-                ))}
+                ),
+              )}
             </div>
           ) : (
             <CalendarEvents
