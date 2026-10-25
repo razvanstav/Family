@@ -1,0 +1,60 @@
+# Pagini legale și solicitări publice
+
+## LG1 — 25 octombrie 2026
+
+**Implementat și verificat local; publicarea finală este în curs.** Cerere explicită: informații legale/GDPR pentru Amora și acces din intrarea publică, cu politica de rambursare limitată de drepturile obligatorii ale consumatorului. Conținutul original în română este în `frontend/src/app/legalContent.ts`, versiunea 25 octombrie 2026. Nu este o certificare a conformității GDPR și nu afirmă că publicarea paginilor înlocuiește măsurile tehnice și organizatorice.
+
+### Scop și fișiere de intrare
+
+- `legalPages`: șase pagini publice `terms`, `privacy`, `cookies`, `refunds`, `contact`, `consumer`, cu titlu, secțiuni, paragrafe și legături. Tipul exportat este `LegalPageId`.
+- Rutarea publică folosește `?legal=<id>`, fără cerință de autentificare; formularul este legat prin `?legal=contact#contact-form`. Rendererul și formularul sunt compuse în aplicație, separat de datele textului.
+- Canalul de solicitări este formularul public, cu tipurile suport/date personale/retragere/conținut ilegal, examinare administrativă internă și conținut criptat. Acest contract de integrare nu afirmă expedierea unui email; rezultatul implementării și verificările rămân de completat de pasul principal.
+- Date de firmă folosite la cererea curentă, confirmate în cercetarea pasului principal: CENTRUL DE CODERI S.R.L., CUI 42281220, J34/102/2020, Strada Baracea nr. 102, sat/comuna Peretu, Teleorman, 147240. Nu au fost furnizate un email sau telefon verificate; nu se publică adrese inventate.
+
+### Comportament și limite
+
+În prezent nu există checkout sau încasare de abonamente Amora. Cheltuieli și Abonamente sunt evidențe introduse de utilizator, nu plăți efectuate prin aplicație. Pagina Rambursări descrie starea actuală și condițiile oricărei eventuale oferte viitoare acceptate separat. Preferința comercială cerută este explicită: pentru un plan plătit, oferit și acceptat separat, nu se acordă rambursări comerciale pentru simpla neutilizare sau renunțarea după expirarea retragerii legale. Nu introduce o renunțare generală la rambursare: sunt păstrate retragerea, nefurnizarea și neconformitatea. O funcție viitoare de vânzare necesită propriile verificări precontractuale și funcția de retragere din art. 11¹ OUG 34/2014; formularul informativ actual nu este prezentat ca dovadă a unui contract plătit.
+
+Textele păstrează accesul implementat în module: Casă pentru adulți, Amintiri pentru familie, Personale/Sănătate inițial private, asocieri Auto/Animale fără lărgirea accesului și Calendar conform sursei. Nu se transferă proprietatea conținutului. Revocarea nu poate retrage copii deja descărcate. Arhivarea păstrează istoricul și nu produce ștergere automată. Solicitările de drepturi sunt manuale, în principiu într-o lună; nu se promit ștergere sau export instantanee.
+
+Nu există un mecanism de consimțământ explicit pentru sănătate confirmat în acest pas. Textele nu pretind contrariul și nu confundă acceptarea termenilor cu temeiul art. 9. Datele speciale rămân opționale, cu necesitatea unei condiții legale valabile și a autorizării persoanei/reprezentantului. Pragul funcției de profil fără cont, sub 14 ani, este separat de pragul consimțământului digital de 16 ani. Acest pas nu modifică automat funcțiile existente sau onboardingul.
+
+Informarea despre stocare folosește inventarul confirmat în pasul principal: cookie-urile `XSRF-TOKEN` și `memoria_staging_session`, 2 ore, Secure/SameSite=Lax, raportare tehnică Cloudflare NEL, fără localStorage ori analytics/publicitate în sursa aplicației. Nu adaugă un banner cu acord fictiv pentru cookie-urile necesare. Introducerea unor tehnologii opționale va necesita evaluare și acord înainte de activare când legea îl cere.
+
+Confidențialitatea numește Cloudflare pentru livrare/protecție și Brevo condițional pentru emailul activat și utilizat, cu legături la documentația oficială. Linkurile nu constituie afirmația că acordurile aplicabile contului Amora au fost semnate/verificate. Sunt precizate sursele directe și indirecte din familie, absența profilării, a deciziilor exclusiv automatizate cu efecte juridice/similare și a vânzării datelor pentru publicitate. Data versiunii se afișează o singură dată de renderer, fără repetare ca paragraf în conținut.
+
+### Obligații operaționale rămase pentru proprietar
+
+- **Contact comercial:** furnizorul trebuie să confirme și să publice emailul și datele de contact aplicabile. Formularul real și poșta sunt canale actuale, dar lipsa datelor cerute de Legea 365/2002 art. 5 nu este declarată rezolvată numai prin text.
+- **Date speciale/minori:** stabilirea rolurilor și temeiurilor pe scop, mecanism demonstrabil pentru consimțământul explicit sau altă condiție art. 9, retragere și reprezentarea părintească proporțional verificată. Simpla declarație a celui care încarcă nu dovedește acordul altui adult.
+- **Găzduire/furnizori:** inventar real al găzduirii, Cloudflare și emailului; contracte art. 28 și transferuri internaționale, unde se aplică. Țara tuturor prelucrărilor, acordurile și garanțiile nu sunt verificate de acest pas; pagina nu promite exclusiv UE/România.
+- **Retenție și ștergere:** termene pe scop, jurnalizare, cereri și copii de siguranță; proces efectiv de export/ștergere manuală, respectând drepturile membrilor. Nu se inventează perioade fixe ori ștergerea automată a arhivei.
+- **Evidență și incidente:** registrul prelucrărilor, procedura de cereri și incidente, analiza riscului/DPIA și necesitatea DPO după scară/context. Publicarea textelor nu validează aceste operațiuni.
+- **DSA:** evaluarea încadrării stocării/partajării ca serviciu de găzduire și a procedurii de notificare/acțiune. Formularul de conținut ilegal nu dovedește singur că toate obligațiile operaționale sunt îndeplinite.
+
+### Surse primare consultate la 25 octombrie 2026
+
+- [Legea 365/2002, art. 5, 8 și 9](https://legislatie.just.ro/Public/DetaliiDocumentAfis/288595): identificare și contacte, termeni care pot fi stocați/reproduși, confirmări contractuale.
+- [OUG 34/2014, forma actuală](https://legislatie.just.ro/Public/DetaliiDocument/158913): retragere și excepții. SaaS nu se tratează automat ca fișier digital descărcabil; începerea unui serviciu continuu nu înseamnă executare integrală.
+- [OUG 18/19 martie 2026](https://legislatie.just.ro/Public/DetaliiDocumentAfis/308474): funcția online de retragere, aplicabilă de la 19 iunie 2026 în regimul legal corespunzător.
+- [OUG 141/2021, art. 12–17](https://legislatie.just.ro/Public/DetaliiDocument/250054): remedii pentru nefurnizare/neconformitate și rambursări.
+- [GDPR](https://eur-lex.europa.eu/eli/reg/2016/679/oj?locale=ro), [Comisia Europeană — cereri ale persoanelor](https://commission.europa.eu/law/law-topic/data-protection/information-business-and-organisations/dealing-requests-individuals_en?prefLang=pl), [ANSPDCP — întrebarea 17](https://ans-extmail.dataprotection.ro/index.jsp?lang=ro&page=IntrebariFrecvente1): informare, drepturi și consimțământ digital la 16 ani.
+- [EDPB — prelucrare legală/categorii speciale](https://www.edpb.europa.eu/sme/be-compliant/process-personal-data-lawfully_en), [Opinia EDPB 07/2024, pct. 19–20](https://www.edpb.europa.eu/system/files/2024-04/edpb_opinion_202407_opiniononauditorcertificationcriteria_en.pdf): temei suplimentar pentru sănătate și neextinderea excepției casnice asupra furnizorului cloud.
+- [Legea 506/2004, art. 4](https://legislatie.just.ro/Public/DetaliiDocument/214211), [EDPB 2/2023, versiunea finală din 16 octombrie 2024](https://www.edpb.europa.eu/documents/guideline/guidelines-22023-on-technical-scope-of-art-53-of-eprivacy-directive_en): reguli pentru cookie-uri și alte stocări în dispozitiv, inclusiv excepția strict necesară.
+- [Ordinul ANPC 449/2022 consolidat](https://legislatie.just.ro/Public/DetaliiDocument/257649?fs=e&s=cl), [comunicatul ANPC din 19 mai 2026](https://anpc.ro/comunicat-sal/): pictograma SAL de 250 × 50 px cu [destinația actuală](https://reclamatiisal.anpc.ro/). [Regulamentul UE 2024/3228](https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX%3A32024R3228) închide SOL/ODR la 20 iulie 2025; nu se folosește linkul vechi.
+- [DSA, Regulamentul UE 2022/2065](https://eur-lex.europa.eu/eli/reg/2022/2065/oj?locale=ro): încadrarea serviciilor de găzduire și notificările de conținut ilegal.
+- Documentație tehnică/de furnizor, fără confirmarea contractelor contului Amora: [Cloudflare confidențialitate](https://www.cloudflare.com/privacypolicy/), [Cloudflare clauze standard](https://www.cloudflare.com/cloudflare-customer-scc/), [Brevo confidențialitate](https://www.brevo.com/legal/privacypolicy/), [Brevo condiții și DPA](https://www.brevo.com/legal/termsofuse/). Brevo confirmă public [unde este inclus acordul de prelucrare](https://help.brevo.com/hc/es/articles/15403782599570--D%C3%B3nde-puedo-encontrar-el-Acuerdo-de-procesamiento-de-datos-DPA); nu se preiau afirmații vechi din pagini de ajutor despre Privacy Shield.
+
+Cozi a fost consultat numai ca inventar comparabil de pagini, fără copiere: [termeni, 13 octombrie 2026](https://www.cozi.com/terms-of-use/), [confidențialitate, 11 iunie 2026](https://www.cozi.com/privacy-policy/). Clauzele americane și promisiunile sale tehnice nu sunt transpuse în Amora.
+
+### Verificări
+
+Observat pentru conținut: cele șase identificatoare în ordinea cerută, eliminarea datei repetate din paragrafe, 25 de legături cu URL/protocol/rută valide și 2.127 de cuvinte în secțiuni. Sursa a fost transpilată și încărcată izolat cu TypeScript pentru verificarea structurii; nu este declarat un build integrat din această probă. Revizia textului urmărește datele firmei, lipsa unui email/telefon inventat, lipsa unei clauze absolute de nerambursare și concordanța cu funcțiile existente. Prettier pentru sursă și `git diff --check` au trecut. Verificarea TypeScript a aplicației, buildul, probele browser, backend și publicarea se completează în pasul integrat, numai după rezultate observate. Verificarea URL-urilor este sintactică și de rutare; nu reprezintă o probă HTTP 200 pentru fiecare destinație externă.
+
+### Rezultatul integrării LG1
+
+73 teste frontend, 36 backend/482 aserțiuni (17Solicitări/211,6AdminOverview/125,9AdminEmail/114,4limite/32), TypeScript/Vite, Pint, Prettier/diff și review independent trecute. Build final `CPwQVwYW/DKMkSrhY`. API-ul/rutele/migrația și privilegiile sunt în [Operare LG1](operations.md#solicitări-publice-și-gdpr-25-octombrie-2026). Migrația054737 și granturile sunt aditive înmemoria_test și localmemoria; amprentele utilizatorilor/familiilor/documentelor/apartenențelor/media rămân identice, tabela reală este goală. Niciun email trimis.
+
+Browser pe server fictiv izolat8005, numai în memorie: toate cele șase pagini publice fără autentificare și fără requesturi de sesiune până la formular; contact cu422 și draft păstrat, retry201, referință și dovadă descărcată cu timpul de înregistrare returnat de server; cererea vizibilă în Administrare, schimbarea stării și412 cu salvarea blocată. Formularul de retragere a fost descărcat; comanda de tipărire este disponibilă, fără PDF nou generat în probă. Desktop1280, mobil390/320: încadrare stabilă fără overflow, controalele măsurate minimum44px; navigarea și ancora către formular verificate. Footerul și pictograma oficială SAL încărcată local în250×50, fără deformare, verificate. Consola fără erori/warninguri observate; tabul/serverul QA închise și viewportul resetat. Fără scrieri DB/SMTP în proba UI sau iPhone fizic.
+
+Identitatea firmei a fost verificată prin [serviciul oficial ANAF](https://static.anaf.ro/static/10/Anaf/Informatii_R/Servicii_web/servicii_sincron.html), interogare CUI42281220 la25octombrie2026, și concordă cu directoarele publice consultate. Nu s-a găsit un contact electronic corporativ verificabil. Grafica SAL și SHA-256/proveniența sunt în [assets/legal/README](../../frontend/src/assets/legal/README.md). Nu se declară conformitate juridică completă; limitele de mai sus rămân deschise.

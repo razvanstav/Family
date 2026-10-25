@@ -8,7 +8,7 @@ Stare: **VC1 — scadențe Auto în Calendar și notificări in-app**, implement
 
 ## VD1 — Adăugare directă a documentelor, 25 octombrie 2026
 
-**Implementat și verificat local.** Cerere explicită pentru Auto și Animale, cu publicarea tuturor modificărilor locale. „Adaugă document” deschide formularul comun în context, fără citirea/alegerea unei liste existente. Nume, Casă/Amintiri, expirare opțională și fișier opțional; accesul categoriei este explicat înainte de salvare. Asocierile existente, inclusiv private, își păstrează accesul. Titlul deschide detaliul canonic, inclusiv pentru atașarea ulterioară. Eliminarea asocierii păstrează documentul.
+**Implementat, verificat și publicat.** Cerere explicită pentru Auto și Animale, cu publicarea tuturor modificărilor locale. „Adaugă document” deschide formularul comun în context, fără citirea/alegerea unei liste existente. Nume, Casă/Amintiri, expirare opțională și fișier opțional; accesul categoriei este explicat înainte de salvare. Asocierile existente, inclusiv private, își păstrează accesul. Titlul deschide detaliul canonic, inclusiv pentru atașarea ulterioară. Eliminarea asocierii păstrează documentul.
 
 App compune `DocumentCreateDialog` și `DocumentDetailDialog` prin contractele UI `shared/documentIntegration.ts`; modulele nu importă între ele. Auto/Pets dețin requestul de asociere prin endpointul existent, autorizat prin `DocumentLinks`. Dacă documentul este creat dar asocierea eșuează, se păstrează ID-ul și câmpurile salvate; Reîncearcă repetă numai asocierea idempotentă. Selectorii vechi, importurile și stilurile fără apelanți au fost eliminate.
 

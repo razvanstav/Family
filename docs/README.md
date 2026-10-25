@@ -25,6 +25,7 @@ La reluare pornește din [STATE.md](STATE.md). Ordinea etapelor și criteriile c
 | Platformă                          | P1a: cuplările existente separate prin compoziție/contracte și gărzi de arhitectură, verificat local; izolarea, media, antivirusul și auditul rămân existente | [Platformă](modules/platform.md)     |
 | Interfață                          | H4 Acasă cald acceptat; FW1 și PB1 fotografii estompate în antete implementate pentru feedback; Nunito/Fraunces și navigația Mai multe păstrate               | [Interfață](modules/interface.md)    |
 | Căutare și drepturi asupra datelor | CD1 căutare comună autorizată în Amintiri/Rețete/Documente, verificată local; exportul și ștergerea rămân planificate                                         | [Căutare și date](modules/data.md)   |
+| Pagini juridice și contact | LG1: pagini publice și formular criptat pentru solicitări, cu examinare în Administrare; limitele operaționale GDPR documentate | [Legal și contact](modules/legal.md) |
 | Operare                            | Pornire locală și configurații O2a pentru predare Linux; instalarea staging, CI și restaurarea rămân deschise                                                 | [Operare](modules/operations.md)     |
 | Aplicații mobile                   | Planificate după stabilizarea web; fără PWA offline sau aplicații native actuale                                                                              | [Mobil](modules/mobile.md)           |
 

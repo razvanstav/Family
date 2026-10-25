@@ -1,12 +1,12 @@
 # Animale
 
-## AN5 — Adăugare directă de documente, 25 octombrie 2026
+## AN5 — Adăugare directă a documentelor, 25 octombrie 2026
 
-**Implementat; verificarea integrată și publicarea sunt în curs.** În fila Documente, „Adaugă document” deschide formularul canonic Documente, compus în App prin slotul tipizat `DocumentCreationRender`. Nu se mai încarcă lista documentelor pentru a alege un element existent. Salvarea creează documentul și îl asociază animalului prin endpointul existent, cu autorizarea Documente păstrată. Fișierul este opțional; numele, categoria, expirarea și accesul urmează regulile canonice. Reîncercarea asocierii reutilizează documentul deja creat, fără o a doua creare.
+**Implementat, verificat și publicat.** În fila Documente, „Adaugă document” deschide formularul canonic Documente, compus în App prin slotul tipizat `DocumentCreationRender`. Nu se mai încarcă lista documentelor pentru a alege un element existent. Salvarea creează documentul și îl asociază animalului prin endpointul existent, cu autorizarea Documente păstrată. Fișierul este opțional; numele, categoria, expirarea și accesul urmează regulile canonice. Reîncercarea asocierii reutilizează documentul deja creat, fără o a doua creare.
 
 Titlul fiecărui document deschide detaliul canonic prin `DocumentDetailRender`, inclusiv când fișierul lipsește sau este în verificare/respins, astfel încât un fișier poate fi atașat ulterior. Starea fișierului și eliminarea asocierii rămân disponibile; eliminarea păstrează documentul original. Formularul vechi `PetDocumentForm`, importul și selectorii pentru linkurile înlocuite au fost eliminate. Pets nu importă modulul Documente și nu schimbă permisiunile documentului.
 
-**Verificat până acum:** cele 3 teste de payload Pets și cele 3 gărzi frontend de module trecute. Verificarea TypeScript/build/browser și rezultatul deployului se completează după integrarea în App; nu sunt declarate observate în acest punct.
+**Verificat:** 73 teste frontend, 23 backend/414 aserțiuni (Pets13/255, Auto6/127, limite4/32), TypeScript/Vite, Prettier și diff trecute. Browser izolat8004 desktop1280/mobil390/320: creare fără fișier,503+retry fără duplicare, detaliu și formular fără overflow; fără DB/SMTP. Commit704ad3d, deploy40166672456 reușit, HTTPS200 și bundleoMMwdSLr/BScxzvd8 confirmate. Tabul/serverul QA închise și viewportul resetat.
 
 **DC1, 24 octombrie 2026:** nașterea animalului, data îngrijirii și scadența următoare, inclusiv încheiată, apar în Calendar prin `PetDatedRecords`, fără dubluri cu proiecțiile active. Arhivarea rămâne respectată; accesul documentelor asociate nu se lărgește, iar cele fără fișier au stare neutră. [Contract și verificări Calendar DC1](calendar.md#dc1--toate-datele-introduse-de-utilizator-24-octombrie-2026).
 

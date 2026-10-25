@@ -17,6 +17,7 @@ use App\Modules\Vehicles\Http\VehicleController;
 use App\Platform\Administration\AdminContext;
 use App\Platform\Administration\AdminOverviewController;
 use App\Platform\Administration\EmailSettingsController;
+use App\Platform\Administration\SupportRequestController;
 use App\Platform\Families\FamilyController;
 use App\Platform\Families\FamilyGenealogyController;
 use App\Platform\Families\InvitationCodeController;
@@ -35,6 +36,7 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
     Route::get('/session', [SessionController::class, 'show']);
     Route::post('/login', [SessionController::class, 'login'])->middleware('throttle:6,1');
     Route::post('/register', RegistrationController::class)->middleware('throttle:6,1');
+    Route::post('/public/requests', [SupportRequestController::class, 'store'])->middleware('throttle:6,1');
     Route::post('/logout', [SessionController::class, 'logout'])->middleware('auth');
     Route::patch('/account', [AccountController::class, 'update'])->middleware(['auth', 'throttle:20,1']);
     Route::get('/account/notification-settings', [NotificationSettingsController::class, 'show'])->middleware('auth');
@@ -44,6 +46,8 @@ Route::prefix('api/v1')->middleware(PrivateResponse::class)->group(function () {
         Route::get('/email-settings', [EmailSettingsController::class, 'show']);
         Route::put('/email-settings', [EmailSettingsController::class, 'update'])->middleware('throttle:20,1');
         Route::post('/email-test', [EmailSettingsController::class, 'test'])->middleware('throttle:admin-email-test');
+        Route::get('/requests', [SupportRequestController::class, 'index']);
+        Route::patch('/requests/{supportRequest}', [SupportRequestController::class, 'update'])->whereUuid('supportRequest')->middleware('throttle:30,1');
     });
     Route::post('/invitations/{family}/inspect', [InvitationController::class, 'inspect'])->whereUuid('family')->middleware('throttle:30,1');
     Route::post('/invitations/{family}/accept', [InvitationController::class, 'accept'])->whereUuid('family')->middleware('throttle:6,1');

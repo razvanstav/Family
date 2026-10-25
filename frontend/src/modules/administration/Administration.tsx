@@ -10,6 +10,7 @@ import { api, ApiError, errorMessage } from "../../shared/api";
 import { PageBackdrop } from "../../shared/PageBackdrop";
 import { SectionTabs } from "../../shared/SectionTabs";
 import { AdministrationOverview } from "./AdministrationOverview";
+import { PublicRequests } from "./PublicRequests";
 import "./administration.css";
 
 type EmailSettings = {
@@ -25,7 +26,7 @@ type EmailSettings = {
 };
 
 export type AdministrationMemory = {
-  section: "overview" | "email";
+  section: "overview" | "email" | "requests";
   email?: {
     saved: EmailSettings;
     draft: EmailSettings;
@@ -51,21 +52,24 @@ export function Administration({
         <div className="page-heading">
           <h1>Administrare</h1>
         </div>
-        <SectionTabs
-          label="Administrare"
-          value={section}
-          options={[
-            { value: "overview", label: "Prezentare" },
-            { value: "email", label: "Email" },
-          ]}
-          onChange={(value) => {
-            memory.current.section = value;
-            setSection(value);
-          }}
-        />
       </PageBackdrop>
+      <SectionTabs
+        label="Administrare"
+        value={section}
+        options={[
+          { value: "overview", label: "Prezentare" },
+          { value: "email", label: "Email" },
+          { value: "requests", label: "Solicitări" },
+        ]}
+        onChange={(value) => {
+          memory.current.section = value;
+          setSection(value);
+        }}
+      />
       {section === "overview" ? (
         <AdministrationOverview onExpired={onExpired} />
+      ) : section === "requests" ? (
+        <PublicRequests onExpired={onExpired} />
       ) : (
         <EmailConfiguration
           userEmail={userEmail}

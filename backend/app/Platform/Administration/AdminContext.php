@@ -14,7 +14,7 @@ final class AdminContext
         abort_unless(AdministratorAccess::allows($request->user()), 403);
 
         return DB::transaction(function () use ($request, $next): Response {
-            DB::select("SELECT set_config('app.email_settings_access', 'admin', true)");
+            DB::select("SELECT set_config('app.email_settings_access', 'admin', true), set_config('app.support_requests_access', 'admin', true)");
 
             return $next($request);
         });

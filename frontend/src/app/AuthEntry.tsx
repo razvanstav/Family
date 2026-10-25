@@ -6,6 +6,7 @@ import { Brand } from "../shared/Brand";
 import { ActionButton } from "../shared/ActionButton";
 import { FocusInput } from "../shared/FocusInput";
 import { FeedbackMessage } from "../shared/FeedbackMessage";
+import { LegalFooter } from "./LegalFooter";
 
 const countryside = new URL(
   "../assets/home/warm-countryside.png",
@@ -182,6 +183,27 @@ export function AuthEntry({
               {error && (
                 <FeedbackMessage variant="error">{error}</FeedbackMessage>
               )}
+              {registering && (
+                <p className="legal-form-hint">
+                  Prin crearea contului accepți{" "}
+                  <a
+                    href="?legal=terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Termenii și condițiile
+                  </a>{" "}
+                  și confirmi că ai consultat{" "}
+                  <a
+                    href="?legal=privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Politica de confidențialitate
+                  </a>
+                  .
+                </p>
+              )}
               <ActionButton
                 type="submit"
                 className="button primary full"
@@ -253,6 +275,7 @@ export function AuthEntry({
           <img className="login-landscape" src={countryside} alt="" />
         </section>
       </div>
+      <LegalFooter />
     </main>
   );
 }
