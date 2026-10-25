@@ -2,7 +2,9 @@
 
 ## H6 — Activitatea de azi pe Acasă, 25 octombrie 2026
 
-**Implementat și verificat local.** Utilizatorul a ales explicit activitatea automată din aplicație. Acasă păstrează Evenimente, Remindere și Sarcini; imediat după Sarcini apare Activitatea de azi, înainte de Plăți următoare și Acces rapid. Rândurile arată actorul real, acțiunea, titlul și ora României, descrescător. Cinci rânduri inițial, extindere la maximum 20 și deschidere în modulul canonic prin callback tipizat compus în App.
+**Implementat, verificat și publicat.** Commit `6f51349`, [deploy 40210148504](https://github.com/razvanstav/Family/actions/runs/40210148504) completed/success cu SHA confirmat. HTTPS `/up`, `/app/`, JS/CSS `BFKMY26o/CV-Buh5J` răspund 200; Activitatea de azi/home-activity sunt prezente în asseturile publice. Fără autentificare sau probe pe date reale de producție.
+
+Utilizatorul a ales explicit activitatea automată din aplicație. Acasă păstrează Evenimente, Remindere și Sarcini; imediat după Sarcini apare Activitatea de azi, înainte de Plăți următoare și Acces rapid. Rândurile arată actorul real, acțiunea, titlul și ora României, descrescător. Cinci rânduri inițial, extindere la maximum 20 și deschidere în modulul canonic prin callback tipizat compus în App.
 
 Backendul citește auditul existent numai prin surse care autorizează resursa actuală în modulul ei: Sarcini, Cheltuieli, Bucătărie, Amintiri, Calendar manual, Auto, Animale și Abonamente. Nu se afișează documente pe Acasă. Acțiunile tehnice, vizualizările secretelor, schimbările de acces și resursele șterse/arhivate nu intră în flux. Familia activă rămâne strictă, inclusiv pentru abonamentele invitate din altă familie. Sursele sunt compuse în AppServiceProvider prin contractul comun ActivitySource, fără importuri private între module sau interogări externe asupra tabelelor lor.
 

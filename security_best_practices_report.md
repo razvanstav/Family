@@ -4,7 +4,7 @@
 
 ## Actualizare — remedieri SR2
 
-**Ambele probleme sunt remediate și verificate local; publicarea este autorizată și în curs.** Constatările de mai jos descriu comportamentul anterior corecțiilor.
+**Ambele probleme sunt remediate, verificate și publicate.** Commit `6f51349`, [deploy 40210148504](https://github.com/razvanstav/Family/actions/runs/40210148504) completed/success cu SHA exact confirmat. HTTPS `/up`, `/app/`, JS `BFKMY26o` și CSS `CV-Buh5J` răspund 200; versiunea publică include și Activitatea de azi. Constatările de mai jos descriu comportamentul anterior corecțiilor. Confirmarea publicării nu include atacuri ori încercări de umplere a discului pe producție.
 
 - Login: limita de șase cereri/minut pe IP este comună tuturor sesiunilor, plus zece cereri/minut pentru emailul normalizat vizat. Sesiunile deja autentificate primesc 409 înainte de verificarea parolei. Limitele expiră și păstrează `Retry-After` și explicații în română.
 - Înscriere: limite comune pe IP de șase cereri/minut, zece/oră și 30/zi. Fluxul fără verificare obligatorie a emailului rămâne disponibil.
