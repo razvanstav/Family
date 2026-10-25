@@ -1,5 +1,9 @@
 # Interfață comună
 
+## SB3 — Detaliul abonamentului, 25 octombrie 2026
+
+Un singur layout redesenat în Abonamente: antet cu iconiță locală și autor, metadate compacte, acțiunea serviciului pe lățime și footer echilibrat. `Modal` oferă titleIcon/titleMeta opționale; titlul/aria-labelledby și structura apelanților existenți sunt păstrate. Suprafețe neutre, fonturi/culori și controale44px comune; fără alte pagini sau formulare redesenate.72frontend, TypeScript/Vite `ip7koMdA/DKAgpeSX`, Prettier/diff/review și browser1280/390/320 trecute. Detaliile, probele privacy/acces și limitele sunt în [Abonamente SB3](subscriptions.md#sb3--detaliu-abonament-25-octombrie-2026). Utilizatorul a cerut explicit DEPLOY după previzualizare; publicarea este în curs.
+
 ## BH1 — Logo desktop spre Acasă, 25 octombrie 2026
 
 **Publicat:** commit `b8385ba`, [deploy40197755657](https://github.com/razvanstav/Family/actions/runs/40197755657) completed/success, head_sha confirmat. HTTPS `/up`, `/app/`, JS `BKGHsVqB` și CSS `BXFcCO3E` răspund200; sidebar-home/member_totals/modal-panel sunt prezente, data-page-navigation absent. Include CH4/UW2/NV1/CO1 din1cf46f7/deploy40191874224. Nu există probe pe iPhone fizic, date reale de producție sau inspecție independentă a workerilor/granturilor runtime.

@@ -149,6 +149,17 @@
 .subscription-author {
   margin-top: -8px;
 }
+.subscription-detail-mark .subscription-service-icon {
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.subscription-detail-mark .subscription-service-icon img {
+  width: 34px;
+  height: 34px;
+}
 .subscription-details {
   margin: 20px 0;
   display: grid;
@@ -167,22 +178,94 @@
   overflow-wrap: anywhere;
   font-size: 14px;
 }
+.subscription-overview {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 0 18px;
+  padding: 4px 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #faf9f5;
+}
+.subscription-overview > div {
+  padding: 14px 16px;
+}
+.subscription-overview > div:nth-child(even) {
+  border-left: 1px solid var(--line);
+}
+.subscription-overview > div:nth-child(n + 3) {
+  border-top: 1px solid var(--line);
+}
+.subscription-overview > div:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.subscription-overview dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 7px;
+}
+.subscription-overview dt > svg {
+  flex-shrink: 0;
+  color: var(--icon-documents);
+}
+.subscription-overview > div:last-child dt > svg {
+  color: var(--icon-family);
+}
+.subscription-overview dd {
+  font-weight: 750;
+}
+.subscription-overview dd > span {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
 .subscription-note {
   white-space: pre-wrap;
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .subscription-website {
+  display: flex;
+  width: 100%;
   max-width: 100%;
+  margin-bottom: 10px;
 }
 .subscription-credentials {
-  border-top: 1px solid var(--line);
-  padding-top: 20px;
-  margin-top: 22px;
+  margin-top: 10px;
 }
 .subscription-credentials > p {
   color: var(--muted);
   font-size: 13px;
+}
+.subscription-credentials-toggle {
+  width: 100%;
+}
+.subscription-no-credentials {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.subscription-no-credentials > svg {
+  flex-shrink: 0;
+  color: var(--icon-private);
+}
+.subscription-detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.subscription-detail-actions .button {
+  min-width: 0;
 }
 .subscription-secret-values {
   padding: 16px;

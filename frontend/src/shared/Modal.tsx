@@ -5,12 +5,16 @@ import { revealModalFocus } from "./modalFocus";
 
 export function Modal({
   title,
+  titleIcon,
+  titleMeta,
   children,
   onClose,
   wide = false,
   returnFocus,
 }: {
   title: string;
+  titleIcon?: ReactNode;
+  titleMeta?: ReactNode;
   children: ReactNode;
   onClose: () => void;
   wide?: boolean;
@@ -65,7 +69,19 @@ export function Modal({
     >
       <div className="modal-panel" ref={panelRef}>
         <div className="modal-heading">
-          <h2 id={titleId}>{title}</h2>
+          {titleIcon || titleMeta ? (
+            <div className="modal-title-with-icon">
+              {titleIcon}
+              <div className="modal-title-copy">
+                <h2 id={titleId}>{title}</h2>
+                {titleMeta && (
+                  <div className="modal-title-meta">{titleMeta}</div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <h2 id={titleId}>{title}</h2>
+          )}
           <button
             className="icon-button"
             aria-label="Închide"

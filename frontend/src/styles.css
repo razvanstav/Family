@@ -769,6 +769,22 @@ main {
   overflow-wrap: anywhere;
   letter-spacing: -0.3px;
 }
+.modal-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.modal-title-copy {
+  min-width: 0;
+}
+.modal-title-meta {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
 .modal-heading .icon-button {
   border: 0;
   color: #797d83;

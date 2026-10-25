@@ -3,8 +3,14 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
+  CalendarDays,
+  LockKeyhole,
+  Pencil,
   RefreshCw,
+  Repeat2,
   UserPlus,
+  Users,
+  Wallet,
   X,
 } from "lucide-react";
 import { api, ApiError, errorMessage } from "../../shared/api";
@@ -12,6 +18,7 @@ import { dateLabel } from "../../shared/calendarDates";
 import { Modal } from "../../shared/Modal";
 import { observePageResume } from "../../shared/pageResume";
 import { observeCredentialPrivacy } from "./subscriptionPrivacy";
+import { SubscriptionServiceIcon } from "./SubscriptionServiceIcon";
 import {
   subscriptionFrequency,
   subscriptionInvitationExpiry,
@@ -304,12 +311,22 @@ export function SubscriptionDetail({
   return (
     <Modal
       title={source.service_name}
+      titleIcon={
+        !invited && (
+          <span className="subscription-detail-mark">
+            <SubscriptionServiceIcon serviceKey={source.service_key} />
+          </span>
+        )
+      }
+      titleMeta={!invited && `Adăugat de ${source.owner_name}`}
       onClose={() => {
         if (!pending.current) onClose();
       }}
       wide
     >
-      <p className="subscription-author">Adăugat de {source.owner_name}</p>
+      {invited && (
+        <p className="subscription-author">Adăugat de {source.owner_name}</p>
+      )}
       {invited ? (
         <>
           <p>
@@ -363,27 +380,36 @@ export function SubscriptionDetail({
         </>
       ) : (
         <>
-          <dl className="subscription-details">
+          <dl className="subscription-details subscription-overview">
             {money && (
               <div>
-                <dt>Cost</dt>
+                <dt>
+                  <Wallet size={15} aria-hidden="true" />
+                  Cost
+                </dt>
                 <dd>
                   {money}
                   {source.recurrence && (
-                    <span> · {subscriptionFrequency(source.recurrence)}</span>
+                    <span>{subscriptionFrequency(source.recurrence)}</span>
                   )}
                 </dd>
               </div>
             )}
             {!money && source.recurrence && (
               <div>
-                <dt>Repetare</dt>
+                <dt>
+                  <Repeat2 size={15} aria-hidden="true" />
+                  Repetare
+                </dt>
                 <dd>{subscriptionFrequency(source.recurrence)}</dd>
               </div>
             )}
             {source.next_due_on && (
               <div>
-                <dt>Următoarea plată</dt>
+                <dt>
+                  <CalendarDays size={15} aria-hidden="true" />
+                  Următoarea plată
+                </dt>
                 <dd>
                   <time dateTime={source.next_due_on}>
                     {dateLabel(source.next_due_on)}
@@ -392,7 +418,10 @@ export function SubscriptionDetail({
               </div>
             )}
             <div>
-              <dt>Acces</dt>
+              <dt>
+                <Users size={15} aria-hidden="true" />
+                Acces
+              </dt>
               <dd>
                 {source.access === "shared" ? "Partajat cu tine" : "Familie"}
               </dd>
@@ -400,7 +429,7 @@ export function SubscriptionDetail({
           </dl>
           {source.website_url && (
             <a
-              className="button secondary subscription-website"
+              className="button primary subscription-website"
               href={source.website_url}
               target="_blank"
               rel="noopener noreferrer"
@@ -417,7 +446,7 @@ export function SubscriptionDetail({
             {source.has_credentials ? (
               <>
                 <button
-                  className="button secondary"
+                  className="button secondary subscription-credentials-toggle"
                   disabled={busy || revealing || stale}
                   onClick={() => void reveal()}
                 >
@@ -456,18 +485,23 @@ export function SubscriptionDetail({
                 )}
               </>
             ) : (
-              <p>Fără date de acces salvate.</p>
+              <p className="subscription-no-credentials">
+                <LockKeyhole size={18} aria-hidden="true" />
+                Fără date de acces salvate.
+              </p>
             )}
           </section>
           {source.can_edit && (
             <>
-              <div className="subscription-actions">
+              <div className="subscription-actions subscription-detail-actions">
                 <button
                   className="button secondary"
                   disabled={busy || stale}
+                  aria-label="Editează abonamentul"
                   onClick={() => onEdit(source)}
                 >
-                  Editează abonamentul
+                  <Pencil size={17} aria-hidden="true" />
+                  Editează
                 </button>
                 <button
                   className="button secondary"
